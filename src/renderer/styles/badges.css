@@ -1,0 +1,60 @@
+/* Status and priority badges */
+.status {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    display: inline-block;
+}
+
+.status.pending {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.status.in_progress {
+    background-color: #fff3e0;
+    color: #f57c00;
+}
+
+.status.completed {
+    background-color: #e8f5e9;
+    color: #388e3c;
+}
+
+.status.cancelled {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.priority {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    display: inline-block;
+}
+
+.priority.low {
+    background-color: #f5f5f5;
+    color: #666;
+}
+
+.priority.medium {
+    background-color: #e1f5fe;
+    color: #0277bd;
+}
+
+.priority.high {
+    background-color: #fff3e0;
+    color: #ef6c00;
+}
+
+.priority.urgent {
+    background-color: #ffebee;
+    color: #c62828;
+}

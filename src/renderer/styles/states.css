@@ -1,0 +1,15 @@
+/* Loading and error states */
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.error {
+    background-color: #fef2f2;
+    color: #991b1b;
+    padding: 20px;
+    border-radius: 4px;
+    border: 1px solid #fecaca;
+    margin-bottom: 20px;
+}

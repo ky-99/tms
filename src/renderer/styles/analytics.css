@@ -1,0 +1,599 @@
+/* Analytics page and progress chart styles */
+
+/* Progress Charts and Visualization */
+.progress-section {
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 4px !important;
+    padding: 50px 30px !important;
+    flex: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    min-height: 500px !important;
+}
+
+.progress-charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+}
+
+.circular-progress {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: transparent;
+    padding: 40px 20px;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    justify-content: center;
+}
+
+.circular-progress-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.circular-progress-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.circular-progress-svg {
+    transform: rotate(0deg);
+}
+
+.circular-progress-bar {
+    transition: stroke-dashoffset 0.5s ease-in-out;
+}
+
+.circular-progress-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.circular-progress-percentage {
+    font-size: 52px;
+    font-weight: 700;
+    color: #34d399;
+    line-height: 1;
+}
+
+.circular-progress-stats {
+    font-size: 18px;
+    color: #6b7280;
+    margin-top: 10px;
+    font-weight: 500;
+}
+
+/* Analytics Page Layout */
+.analyze-page {
+    padding: 12px 0;
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: calc(100vh - 120px);
+}
+
+.analyze-header {
+    margin-bottom: 30px;
+}
+
+.analyze-header h1 {
+    font-size: 28px;
+    color: #111827;
+    margin: 0;
+}
+
+.analyze-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: calc(100vh - 160px);
+}
+
+.analyze-section {
+    background: white;
+    border-radius: 4px;
+    padding: 24px;
+    border: 1px solid #e5e7eb;
+}
+
+.analyze-section h2 {
+    font-size: 20px;
+    color: #374151;
+    margin: 0 0 16px 0;
+    font-weight: 600;
+}
+
+.analyze-section p {
+    color: #6b7280;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.analyze-layout {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+/* Chart Sections and Analytics Grid */
+.chart-section {
+    flex: 2.5;
+    background: white;
+    border-radius: 4px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+.chart-section h2 {
+    font-size: 20px;
+    margin: 0 0 20px 0;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chart-section-full {
+    background: white;
+    border-radius: 4px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    box-shadow: none;
+}
+
+.charts-container {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+.main-chart {
+    flex: 2;
+}
+
+.priority-chart {
+    flex: 1;
+    min-width: 300px;
+}
+
+.main-chart h2,
+.priority-chart h2 {
+    font-size: 20px;
+    margin: 0 0 20px 0;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Analytics Grid Layout */
+.analytics-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: auto;
+    grid-template-areas: 
+        "main-charts side-charts"
+        "task-cards task-cards";
+    gap: 16px;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    min-height: calc(100vh - 120px);
+    background: #fafafa;
+}
+
+.main-charts-container {
+    grid-area: main-charts;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.task-cards-container {
+    grid-area: task-cards;
+    margin-top: 0;
+    width: 100%;
+}
+
+.side-charts-container {
+    grid-area: side-charts;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+    height: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* Grid Items */
+.grid-item {
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    box-shadow: none;
+    overflow: hidden;
+    min-width: 0;
+    width: 100%;
+}
+
+.burnup-chart-only {
+    align-items: flex-start;
+    height: fit-content;
+}
+
+.burnup-chart-only .chart-content {
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    width: 100%;
+}
+
+.tag-progress-chart {
+    align-items: flex-start;
+    flex: 1;
+}
+
+.tag-progress-chart .chart-content {
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    width: 100%;
+    flex: 1;
+}
+
+.weekly-tasks-section {
+    align-items: flex-start;
+    width: 100%;
+}
+
+.weekly-tasks-section .chart-content {
+    align-items: stretch;
+    justify-content: center;
+    padding: 20px;
+    width: 100%;
+}
+
+.priority-progress-chart {
+    align-items: flex-start;
+    height: fit-content;
+}
+
+.priority-progress-chart .chart-content {
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    width: 100%;
+    overflow: hidden;
+}
+
+.task-status-chart {
+    flex: 1;
+}
+
+.task-status-chart .chart-header {
+    align-items: flex-start;
+}
+
+.task-status-chart .chart-content {
+    align-items: center;
+    overflow: hidden;
+}
+
+/* Chart Structure */
+.chart-header {
+    padding: 20px 20px 10px 20px;
+    margin-bottom: 0;
+    flex-shrink: 0;
+    background: white;
+    display: flex;
+    align-items: flex-start;
+}
+
+.chart-header h2 {
+    font-size: 16px;
+    margin: 0 auto 0 0;
+    color: #6b7280;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-align: left;
+    padding-left: 10px;
+}
+
+.chart-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.chart-footer {
+    padding: 0 20px 20px 20px;
+    margin-top: 0;
+    flex-shrink: 0;
+}
+
+/* Completed Tasks Chart */
+.completed-tasks-chart {
+    width: 100%;
+    overflow-x: auto;
+    padding: 20px 0;
+}
+
+.completed-tasks-chart svg {
+    display: block;
+    margin: 0 auto;
+    border: none;
+    border-radius: 4px;
+    box-shadow: none;
+}
+
+.chart-empty {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 400px;
+    color: #6b7280;
+    font-size: 16px;
+}
+
+/* Today's Progress Bar */
+.today-progress {
+    margin-top: 20px;
+    padding: 16px;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.progress-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.progress-stats {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #059669);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.progress-percentage {
+    text-align: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: #10b981;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .analytics-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        grid-template-areas: 
+            "main-charts"
+            "side-charts"
+            "task-cards";
+        gap: 20px;
+        padding: 0;
+    }
+    
+    .side-charts-container {
+        flex-direction: row;
+        gap: 20px;
+    }
+    
+    .priority-progress-chart,
+    .task-status-chart {
+        flex: 1;
+    }
+    
+    .task-cards-container {
+        margin-top: 0;
+        width: 100%;
+    }
+}
+
+@media (max-width: 900px) {
+    .analytics-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        grid-template-areas: 
+            "main-charts"
+            "side-charts"
+            "task-cards";
+        gap: 20px;
+        padding: 0;
+    }
+    
+    .side-charts-container {
+        flex-direction: row;
+        gap: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .progress-charts {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .circular-progress {
+        padding: 15px;
+        max-width: 280px;
+        margin: 0 auto;
+    }
+    
+    .progress-section {
+        padding: 20px 15px !important;
+        min-height: 300px !important;
+        flex: none !important;
+    }
+    
+    .circular-progress-percentage {
+        font-size: 32px;
+    }
+    
+    .circular-progress-stats {
+        font-size: 14px;
+    }
+    
+    .analytics-grid {
+        gap: 20px;
+        padding: 0;
+    }
+    
+    .side-charts-container {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .chart-header {
+        padding: 16px 20px 0 20px;
+    }
+    
+    .chart-header h2 {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+    
+    .chart-content {
+        padding: 16px 20px;
+    }
+    
+    .chart-footer {
+        padding: 0 20px 20px 20px;
+    }
+    
+    .grid-item {
+        border-radius: 4px;
+    }
+    
+    .analyze-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .analyze-page {
+        padding: 12px 0;
+    }
+    
+    .analyze-section {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+    .progress-charts {
+        gap: 25px;
+    }
+    
+    .circular-progress {
+        padding: 20px;
+    }
+    
+    .progress-section {
+        min-height: 420px !important;
+        padding: 35px 25px !important;
+    }
+}
+
+@media (max-width: 1200px) and (min-width: 1025px) {
+    .progress-charts {
+        gap: 50px;
+    }
+    
+    .progress-section {
+        padding: 40px 25px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .analytics-grid {
+        gap: 12px;
+        padding: 0;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto;
+        grid-template-areas: 
+            "main-charts"
+            "side-charts"
+            "task-cards"
+            "task-cards";
+    }
+    
+    .side-charts-container {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .chart-header {
+        padding: 8px 12px 0 12px;
+    }
+    
+    .chart-header h2 {
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+    
+    .chart-content {
+        padding: 8px 12px;
+    }
+    
+    .chart-footer {
+        padding: 0 16px 16px 16px;
+    }
+    
+    .grid-item {
+        border-radius: 4px;
+    }
+}

@@ -1,0 +1,24 @@
+/* Filter Modal Form Input Overrides */
+/* Override form input width specifically for filter modal to prevent overflow */
+
+.filter-modal .form-group input,
+.filters-modal .form-group input {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.filter-modal .date-input .form-group input,
+.filters-modal .date-input .form-group input {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.filter-modal .tag-search-input .form-group input,
+.filters-modal .tag-search-input .form-group input {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  padding-right: 32px !important;
+}

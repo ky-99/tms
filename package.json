@@ -1,0 +1,80 @@
+{
+  "name": "task-management-system",
+  "version": "1.0.0",
+  "description": "Tree-based task management desktop application",
+  "main": "dist/main.js",
+  "homepage": "./",
+  "scripts": {
+    "build": "tsc && webpack",
+    "build:main": "tsc",
+    "build:renderer": "webpack",
+    "start": "electron .",
+    "dev": "npm run build && electron .",
+    "package": "electron-builder",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "keywords": [
+    "electron",
+    "task-management",
+    "sqlite",
+    "typescript"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.9",
+    "@types/node": "^20.11.24",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@types/react-router-dom": "^5.3.3",
+    "css-loader": "^7.1.2",
+    "electron": "^28.2.0",
+    "electron-builder": "^24.13.3",
+    "electron-rebuild": "^3.2.9",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.3.3",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "@lexical/plain-text": "^0.32.1",
+    "better-sqlite3": "^11.7.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.2"
+  },
+  "build": {
+    "appId": "com.yourcompany.taskmanagement",
+    "productName": "Task Management System",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "index.html",
+      "schema.sql",
+      "node_modules/better-sqlite3/build/Release/*.node"
+    ],
+    "extraResources": [
+      "schema.sql"
+    ],
+    "asarUnpack": [
+      "**/better-sqlite3/**",
+      "**/*.node"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "identity": null,
+      "entitlements": false,
+      "entitlementsInherit": false,
+      "gatekeeperAssess": false
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}

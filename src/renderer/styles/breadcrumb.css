@@ -1,0 +1,67 @@
+/* Breadcrumb navigation styles */
+.breadcrumb {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.breadcrumb-item {
+  background: none;
+  border: none;
+  color: #8b5cf6;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  font-size: 14px;
+}
+
+.breadcrumb-item:hover {
+  background-color: #f3f4f6;
+}
+
+.breadcrumb-separator {
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.breadcrumb-current {
+  color: #1f2937;
+  font-weight: 600;
+  padding: 4px 8px;
+}
+
+.breadcrumb ol {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  gap: 4px;
+}
+
+.breadcrumb li {
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumb-link {
+  background: none;
+  border: none;
+  color: #8b5cf6;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  font-size: 14px;
+}
+
+.breadcrumb-link:hover {
+  background-color: #f3f4f6;
+}

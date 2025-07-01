@@ -1,0 +1,887 @@
+/* Tag management styles */
+
+/* 既存タグセクション */
+.existing-tags-section {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.existing-tags-section h3 {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.existing-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.existing-tag {
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.existing-tag:hover {
+    opacity: 0.8;
+}
+
+/* 既存タグのホバー時削除ボタン */
+.existing-tag-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.existing-tag-hoverable {
+    position: relative;
+    transition: padding-right 0.3s ease;
+}
+
+.existing-tag-hoverable:hover:not(.assigned) {
+    padding-right: 25px;
+}
+
+.existing-tag-remove-hover {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    border: none;
+    background: #ffffff;
+    color: #ef4444;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: all 0.2s ease;
+    z-index: 2;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.existing-tag-hoverable:hover:not(.assigned) .existing-tag-remove-hover {
+    display: flex;
+}
+
+.existing-tag-remove-hover:hover {
+    background: #ffffff;
+    color: #dc2626;
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* タグモーダルの色選択 */
+.tag-preview-section {
+    display: flex;
+    align-items: center;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 8px 12px;
+    min-width: 80px;
+    justify-content: center;
+}
+
+.tag-sample-inline {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.color-selector {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.color-picker-input {
+    width: 50px;
+    height: 40px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+}
+
+.color-text-input {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: monospace;
+    background-color: #f9fafb;
+}
+
+.color-presets {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.color-preset {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.color-preset:hover {
+    opacity: 0.8;
+}
+
+.text-color-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+}
+
+.text-color-options {
+    display: flex;
+    gap: 12px;
+}
+
+.text-color-preset {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.text-color-preset:hover {
+    opacity: 0.8;
+}
+
+.text-color-preset.active {
+    box-shadow: 0 0 0 3px #8b5cf6;
+}
+
+.text-color-preset[style*="ffffff"] {
+    box-shadow: inset 0 0 0 1px #e5e7eb;
+}
+
+.text-color-preset[style*="ffffff"].active {
+    box-shadow: inset 0 0 0 1px #e5e7eb, 0 0 0 3px #8b5cf6;
+}
+
+/* タスクのタグセクション */
+.task-tags-section {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* タスクタグのホバー時削除ボタン */
+.task-tag-hoverable {
+    position: relative;
+    transition: padding-right 0.3s ease;
+}
+
+.task-tag-hoverable:hover {
+    padding-right: 25px;
+}
+
+.task-tag-remove-hover {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    border: none;
+    background: rgba(255, 255, 255, 0.8);
+    color: #ef4444;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: all 0.2s ease;
+}
+
+.task-tag-hoverable:hover .task-tag-remove-hover {
+    display: flex;
+}
+
+.task-tag-remove-hover:hover {
+    background: #ffffff;
+    color: #dc2626;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.task-tags-section h3 {
+    font-size: 14px;
+    color: #374151;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.task-tags-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.task-tag-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background-color: #f9fafb;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+}
+
+.task-tag-display {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.task-tag-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.tag-edit-btn,
+.tag-remove-btn,
+.tag-delete-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.tag-edit-btn {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.tag-edit-btn:hover {
+    background-color: #2563eb;
+}
+
+.tag-remove-btn {
+    background-color: #f59e0b;
+    color: white;
+}
+
+.tag-remove-btn:hover {
+    background-color: #d97706;
+}
+
+.tag-delete-btn {
+    background-color: #ef4444;
+    color: white;
+}
+
+.tag-delete-btn:hover {
+    background-color: #dc2626;
+}
+
+/* 編集モード表示 */
+.edit-mode-indicator {
+    background-color: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.edit-mode-indicator span {
+    font-size: 14px;
+    color: #92400e;
+    font-weight: 500;
+}
+
+.cancel-edit-btn {
+    background-color: #6b7280;
+    color: white;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.cancel-edit-btn:hover {
+    background-color: #4b5563;
+}
+
+/* 既存タグヘッダー */
+.existing-tags-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.existing-tags-header h3 {
+    margin: 0;
+}
+
+.tag-selection-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.tag-action-btn {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.edit-selected-btn {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.edit-selected-btn:hover {
+    background-color: #2563eb;
+}
+
+.delete-selected-btn {
+    background-color: #ef4444;
+    color: white;
+}
+
+.delete-selected-btn:hover {
+    background-color: #dc2626;
+}
+
+/* 既存タグアイテム */
+.existing-tag-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.existing-tag-item.selected {
+    background-color: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.existing-tag.assigned {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.tag-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* コンテキストメニュー */
+.context-menu {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 4px 0;
+    min-width: 180px;
+    z-index: 10001;
+}
+
+.context-menu-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 8px 16px;
+    border: none;
+    background-color: transparent;
+    color: #374151;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.context-menu-icon {
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+    font-weight: bold;
+}
+
+.context-menu-item:hover {
+    background-color: #f3f4f6;
+    color: #111827;
+}
+
+.context-menu-delete {
+    color: #ef4444;
+}
+
+.context-menu-delete:hover {
+    background-color: #fef2f2;
+    color: #dc2626;
+}
+
+/* タグ編集UI（Notion風） */
+.task-tags-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 6px 0;
+}
+
+.task-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    position: relative;
+    cursor: default;
+    transition: padding-right 0.2s;
+}
+
+.task-tag:hover {
+    padding-right: 20px;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.task-tag-remove {
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: none;
+    background: rgba(0, 0, 0, 0.2);
+    color: inherit;
+    border-radius: 50%;
+    font-size: 10px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.task-tag:hover .task-tag-remove {
+    display: flex;
+}
+
+.task-tag-remove:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.task-tag-add {
+    background: none;
+    border: 1px dashed #d1d5db;
+    color: #6b7280;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.task-tag-add:hover {
+    border-color: #9ca3af;
+    color: #4b5563;
+    background-color: #f9fafb;
+}
+
+/* タグエディターポップオーバー */
+.tag-editor-popover {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(0, 0, 0, 0.05);
+    min-width: 240px;
+    max-width: 320px;
+    max-height: 400px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.tag-editor-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.tag-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.tag-editor-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.tag-editor-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #9ca3af;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.tag-editor-close:hover {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
+.tag-editor-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.tag-editor-item {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 8px 12px;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.tag-editor-item:hover {
+    background-color: #f9fafb;
+}
+
+/* タグエディター内のホバー時削除ボタン */
+.tag-editor-item-wrapper {
+    position: relative;
+    display: block;
+}
+
+.tag-editor-item-hoverable .tag-preview {
+    position: relative;
+    transition: padding-right 0.3s ease;
+}
+
+.tag-editor-item-hoverable:hover .tag-preview {
+    padding-right: 25px;
+}
+
+.tag-editor-remove-hover {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    border: none;
+    background: #ffffff;
+    color: #ef4444;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: all 0.2s ease;
+    z-index: 2;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.tag-editor-item-hoverable:hover .tag-editor-remove-hover {
+    display: flex;
+}
+
+.tag-editor-remove-hover:hover {
+    background: #ffffff;
+    color: #dc2626;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.tag-preview {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.tag-editor-create {
+    width: 100%;
+    background: none;
+    border: none;
+    border-top: 1px solid #f3f4f6;
+    padding: 12px 16px;
+    text-align: left;
+    color: #8b5cf6;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.tag-editor-create:hover {
+    background-color: #f9fafb;
+}
+
+/* タグエディターヘッダーアクション */
+.tag-editor-header-actions {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.tag-editor-mode-btn,
+.tag-editor-back {
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: #9ca3af;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.tag-editor-mode-btn:hover,
+.tag-editor-back:hover {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
+/* タグ作成フォーム */
+.tag-editor-form {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tag-editor-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+
+.tag-editor-input:focus {
+    outline: none;
+    border-color: #8b5cf6;
+}
+
+.tag-color-selector {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.tag-color-input {
+    width: 40px;
+    height: 32px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.tag-color-presets {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.tag-color-preset {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.tag-color-preset:hover {
+    opacity: 0.8;
+}
+
+.tag-editor-save {
+    padding: 8px 16px;
+    background-color: #8b5cf6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.tag-editor-save:hover:not(:disabled) {
+    background-color: #7c3aed;
+}
+
+.tag-editor-save:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* タグ管理モード */
+.tag-manage-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.tag-manage-item:hover {
+    background-color: #f9fafb;
+}
+
+.tag-manage-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.tag-edit-btn,
+.tag-delete-btn,
+.tag-save-btn,
+.tag-cancel-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.tag-edit-btn {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.tag-edit-btn:hover {
+    background-color: #2563eb;
+}
+
+.tag-delete-btn {
+    background-color: #ef4444;
+    color: white;
+}
+
+.tag-delete-btn:hover {
+    background-color: #dc2626;
+}
+
+.tag-save-btn {
+    background-color: #10b981;
+    color: white;
+}
+
+.tag-save-btn:hover {
+    background-color: #059669;
+}
+
+.tag-cancel-btn {
+    background-color: #6b7280;
+    color: white;
+}
+
+.tag-cancel-btn:hover {
+    background-color: #4b5563;
+}
+
+.tag-edit-input {
+    flex: 1;
+    padding: 4px 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-right: 8px;
+}
+
+.tag-edit-input:focus {
+    outline: none;
+    border-color: #8b5cf6;
+}
+
+.tag-edit-color {
+    width: 32px;
+    height: 24px;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 8px;
+}

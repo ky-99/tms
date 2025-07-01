@@ -1,0 +1,545 @@
+/* Enhanced Filter Modal Styles */
+
+/* IMPORTANT: Reset container padding for filter modal with maximum specificity */
+html body .modal.filter-modal .modal-content,
+html body .filter-modal .modal-content {
+  padding: 0 !important;
+}
+
+html body .modal.filter-modal .modal-body,
+html body .filter-modal .modal-body {
+  padding: 0 !important;
+}
+
+/* Filter modal content styling is now handled in modal.css */
+
+.modal.filter-modal .modal-body,
+.filter-modal .modal-body {
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 450px !important;
+  max-width: 450px !important;
+  height: 370px !important;
+  max-height: 370px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  overflow-y: hidden !important;
+  overflow-x: hidden !important;
+}
+
+.modal-body .filters-modal {
+  padding: 0;
+  margin: 0;
+}
+
+.filters-modal {
+  width: 450px;
+  max-width: 450px;
+  min-width: 450px;
+  height: 370px;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Header */
+.filters-modal-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  position: relative;
+  width: 100%;
+  height: 48px;
+}
+
+.filters-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  position: absolute;
+  top: -8px;
+  right: -4px;
+}
+
+.filters-modal-close:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.clear-filters-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: none;
+  position: absolute;
+  top: 24px;
+  right: 4px;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.clear-filters-btn:hover {
+  background-color: #fecaca;
+}
+
+
+/* Tab Navigation */
+.filter-tabs {
+  display: flex;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  padding: 4px;
+  margin-bottom: 12px;
+  gap: 2px;
+  overflow: hidden;
+  flex-wrap: wrap;
+  border: none;
+  width: 100%;
+  max-width: 100%;
+}
+
+.filter-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  min-width: 90px;
+  white-space: nowrap;
+}
+
+.filter-tab:hover {
+  background-color: #ffffff;
+  color: #374151;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.filter-tab.active {
+  background-color: #8b5cf6;
+  color: white;
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+}
+
+.filter-tab.active:hover {
+  background-color: #7c3aed;
+}
+
+
+.tab-label {
+  font-weight: inherit;
+}
+
+.tab-badge {
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #8b5cf6;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.filter-tab.active .tab-badge {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* Filter Content */
+.filter-content {
+  height: 300px;
+  overflow: hidden;
+  overflow-x: hidden;
+  padding-right: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.filter-panel {
+  animation: fadeIn 0.2s ease;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* Filter Options */
+.filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  overflow: hidden;
+  border: none;
+  box-sizing: border-box;
+  padding: 4px;
+}
+
+.filter-option-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  outline: none;
+  flex: 1 1 calc(50% - 8px);
+  min-width: 0;
+  box-sizing: border-box;
+  font-weight: 500;
+  max-width: calc(50% - 8px);
+}
+
+.filter-option-card:hover {
+  /* No hover effects - intentionally left as placeholder */
+  opacity: 1;
+}
+
+.filter-checkbox-hidden {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Status specific colors - unselected */
+.filter-option-card[data-status="pending"] {
+  background-color: #e5e7eb;
+  color: #6b7280;
+}
+
+.filter-option-card[data-status="in_progress"] {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.filter-option-card[data-status="completed"] {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.filter-option-card[data-status="cancelled"] {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+/* Priority specific colors - unselected */
+.filter-option-card[data-priority="low"] {
+  background-color: #e5e7eb;
+  color: #6b7280;
+}
+
+.filter-option-card[data-priority="medium"] {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.filter-option-card[data-priority="high"] {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.filter-option-card[data-priority="urgent"] {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+/* Selected state - add border and checkmark */
+.filter-option-card.selected {
+  border-color: currentColor;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.filter-option-card.selected[data-status="pending"],
+.filter-option-card.selected[data-priority="low"] {
+  border-color: #6b7280;
+  box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.1);
+}
+
+.filter-option-card.selected[data-status="in_progress"],
+.filter-option-card.selected[data-priority="high"] {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+.filter-option-card.selected[data-status="completed"] {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.filter-option-card.selected[data-status="cancelled"],
+.filter-option-card.selected[data-priority="urgent"] {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.filter-option-card.selected[data-priority="medium"] {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Default selected state (for tags) */
+.filter-option-card.selected:not([data-status]):not([data-priority]) {
+  background-color: #8b5cf6;
+  color: white;
+  border-color: #8b5cf6;
+}
+
+.filter-option-card.selected:hover {
+  /* Keep selected state styling - intentionally minimal */
+  opacity: 1;
+}
+
+.filter-option-card.selected .option-check {
+  opacity: 1;
+}
+
+.option-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+
+.option-tag-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: none;
+  margin-right: 8px;
+}
+
+.filter-option-card.selected .option-tag-color {
+  border: none;
+}
+
+.option-label {
+  font-weight: 500;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.option-check {
+  font-size: 18px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  color: currentColor;
+  font-weight: bold;
+  margin-left: 8px;
+  position: absolute;
+  right: 12px;
+}
+
+/* Tag Search */
+.tag-search-container {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.tag-search-input .form-group {
+  margin-bottom: 0;
+}
+
+.tag-search-input .form-group input {
+  padding-right: 32px;
+}
+
+.tag-search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.tag-search-clear:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.no-tags-message {
+  text-align: center;
+  color: #6b7280;
+  font-size: 13px;
+  padding: 15px;
+  background-color: #f9fafb;
+  border-radius: 6px;
+  grid-column: 1 / -1;
+}
+
+/* Date Filter */
+.date-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.date-input-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.date-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  height: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.date-input .form-group {
+  margin-bottom: 0;
+}
+
+.date-input .form-group input {
+  height: 40px;
+}
+
+.date-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 40px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 450px) {
+  .filters-modal {
+    min-width: 260px;
+    width: 100%;
+    max-width: none;
+    height: 300px;
+  }
+  
+  .filter-tabs {
+    flex-wrap: wrap;
+    gap: 1px;
+  }
+  
+  .filter-tab {
+    flex: 1 1 calc(50% - 0.5px);
+    min-width: 0;
+    font-size: 11px;
+    padding: 6px 4px;
+  }
+  
+  .date-filter-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .date-separator {
+    align-self: center;
+    width: auto;
+    height: 24px;
+    margin: 8px 0;
+  }
+}
+
+@media (max-width: 320px) {
+  .filters-modal {
+    min-width: 240px;
+    height: 280px;
+  }
+  
+  .filter-content {
+    height: 180px;
+  }
+  
+  .filter-tab {
+    font-size: 10px;
+    padding: 4px 2px;
+    gap: 2px;
+  }
+  
+  .tab-badge {
+    font-size: 10px;
+    padding: 1px 4px;
+    min-width: 14px;
+  }
+  
+  .filter-option-card {
+    padding: 3px 6px;
+    font-size: 11px;
+  }
+}

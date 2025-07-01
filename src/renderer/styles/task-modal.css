@@ -1,0 +1,104 @@
+/* Task Modal specific styles */
+
+/* Override modal-content for task modal */
+.task-modal .modal-content {
+    width: 90%;
+    max-width: 600px;
+    height: auto;
+    max-height: 90vh;
+    padding: 0;
+    overflow: visible;
+}
+
+.task-modal .modal-header {
+    padding: 20px 30px;
+    margin: 0;
+}
+
+.task-modal .modal-body {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    padding: 0 30px 30px 30px;
+    display: block;
+    overflow-y: auto;
+    max-height: calc(90vh - 100px);
+    box-sizing: border-box;
+}
+
+/* Task modal form styles */
+.task-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+.task-form .form-group {
+    margin-bottom: 0;
+}
+
+.form-row {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+}
+
+.form-row > * {
+    flex: 1;
+    min-width: 0;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Override general modal styles that might interfere */
+.task-modal input[type="text"],
+.task-modal input[type="date"],
+.task-modal textarea,
+.task-modal select {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Single field in form-row should take full width */
+.form-row:has(> :only-child) > * {
+    max-width: 100%;
+}
+
+/* Date input specific styling */
+.task-modal input[type="date"] {
+    padding-right: 40px;
+    cursor: pointer;
+}
+
+.task-modal .form-group:has(input[type="date"]) label {
+    font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .task-modal .modal-content {
+        width: 95%;
+        max-width: none;
+    }
+    
+    .task-modal .modal-header {
+        padding: 16px 20px;
+    }
+    
+    .task-modal .modal-body {
+        padding: 0 20px 20px 20px;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 12px;
+    }
+}
