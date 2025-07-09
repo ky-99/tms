@@ -18,6 +18,11 @@ export interface BaseTask {
   completedAt?: string;
   parentId?: number;
   tagIds?: number[];
+  // Routine task fields
+  isRoutine?: boolean;
+  routineType?: RoutineType | null;
+  lastGeneratedAt?: string | null;
+  routineParentId?: number | null;
 }
 
 export interface TaskWithChildren extends BaseTask {
@@ -47,6 +52,10 @@ export interface LegacyTaskFields {
   due_date?: string;
   created_at?: string;
   completed_at?: string;
+  is_routine?: boolean;
+  routine_type?: RoutineType | null;
+  last_generated_at?: string | null;
+  routine_parent_id?: number | null;
 }
 
 export type ApiTask = BaseTask & LegacyTaskFields;

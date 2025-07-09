@@ -3,14 +3,21 @@
     padding: 12px;
 }
 
+.task-divider {
+    height: 1px;
+    background-color: #e5e7eb;
+    margin: 8px 0;
+    margin-left: 30px; /* タスクアイテムの左マージンに合わせる */
+}
+
 .task-item {
-    border-bottom: 1px solid #eee;
     padding: 8px 0;
     padding-left: 30px; /* ボタン用のスペースを確保 */
     display: flex;
     align-items: flex-start;
     gap: 5px; /* ギャップを狭めてボタンとコンテンツを近づける */
     position: relative;
+    transition: all 0.2s ease;
 }
 
 .task-item:last-child {
@@ -201,4 +208,106 @@
 .timeline-ongoing {
     color: #3b82f6;
     font-weight: 500;
+}
+
+/* ルーティンタスクのスタイル */
+.task-item.routine-task {
+    background: linear-gradient(135deg, #fff5e6 0%, #fff9f0 100%) !important;
+    border-left: 3px solid #ff9800 !important;
+    position: relative;
+}
+
+.task-item.routine-task::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(255, 152, 0, 0.03) 10px,
+        rgba(255, 152, 0, 0.03) 20px
+    );
+    pointer-events: none;
+}
+
+.task-item.routine-task .task-header {
+    position: relative;
+    z-index: 1;
+}
+
+.task-item.routine-task .task-tags-container {
+    position: relative;
+    z-index: 1;
+}
+
+.task-item.routine-task .task-description {
+    position: relative;
+    z-index: 1;
+}
+
+.task-item.routine-task .task-timeline {
+    position: relative;
+    z-index: 1;
+}
+
+/* 操作モードのスタイル */
+.task-item.operation-mode {
+    background: #eff6ff !important;
+}
+
+.task-operation-actions {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    display: flex;
+    gap: 4px;
+    background: white;
+    border-radius: 6px;
+    padding: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border: 1px solid #d1d5db;
+    z-index: 1000;
+}
+
+.operation-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    background: white;
+    color: #374151;
+}
+
+.operation-btn:hover {
+    background: #f3f4f6;
+}
+
+.operation-btn.routine-btn {
+    color: #6b7280;
+}
+
+.operation-btn.routine-btn:hover {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.operation-btn.routine-active {
+    background: #fbbf24;
+    color: #92400e;
+    border-color: #f59e0b;
+}
+
+.operation-btn.routine-active:hover {
+    background: #f59e0b;
+    color: #78350f;
 }

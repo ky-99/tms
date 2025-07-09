@@ -360,6 +360,17 @@ const ExportPage: React.FC = () => {
     return <div className="loading">データを読み込んでいます...</div>;
   }
 
+  if (tasks.length === 0) {
+    return (
+      <div className="export-page">
+        <div className="empty-state">
+          <h2>エクスポートできるタスクがありません</h2>
+          <p>タスクを作成してからエクスポートしてください</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="export-page">
       <div className="export-container">

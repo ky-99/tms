@@ -18,6 +18,7 @@
 @import './badges.css';
 @import './dashboard.css';
 @import './weekly-task-cards.css';
+@import './calendar-view.css';
 
 /* Page layouts */
 @import './tasks-page.css';
@@ -30,11 +31,13 @@
 @import './date-filter.css';
 
 /* Modal specific styles - loaded after base modal */
-@import './task-modal.css';
+@import './status-priority-modal.css';
+@import './task-detail-modal.css';
+@import './task-merge-modal.css';
 
 /* Filter modal - loaded last to ensure highest priority */
-@import './filter-modal.css';
-@import './filter-modal-forms.css';
+@import './notion-filter-modal.css';
+@import './notion-sort-modal.css';
 
 /* Tag management */
 @import './tag-management.css';
@@ -45,3 +48,7 @@
 
 /* Toast notifications */
 @import './toast.css';
+
+/* Page specific styles */
+@import './dump-page.css';
+@import './shortcuts-page.css';

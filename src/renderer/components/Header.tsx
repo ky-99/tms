@@ -58,7 +58,29 @@ const Header: React.FC = () => {
               <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
             </svg>
           </div>
-          <span className="sidebar-text">エクスポート</span>
+          <span className="sidebar-text">マークダウン化</span>
+        </Link>
+        <Link 
+          to="/dump" 
+          className={`sidebar-link ${location.pathname === '/dump' ? 'active' : ''}`}
+        >
+          <div className="sidebar-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,3C7.58,3 4,4.79 4,7V17C4,19.21 7.58,21 12,21C16.42,21 20,19.21 20,17V7C20,4.79 16.42,3 12,3M12,5C15.87,5 18,6.21 18,7C18,7.79 15.87,9 12,9C8.13,9 6,7.79 6,7C6,6.21 8.13,5 12,5M6,9.5C7.97,10.5 9.97,10.9 12,10.9C14.03,10.9 16.03,10.5 18,9.5V12C18,12.79 15.87,14 12,14C8.13,14 6,12.79 6,12V9.5M6,14.5C7.97,15.5 9.97,15.9 12,15.9C14.03,15.9 16.03,15.5 18,14.5V17C18,17.79 15.87,19 12,19C8.13,19 6,17.79 6,17V14.5Z"/>
+            </svg>
+          </div>
+          <span className="sidebar-text">ダンプ</span>
+        </Link>
+        <Link 
+          to="/shortcuts" 
+          className={`sidebar-link ${location.pathname === '/shortcuts' ? 'active' : ''}`}
+        >
+          <div className="sidebar-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M1,5A2,2 0 0,0 3,7H5V5H3V7H5V9H3A2,2 0 0,0 1,7V5M7,5V7H9V5H7M11,5V7H13V5H11M15,5V7H17V5H15M19,5V7H21V5H19M1,11A2,2 0 0,0 3,13H5V11H3V13H5V15H3A2,2 0 0,0 1,13V11M7,11V13H9V11H7M11,11V13H13V11H11M15,11V13H17V11H15M19,11V13H21V11H19M1,17A2,2 0 0,0 3,19H17A2,2 0 0,0 19,17V19H21V17H19V19H17V17H19V15H3A2,2 0 0,0 1,17V19H3V17H1M3,17H17V19H3V17Z"/>
+            </svg>
+          </div>
+          <span className="sidebar-text">ショートカット</span>
         </Link>
       </div>
     </nav>

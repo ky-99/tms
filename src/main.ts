@@ -2,7 +2,6 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
 import { initializeDatabase } from './database/init';
 import { TaskRepository } from './database/taskRepository';
-import { createSampleData } from './database/sampleData';
 
 let mainWindow: BrowserWindow | null = null;
 let taskRepository: TaskRepository | null = null;
@@ -62,15 +61,7 @@ ipcMain.handle('get-all-tasks', async () => {
     throw new Error('Database not initialized');
   }
   try {
-    const tasks = taskRepository.getAllTasksAsTree();
-    
-    // If no tasks exist, create sample data
-    if (tasks.length === 0) {
-      createSampleData(taskRepository);
-      return taskRepository.getAllTasksAsTree();
-    }
-    
-    return tasks;
+    return taskRepository.getAllTasksAsTree();
   } catch (error) {
     console.error('Error getting tasks:', error);
     return [];

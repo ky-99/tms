@@ -16,10 +16,10 @@ export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
 };
 
 export const TASK_STATUS_COLORS: Record<TaskStatus, string> = {
-  pending: '#6b7280',
-  in_progress: '#f59e0b',
-  completed: '#10b981',
-  cancelled: '#ef4444'
+  pending: '#6b7280',      // 灰色
+  in_progress: '#3b82f6',  // 青色
+  completed: '#10b981',    // 緑色
+  cancelled: '#ef4444'     // 赤色
 };
 
 // Priority constants

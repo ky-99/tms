@@ -1,0 +1,190 @@
+/* ステータス・優先度選択モーダル */
+.status-priority-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-priority-modal {
+  position: absolute;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+  padding: 12px;
+  min-width: 160px;
+  max-width: 220px;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-header {
+  margin-bottom: 8px;
+}
+
+.modal-header h3 {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.status-priority-modal .option-card {
+  padding: 2px 8px !important;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20px !important;
+  border: 2px solid transparent;
+  font-size: 10px !important;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.status-priority-modal .option-card:hover {
+  opacity: 0.8;
+}
+
+.status-priority-modal .option-card.selected {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.option-label {
+  flex: 1;
+  text-align: center;
+}
+
+.checkmark {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
+  color: #3b82f6;
+}
+
+/* ステータス用の色 */
+.status-priority-modal .option-card.status.pending {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.status-priority-modal .option-card.status.pending.selected {
+  background-color: #6b7280;
+  color: white;
+}
+
+.status-priority-modal .option-card.status.in_progress {
+  background-color: #dbeafe;
+  color: #3b82f6;
+}
+
+.status-priority-modal .option-card.status.in_progress.selected {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.status-priority-modal .option-card.status.completed {
+  background-color: #e8f5e9;
+  color: #388e3c;
+}
+
+.status-priority-modal .option-card.status.completed.selected {
+  background-color: #10b981;
+  color: white;
+}
+
+.status-priority-modal .option-card.status.cancelled {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.status-priority-modal .option-card.status.cancelled.selected {
+  background-color: #c62828;
+  color: white;
+}
+
+/* 優先度用の色 */
+.status-priority-modal .option-card.priority.low {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.status-priority-modal .option-card.priority.low.selected {
+  background-color: #666;
+  color: white;
+}
+
+.status-priority-modal .option-card.priority.medium {
+  background-color: #e1f5fe;
+  color: #0277bd;
+}
+
+.status-priority-modal .option-card.priority.medium.selected {
+  background-color: #0277bd;
+  color: white;
+}
+
+.status-priority-modal .option-card.priority.high {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+.status-priority-modal .option-card.priority.high.selected {
+  background-color: #ef6c00;
+  color: white;
+}
+
+.status-priority-modal .option-card.priority.urgent {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.status-priority-modal .option-card.priority.urgent.selected {
+  background-color: #c62828;
+  color: white;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .status-priority-modal {
+    position: fixed;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%);
+    max-width: 90vw;
+  }
+  
+  .options-grid {
+    grid-template-columns: 1fr;
+  }
+}

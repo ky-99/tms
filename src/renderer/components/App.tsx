@@ -7,6 +7,8 @@ import HomePage from '../pages/HomePage';
 import TasksPage from '../pages/TasksPage';
 import AnalyzePage from '../pages/AnalyzePage';
 import ExportPage from '../pages/ExportPage';
+import DumpPage from '../pages/DumpPage';
+import ShortcutsPage from '../pages/ShortcutsPage';
 
 const App: React.FC = () => {
   return (
@@ -24,6 +26,8 @@ const App: React.FC = () => {
                     <Route path="/tasks/:rootId" element={<TasksPage />} />
                     <Route path="/analyze" element={<AnalyzePage />} />
                     <Route path="/export" element={<ExportPage />} />
+                    <Route path="/dump" element={<DumpPage />} />
+                    <Route path="/shortcuts" element={<ShortcutsPage />} />
                   </Routes>
                 </div>
               </main>

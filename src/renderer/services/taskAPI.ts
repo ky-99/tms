@@ -52,7 +52,9 @@ class TaskAPIService {
         priority: taskData.priority || 'medium',
         dueDate: taskData.dueDate || undefined,
         parentId: taskData.parentId || undefined,
-        tagIds: taskData.tagIds || []
+        tagIds: taskData.tagIds || [],
+        isRoutine: taskData.isRoutine || false,
+        routineType: taskData.isRoutine ? 'daily' : null
       };
       
       // Use the real IPC communication instead of in-memory manipulation

@@ -1,23 +1,13 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-interface Task {
-  id: number;
-  title: string;
-  status: string;
-  priority: string;
-  dueDate?: string;
-  due_date?: string;
-  completedAt?: string;
-  completed_at?: string;
-  children?: Task[];
-}
+import { Task } from '../types';
 
 interface WeeklyTaskCardsProps {
   tasks: Task[];
+  onTaskClick?: (task: Task) => void;
 }
 
-const WeeklyTaskCards: React.FC<WeeklyTaskCardsProps> = ({ tasks }) => {
+const WeeklyTaskCards: React.FC<WeeklyTaskCardsProps> = ({ tasks, onTaskClick }) => {
   const navigate = useNavigate();
   // 全タスクを平坦化
   const flattenTasks = (taskList: Task[]): Task[] => {
@@ -34,8 +24,8 @@ const WeeklyTaskCards: React.FC<WeeklyTaskCardsProps> = ({ tasks }) => {
     return result;
   };
 
-  // 今週のタスクのみをフィルタリング
-  const getWeeklyTasks = () => {
+  // 今週のタスクのみをフィルタリング（メモ化）
+  const { weeklyTasks, completedTasks, inProgressTasks, pendingTasks } = useMemo(() => {
     const today = new Date();
     const sunday = new Date(today);
     // 今週の日曜日を取得（週始まり）
@@ -47,18 +37,20 @@ const WeeklyTaskCards: React.FC<WeeklyTaskCardsProps> = ({ tasks }) => {
     saturday.setHours(23, 59, 59, 999);
 
     const flatTasks = flattenTasks(tasks);
-    return flatTasks.filter(task => {
+    const weeklyFiltered = flatTasks.filter(task => {
       const dueDateValue = task.dueDate || task.due_date;
       if (!dueDateValue) return false;
       const dueDate = new Date(dueDateValue);
       return dueDate >= sunday && dueDate <= saturday;
     });
-  };
 
-  const weeklyTasks = getWeeklyTasks();
-  const completedTasks = weeklyTasks.filter(task => task.status === 'completed');
-  const inProgressTasks = weeklyTasks.filter(task => task.status === 'in_progress');
-  const pendingTasks = weeklyTasks.filter(task => task.status === 'pending');
+    return {
+      weeklyTasks: weeklyFiltered,
+      completedTasks: weeklyFiltered.filter(task => task.status === 'completed'),
+      inProgressTasks: weeklyFiltered.filter(task => task.status === 'in_progress'),
+      pendingTasks: weeklyFiltered.filter(task => task.status === 'pending')
+    };
+  }, [tasks]);
 
   const priorityColors = {
     urgent: '#ef4444',
@@ -74,8 +66,12 @@ const WeeklyTaskCards: React.FC<WeeklyTaskCardsProps> = ({ tasks }) => {
     low: '低'
   };
 
-  const handleTaskDoubleClick = (taskId: number) => {
-    navigate(`/tasks/${taskId}`);
+  const handleTaskClick = (task: Task) => {
+    if (onTaskClick) {
+      onTaskClick(task);
+    } else {
+      navigate(`/tasks/${task.id}`);
+    }
   };
 
   const TaskCard: React.FC<{ task: Task; status: string }> = ({ task, status }) => {
@@ -84,7 +80,7 @@ const WeeklyTaskCards: React.FC<WeeklyTaskCardsProps> = ({ tasks }) => {
     return (
       <div 
         className={`weekly-task-card ${status}`}
-        onDoubleClick={() => handleTaskDoubleClick(task.id)}
+        onClick={() => handleTaskClick(task)}
         style={{ 
           cursor: 'pointer',
           ...(status === 'completed' ? { 
@@ -92,7 +88,7 @@ const WeeklyTaskCards: React.FC<WeeklyTaskCardsProps> = ({ tasks }) => {
             borderColor: '#10b981'
           } : {})
         }}
-        title="ダブルクリックでタスク管理画面に移動"
+        title="クリックでタスク詳細を表示"
       >
         <div className="task-card-header">
           <span 

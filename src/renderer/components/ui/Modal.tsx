@@ -14,6 +14,7 @@ interface ModalProps {
   showCloseButton?: boolean;
   closeOnOverlayClick?: boolean;
   className?: string;
+  contentStyle?: React.CSSProperties & { top?: number; left?: number; right?: number; };
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -23,7 +24,8 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   showCloseButton = true,
   closeOnOverlayClick = true,
-  className = ''
+  className = '',
+  contentStyle = {}
 }) => {
   // Handle escape key
   useEffect(() => {
@@ -47,14 +49,28 @@ export const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
   
   const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget && closeOnOverlayClick) {
+    // For filter modals, we need to check if the click is outside the modal content
+    if (className?.includes('filter-modal')) {
+      const target = e.target as HTMLElement;
+      const modalContent = document.querySelector('.modal-content.filter-modal');
+      if (modalContent && !modalContent.contains(target) && closeOnOverlayClick) {
+        onClose();
+      }
+    } else if (e.target === e.currentTarget && closeOnOverlayClick) {
       onClose();
     }
   };
   
+  // For filter modal, we need to set CSS variables for positioning
+  const modalStyle = className?.includes('filter-modal') ? {
+    '--modal-top': `${contentStyle.top}px`,
+    '--modal-left': contentStyle.left !== undefined ? `${contentStyle.left}px` : undefined,
+    '--modal-right': contentStyle.right !== undefined ? `${contentStyle.right}px` : undefined,
+  } as React.CSSProperties : {};
+  
   return (
-    <div className="modal" onClick={handleOverlayClick}>
-      <div className={`modal-content ${className}`}>
+    <div className={`modal ${className}`} onClick={handleOverlayClick} style={modalStyle}>
+      <div className={`modal-content ${className}`} style={className?.includes('filter-modal') ? {} : contentStyle}>
         {/* Header */}
         {(title || showCloseButton) && (
           <div className="modal-header">

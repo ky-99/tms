@@ -33,6 +33,11 @@ export const normalizeTask = (apiTask: ApiTask): Task => {
     dueDate: apiTask.dueDate || apiTask.due_date,
     createdAt: apiTask.createdAt || apiTask.created_at,
     completedAt: apiTask.completedAt || apiTask.completed_at,
+    // ルーティンタスクフィールドの正規化
+    isRoutine: apiTask.isRoutine || (apiTask as any).is_routine,
+    routineType: apiTask.routineType || (apiTask as any).routine_type,
+    lastGeneratedAt: apiTask.lastGeneratedAt || (apiTask as any).last_generated_at,
+    routineParentId: apiTask.routineParentId || (apiTask as any).routine_parent_id,
   };
 };
 
@@ -106,88 +111,123 @@ export const getDueDateText = (task: Task): string | null => {
   return `${diffDays}日後`;
 };
 
+
 /**
- * Filters tasks by various criteria
+ * Checks if a task is a parent task (has children)
  */
-export const filterTasks = (
-  tasks: Task[],
-  filters: {
-    status?: TaskStatus[];
-    priority?: TaskPriority[];
-    search?: string;
-    showOverdue?: boolean;
-  }
-): Task[] => {
-  return tasks.filter(task => {
-    // Status filter
-    if (filters.status && filters.status.length > 0) {
-      if (!filters.status.includes(task.status)) return false;
-    }
-    
-    // Priority filter
-    if (filters.priority && filters.priority.length > 0) {
-      if (!filters.priority.includes(task.priority)) return false;
-    }
-    
-    // Search filter
-    if (filters.search && filters.search.trim()) {
-      const searchLower = filters.search.toLowerCase();
-      const titleMatch = task.title.toLowerCase().includes(searchLower);
-      const descMatch = task.description?.toLowerCase().includes(searchLower);
-      if (!titleMatch && !descMatch) return false;
-    }
-    
-    // Overdue filter
-    if (filters.showOverdue === true && !isTaskOverdue(task)) return false;
-    if (filters.showOverdue === false && isTaskOverdue(task)) return false;
-    
-    return true;
-  });
+export const isParentTask = (task: Task): boolean => {
+  return !!(task.children && task.children.length > 0);
 };
 
 /**
- * Sorts tasks by various criteria
+ * Calculates the appropriate status for a parent task based on its children
  */
-export const sortTasks = (
+export const calculateParentTaskStatus = (task: Task): TaskStatus => {
+  if (!isParentTask(task)) {
+    return task.status; // 子タスクがない場合は現在のステータスを維持
+  }
+
+  const children = task.children!;
+  const statuses = children.map(child => child.status);
+  
+  // 全て完了している場合
+  if (statuses.every(status => status === 'completed')) {
+    return 'completed';
+  }
+  
+  // 1つでも進行中がある場合
+  if (statuses.some(status => status === 'in_progress')) {
+    return 'in_progress';
+  }
+  
+  // 1つでも完了がある場合（進行中がない場合）
+  if (statuses.some(status => status === 'completed')) {
+    return 'in_progress';
+  }
+  
+  // 全て未着手の場合
+  if (statuses.every(status => status === 'pending')) {
+    return 'pending';
+  }
+  
+  // 全てキャンセルされている場合
+  if (statuses.every(status => status === 'cancelled')) {
+    return 'cancelled';
+  }
+  
+  // その他の場合（混在状態）は進行中とする
+  return 'in_progress';
+};
+
+export type SortField = 'title' | 'status' | 'priority' | 'dueDate' | 'createdAt';
+export type SortDirection = 'asc' | 'desc';
+
+export interface SortOption {
+  field: SortField;
+  direction: SortDirection;
+}
+
+/**
+ * Sorts tasks by multiple criteria (Notion-like)
+ */
+export const sortTasksMultiple = (
   tasks: Task[],
-  sortBy: 'title' | 'dueDate' | 'priority' | 'status' | 'createdAt',
-  direction: 'asc' | 'desc' = 'asc'
+  sortOptions: SortOption[]
 ): Task[] => {
+  if (sortOptions.length === 0) return tasks;
+
   const sorted = [...tasks].sort((a, b) => {
-    let aValue: any;
-    let bValue: any;
-    
-    switch (sortBy) {
-      case 'title':
-        aValue = a.title.toLowerCase();
-        bValue = b.title.toLowerCase();
-        break;
-      case 'dueDate':
-        aValue = a.dueDate ? new Date(a.dueDate).getTime() : 0;
-        bValue = b.dueDate ? new Date(b.dueDate).getTime() : 0;
-        break;
-      case 'priority':
-        const priorityOrder = { 'urgent': 4, 'high': 3, 'medium': 2, 'low': 1 };
-        aValue = priorityOrder[a.priority];
-        bValue = priorityOrder[b.priority];
-        break;
-      case 'status':
-        const statusOrder = { 'pending': 1, 'in_progress': 2, 'completed': 3, 'cancelled': 4 };
-        aValue = statusOrder[a.status];
-        bValue = statusOrder[b.status];
-        break;
-      case 'createdAt':
-        aValue = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        bValue = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        break;
-      default:
-        return 0;
+    for (const sortOption of sortOptions) {
+      const comparison = compareTasksByField(a, b, sortOption.field, sortOption.direction);
+      if (comparison !== 0) return comparison;
     }
-    
-    if (aValue < bValue) return direction === 'asc' ? -1 : 1;
-    if (aValue > bValue) return direction === 'asc' ? 1 : -1;
     return 0;
   });
-  
+
   return sorted;
 };
+
+/**
+ * Compares two tasks by a specific field
+ */
+const compareTasksByField = (
+  a: Task,
+  b: Task,
+  field: SortField,
+  direction: SortDirection
+): number => {
+  let aValue: any;
+  let bValue: any;
+
+  switch (field) {
+    case 'title':
+      aValue = a.title.toLowerCase();
+      bValue = b.title.toLowerCase();
+      break;
+    case 'dueDate':
+      aValue = a.dueDate ? new Date(a.dueDate).getTime() : 0;
+      bValue = b.dueDate ? new Date(b.dueDate).getTime() : 0;
+      break;
+    case 'priority':
+      const priorityOrder = { 'urgent': 4, 'high': 3, 'medium': 2, 'low': 1 };
+      aValue = priorityOrder[a.priority];
+      bValue = priorityOrder[b.priority];
+      break;
+    case 'status':
+      const statusOrder = { 'pending': 1, 'in_progress': 2, 'completed': 3, 'cancelled': 4 };
+      aValue = statusOrder[a.status];
+      bValue = statusOrder[b.status];
+      break;
+    case 'createdAt':
+      aValue = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      bValue = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      break;
+    default:
+      return 0;
+  }
+
+  if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+  if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+  return 0;
+};
+

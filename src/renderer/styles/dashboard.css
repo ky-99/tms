@@ -6,6 +6,28 @@
     min-height: calc(100vh - 120px);
 }
 
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6b7280;
+    background: white;
+    border-radius: 8px;
+    margin: 40px 0;
+}
+
+.empty-state h2 {
+    font-size: 24px;
+    margin-bottom: 12px;
+    color: #374151;
+}
+
+.empty-state p {
+    font-size: 16px;
+    margin: 0;
+    line-height: 1.5;
+}
+
 .dashboard-header {
     display: flex;
     justify-content: flex-end;
@@ -24,6 +46,7 @@
     flex-direction: column;
     gap: 16px;
     min-height: calc(100vh - 160px);
+    padding: 0 24px 24px;
 }
 
 .dashboard-section {
@@ -31,6 +54,9 @@
     border-radius: 4px;
     padding: 20px;
     border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+    /* 強制的にborder-radiusを維持 */
+    border-radius: 4px !important;
 }
 
 .section-title {
@@ -57,6 +83,15 @@
     border: 1px solid #e5e7eb;
     border-radius: 4px;
     padding: 16px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    /* 強制的にborder-radiusを維持 */
+    border-radius: 4px !important;
+}
+
+.task-card:hover {
+    background: #f9fafb;
 }
 
 .task-card.overdue {
@@ -74,6 +109,45 @@
     opacity: 0.7;
 }
 
+.task-card.operation-mode {
+    border-color: #3b82f6 !important;
+    border-width: 2px !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+    background: #eff6ff !important;
+}
+
+.task-operation-actions {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    display: flex;
+    gap: 4px;
+    background: white;
+    border-radius: 6px;
+    padding: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border: 1px solid #d1d5db;
+}
+
+.operation-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    background: white;
+    color: #374151;
+}
+
+.operation-btn:hover {
+    background: #f3f4f6;
+}
+
 .task-card-header {
     display: flex;
     justify-content: space-between;
@@ -89,12 +163,70 @@
     margin: 0;
     flex: 1;
     line-height: 1.4;
+    display: flex;
+    align-items: center;
+}
+
+.task-title-text {
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: -2px -4px;
+    transition: background-color 0.2s;
+}
+
+.task-title-text:hover {
+    background-color: #f3f4f6;
+}
+
+.task-title-input {
+    background: white;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    width: 100%;
+    outline: none;
+    margin: -6px -8px;
 }
 
 .task-card-badges {
     display: flex;
     gap: 6px;
     flex-shrink: 0;
+}
+
+.status {
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.status:hover {
+    opacity: 0.8;
+}
+
+.priority {
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.priority:hover {
+    opacity: 0.8;
+}
+
+.status-select, .priority-select {
+    padding: 2px 8px;
+    border: 1px solid #3b82f6;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    background: white;
+    outline: none;
+    cursor: pointer;
 }
 
 .task-card-description {
@@ -127,4 +259,15 @@
     text-align: center;
     padding: 40px;
     margin: 0;
+}
+
+/* カレンダーセクション */
+.calendar-section {
+    padding: 0;
+    overflow: hidden;
+}
+
+.calendar-section .calendar-view {
+    border: none;
+    border-radius: 8px;
 }

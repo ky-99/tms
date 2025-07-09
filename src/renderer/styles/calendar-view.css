@@ -1,0 +1,242 @@
+/* カレンダービュー全体 */
+.calendar-view {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 24px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ヘッダー部分 */
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.calendar-nav-button {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  color: #6b7280;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-nav-button:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.calendar-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.today-button {
+  background: none;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  margin: 0 2px;
+}
+
+.today-button:hover {
+  background-color: #f3f4f6;
+}
+
+/* 曜日ヘッダー */
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  margin-bottom: 2px;
+  padding: 0;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: #9ca3af;
+  padding: 4px 0;
+}
+
+/* カレンダーグリッド */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background-color: #e5e7eb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  flex: 1;
+}
+
+.calendar-day {
+  background-color: white;
+  min-height: 140px;
+  padding: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.calendar-day.other-month {
+  background-color: #fafafa;
+}
+
+.calendar-day.other-month .calendar-day-number {
+  color: #d1d5db;
+}
+
+.calendar-day.today {
+  background-color: #eff6ff;
+}
+
+.calendar-day.today .calendar-day-number {
+  background-color: #3b82f6;
+  color: white;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.calendar-day-header {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 6px;
+}
+
+.calendar-day-number {
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
+}
+
+/* タスク表示 */
+.calendar-day-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.calendar-task {
+  font-size: 12px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.calendar-task:hover {
+  background-color: #e5e7eb !important;
+}
+
+.calendar-task-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.calendar-task-priority-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.calendar-task-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #374151;
+  flex: 1;
+}
+
+.calendar-task-title.completed {
+  text-decoration: line-through;
+  color: #9ca3af;
+}
+
+.calendar-more-tasks {
+  font-size: 11px;
+  color: #6b7280;
+  padding: 2px 6px;
+  background-color: #f3f4f6;
+  border-radius: 4px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.calendar-more-tasks:hover {
+  background-color: #e5e7eb;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 1200px) {
+  .calendar-day {
+    min-height: 90px;
+  }
+  
+  .calendar-task {
+    font-size: 11px;
+    padding: 3px 4px;
+  }
+}
+
+@media (max-width: 768px) {
+  .calendar-view {
+    padding: 16px;
+  }
+  
+  .calendar-day {
+    min-height: 70px;
+    padding: 4px;
+  }
+  
+  .calendar-task-title {
+    display: none;
+  }
+  
+  .calendar-task {
+    width: 100%;
+    height: 4px;
+    padding: 0;
+    border-radius: 2px;
+  }
+  
+  .calendar-task-priority-dot {
+    display: none;
+  }
+}

@@ -24,12 +24,13 @@ export class TaskRepository {
              is_routine as isRoutine, routine_type as routineType,
              last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
       FROM tasks
-      ORDER BY parent_id, position
+      ORDER BY id
     `).all() as Task[];
 
-    // 各タスクにタグ情報を追加
+    // 各タスクにタグ情報を追加し、NULLを空文字列に正規化
     const tasksWithTags = tasks.map(task => ({
       ...task,
+      description: task.description || '',
       tags: this.getTagsByTaskId(task.id)
     }));
 
@@ -60,6 +61,11 @@ export class TaskRepository {
       FROM tasks WHERE id = ?
     `).get(id) as Task | undefined;
 
+    // データベースのNULLを空文字列に正規化
+    if (task) {
+      task.description = task.description || '';
+    }
+
     return task || null;
   }
 
@@ -72,12 +78,13 @@ export class TaskRepository {
              is_routine as isRoutine, routine_type as routineType,
              last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
       FROM tasks WHERE parent_id = ?
-      ORDER BY position
+      ORDER BY id
     `).all(parentId) as Task[];
 
-    // 再帰的に子タスクを取得
+    // 再帰的に子タスクを取得し、NULLを空文字列に正規化
     return children.map(child => ({
       ...child,
+      description: child.description || '',
       children: this.getChildrenByParentId(child.id)
     }));
   }
@@ -94,7 +101,7 @@ export class TaskRepository {
     const params = {
       parentId: input.parentId !== undefined ? input.parentId : null,
       title: input.title,
-      description: input.description || null,
+      description: input.description === '' ? null : (input.description || null),
       status: input.status || 'pending',
       priority: input.priority || 'medium',
       dueDate: input.dueDate || null,
@@ -120,13 +127,14 @@ export class TaskRepository {
     }
     if (input.description !== undefined) {
       updates.push('description = @description');
-      params.description = input.description;
+      // nullの場合はデータベースのNULLとして保存、空文字列もNULLとして扱う
+      params.description = input.description === '' ? null : input.description;
     }
     if (input.status !== undefined) {
       updates.push('status = @status');
       params.status = input.status;
       if (input.status === 'completed') {
-        updates.push('completed_at = CURRENT_TIMESTAMP');
+        updates.push('completed_at = datetime(\'now\', \'localtime\')');
       }
     }
     if (input.priority !== undefined) {
@@ -175,7 +183,7 @@ export class TaskRepository {
       }
     }
 
-    return this.getTaskById(id);
+    return this.getTaskWithChildren(id);
   }
 
   // 親タスクの自動完了をチェックして更新
@@ -194,7 +202,7 @@ export class TaskRepository {
     if (allCompleted) {
       // 親タスクを完了に更新
       const parentUpdateStmt = this.db.prepare(`
-        UPDATE tasks SET status = 'completed', completed_at = CURRENT_TIMESTAMP WHERE id = ?
+        UPDATE tasks SET status = 'completed', completed_at = datetime('now', 'localtime') WHERE id = ?
       `);
       parentUpdateStmt.run(task.parentId);
 
@@ -354,7 +362,7 @@ export class TaskRepository {
 
   // 全てのルーティンタスクを取得
   getRoutineTasks(): Task[] {
-    return this.db.prepare(`
+    const tasks = this.db.prepare(`
       SELECT id, parent_id as parentId, title, description, status, priority,
              due_date as dueDate, created_at as createdAt, updated_at as updatedAt,
              completed_at as completedAt, position, expanded,
@@ -364,6 +372,12 @@ export class TaskRepository {
       WHERE is_routine = 1
       ORDER BY position
     `).all() as Task[];
+
+    // NULLを空文字列に正規化
+    return tasks.map(task => ({
+      ...task,
+      description: task.description || ''
+    }));
   }
 
   // データベースを閉じる

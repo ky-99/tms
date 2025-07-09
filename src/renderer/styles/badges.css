@@ -10,13 +10,13 @@
 }
 
 .status.pending {
-    background-color: #e3f2fd;
-    color: #1976d2;
+    background-color: #f3f4f6;
+    color: #6b7280;
 }
 
 .status.in_progress {
-    background-color: #fff3e0;
-    color: #f57c00;
+    background-color: #dbeafe;
+    color: #3b82f6;
 }
 
 .status.completed {
@@ -57,4 +57,18 @@
 .priority.urgent {
     background-color: #ffebee;
     color: #c62828;
+}
+
+/* Parent task status - visually distinct and non-interactive */
+.status.parent-task-status {
+    opacity: 0.7;
+    border: 1px dashed #9ca3af;
+    background-color: #f9fafb !important;
+    color: #6b7280 !important;
+}
+
+.status.parent-task-status::after {
+    content: " (自動)";
+    font-size: 8px;
+    opacity: 0.6;
 }

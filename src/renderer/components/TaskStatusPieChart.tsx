@@ -199,7 +199,7 @@ const TaskStatusPieChart: React.FC<TaskStatusPieChartProps> = ({ tasks }) => {
       const path = createDonutPath(currentAngle, currentAngle + inProgressAngle);
       segments.push({
         path: path,
-        color: '#f59e0b',
+        color: '#3b82f6',
         label: '進行中',
         count: statusStats.inProgress,
         percentage: Math.round((statusStats.inProgress / total) * 100)

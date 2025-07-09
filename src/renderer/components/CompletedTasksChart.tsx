@@ -78,7 +78,9 @@ const CompletedTasksChart: React.FC<CompletedTasksChartProps> = ({ data }) => {
   // データの最大値を取得
   const maxCompleted = Math.max(...data.map(d => d.completed));
   const maxPlanned = Math.max(...data.map(d => d.planned));
-  const yMax = Math.ceil(Math.max(maxCompleted, maxPlanned) * 1.1); // 10%の余白を追加
+  const dataMax = Math.max(maxCompleted, maxPlanned);
+  // 適切な目盛り間隔で最大値を設定
+  const yMax = dataMax === 0 ? 5 : Math.max(5, Math.ceil(dataMax * 1.2));
 
   // スケールの計算
   const xScale = (index: number) => (index / (data.length - 1)) * chartWidth;
@@ -104,9 +106,22 @@ const CompletedTasksChart: React.FC<CompletedTasksChartProps> = ({ data }) => {
 
   // グリッドラインの生成
   const yGridLines = [];
-  const ySteps = 5;
-  for (let i = 0; i <= ySteps; i++) {
-    const value = (yMax / ySteps) * i;
+  // 適切な目盛り間隔を計算
+  const getTickInterval = (max: number) => {
+    if (max <= 5) return 1;
+    if (max <= 10) return 2;
+    if (max <= 20) return 5;
+    if (max <= 50) return 10;
+    return Math.ceil(max / 5);
+  };
+  
+  const tickInterval = getTickInterval(yMax);
+  const tickCount = Math.ceil(yMax / tickInterval);
+  
+  for (let i = 0; i <= tickCount; i++) {
+    const value = i * tickInterval;
+    if (value > yMax) break;
+    
     const y = yScale(value) + padding.top;
     yGridLines.push(
       <g key={`grid-${i}`}>
@@ -122,11 +137,11 @@ const CompletedTasksChart: React.FC<CompletedTasksChartProps> = ({ data }) => {
           x={padding.left - 10}
           y={y}
           textAnchor="end"
-          alignmentBaseline="middle"
+          dominantBaseline="central"
           fontSize={fontSizes.axis}
           fill="#6b7280"
         >
-          {Math.round(value)}
+          {value}
         </text>
       </g>
     );

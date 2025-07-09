@@ -6,6 +6,7 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { Task, Tag } from '../types';
 import { taskAPI } from '../services';
+import { calculateParentTaskStatus, isParentTask } from '../utils/taskUtils';
 
 // Action types
 type TaskAction =
@@ -79,11 +80,24 @@ const taskReducer = (state: TaskState, action: TaskAction): TaskState => {
       };
     
     case 'UPDATE_TASK':
+      const updateTaskRecursively = (tasks: Task[]): Task[] => {
+        return tasks.map(task => {
+          if (task.id === action.payload.id) {
+            return action.payload;
+          }
+          if (task.children && task.children.length > 0) {
+            return {
+              ...task,
+              children: updateTaskRecursively(task.children)
+            };
+          }
+          return task;
+        });
+      };
+      
       return {
         ...state,
-        tasks: state.tasks.map(task => 
-          task.id === action.payload.id ? action.payload : task
-        ),
+        tasks: updateTaskRecursively(state.tasks),
         error: null
       };
     
@@ -122,18 +136,34 @@ interface TaskProviderProps {
 export const TaskProvider: React.FC<TaskProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(taskReducer, initialState);
 
-  // Task operations
-  const loadTasks = async () => {
+  // Task operations (内部用)
+  const loadTasksInternal = async (skipUpdate: boolean = false) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       const tasks = await taskAPI.loadTasks();
-      dispatch({ type: 'SET_TASKS', payload: tasks });
+      
+      // 初回読み込み時のみ親タスクのステータスを再計算
+      if (!skipUpdate) {
+        await updateAllParentTaskStatuses(tasks);
+        // 更新後のタスクを再読み込み
+        const updatedTasks = await taskAPI.loadTasks();
+        dispatch({ type: 'SET_TASKS', payload: updatedTasks });
+      } else {
+        dispatch({ type: 'SET_TASKS', payload: tasks });
+      }
     } catch (error) {
       dispatch({ 
         type: 'SET_ERROR', 
         payload: error instanceof Error ? error.message : 'タスクの読み込みに失敗しました' 
       });
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
     }
+  };
+
+  // Task operations (公開用)
+  const loadTasks = async () => {
+    await loadTasksInternal(false);
   };
 
   const createTask = async (taskData: Partial<Task>): Promise<Task> => {
@@ -154,18 +184,94 @@ export const TaskProvider: React.FC<TaskProviderProps> = ({ children }) => {
 
   const updateTask = async (id: number, updates: Partial<Task>): Promise<Task> => {
     try {
-      dispatch({ type: 'SET_LOADING', payload: true });
+      // インライン編集の場合はローディング状態を表示しない（ちらつき防止）
       const updatedTask = await taskAPI.updateTask(id, updates);
-      // Reload all tasks to ensure consistent state across the tree
-      await loadTasks();
+      
+      // 期限が変更された場合は、全タスクを再読み込みして並び順を更新
+      if ('dueDate' in updates || 'due_date' in updates) {
+        await loadTasks();
+      } else {
+        // 期限以外の変更は即座にローカル状態を更新
+        dispatch({ type: 'UPDATE_TASK', payload: updatedTask });
+        
+        // ステータスが変更された場合、親タスクのステータスも自動更新
+        if ('status' in updates) {
+          await updateParentTaskStatuses(id, state.tasks);
+        }
+      }
+      
       return updatedTask;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'タスクの更新に失敗しました';
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
       throw error;
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
     }
+  };
+
+  // 親タスクのステータスを自動更新する関数
+  const updateParentTaskStatuses = async (childTaskId: number, tasks: Task[]): Promise<void> => {
+    const findAndUpdateParents = async (taskList: Task[], targetId: number): Promise<Task | null> => {
+      for (const task of taskList) {
+        if (task.children) {
+          // 直接の子タスクかチェック
+          if (task.children.some(child => child.id === targetId)) {
+            // 親タスクのステータスを再計算
+            const newStatus = calculateParentTaskStatus(task);
+            if (newStatus !== task.status) {
+              try {
+                await taskAPI.updateTask(task.id, { status: newStatus });
+                // さらに上位の親タスクもチェック
+                await findAndUpdateParents(tasks, task.id);
+              } catch (error) {
+                console.error('Failed to update parent task status:', error);
+              }
+            }
+            return task;
+          }
+          
+          // 再帰的に子タスクをチェック
+          const found = await findAndUpdateParents(task.children, targetId);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    await findAndUpdateParents(tasks, childTaskId);
+    // 親タスクの更新後、全タスクを再読み込み（skipUpdate=trueで無限ループを防ぐ）
+    await loadTasksInternal(true);
+  };
+
+  // すべての親タスクのステータスを再計算する関数
+  const updateAllParentTaskStatuses = async (tasks: Task[]): Promise<void> => {
+    console.log('Updating all parent task statuses...');
+    
+    const updateTaskStatuses = async (taskList: Task[]): Promise<void> => {
+      for (const task of taskList) {
+        if (isParentTask(task)) {
+          // 親タスクのステータスを再計算
+          const newStatus = calculateParentTaskStatus(task);
+          console.log(`Parent task "${task.title}" (ID: ${task.id}): current status = ${task.status}, calculated status = ${newStatus}`);
+          
+          if (newStatus !== task.status) {
+            try {
+              console.log(`Updating parent task "${task.title}" status from ${task.status} to ${newStatus}`);
+              await taskAPI.updateTask(task.id, { status: newStatus });
+            } catch (error) {
+              console.error('Failed to update parent task status:', error);
+            }
+          }
+        }
+        
+        // 子タスクも再帰的にチェック
+        if (task.children && task.children.length > 0) {
+          await updateTaskStatuses(task.children);
+        }
+      }
+    };
+
+    await updateTaskStatuses(tasks);
+    console.log('Finished updating parent task statuses');
   };
 
   const deleteTask = async (id: number): Promise<void> => {

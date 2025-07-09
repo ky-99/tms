@@ -26,6 +26,9 @@
     height: fit-content;
     width: 100%;
     box-sizing: border-box;
+    transition: all 0.2s ease;
+    /* 強制的にborder-radiusを維持 */
+    border-radius: 4px !important;
 }
 
 .completed-section {
@@ -33,7 +36,7 @@
 }
 
 .in-progress-section {
-    border-left: 4px solid #f97316;
+    border-left: 4px solid #3b82f6;
 }
 
 .pending-section {
@@ -64,25 +67,83 @@
     flex-direction: column;
     box-shadow: none;
     cursor: pointer;
+    transition: all 0.2s ease;
+    /* 強制的にborder-radiusを維持 */
+    border-radius: 4px !important;
 }
 
 .weekly-task-card.completed {
-    background: #f0fdf4;
-    border-color: #bbf7d0;
-}
-
-.weekly-task-card.in_progress {
-    background: #fff7ed;
-    border-color: #fed7aa;
-}
-
-.weekly-task-card.pending {
-    background: #f9fafb;
+    background: white;
     border-color: #e5e7eb;
 }
 
+.weekly-task-card.in_progress {
+    background: white;
+    border-color: #e5e7eb;
+}
+
+.weekly-task-card.pending {
+    background: white;
+    border-color: #e5e7eb;
+}
+
+.weekly-task-card:hover {
+    background: #f9fafb !important;
+}
+
+/* ルーティンタスクのスタイル */
+.task-card.routine-task {
+    background: linear-gradient(135deg, #fff5e6 0%, #fff9f0 100%) !important;
+    border-left: 4px solid #ff9800 !important;
+    border-color: #ff9800 !important;
+    position: relative;
+}
+
+.task-card.routine-task::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(255, 152, 0, 0.03) 10px,
+        rgba(255, 152, 0, 0.03) 20px
+    );
+    pointer-events: none;
+    border-radius: 4px;
+}
+
+.task-card.routine-task .task-card-header {
+    position: relative;
+    z-index: 1;
+}
+
+.task-card.routine-task .task-card-title {
+    position: relative;
+    z-index: 1;
+}
+
+.task-card.routine-task .task-card-description {
+    position: relative;
+    z-index: 1;
+}
+
+.task-card.routine-task .task-card-footer {
+    position: relative;
+    z-index: 1;
+}
+
+.task-card.routine-task .task-card-badges {
+    position: relative;
+    z-index: 1;
+}
+
 .in-progress-indicator {
-    color: #f97316;
+    color: #3b82f6;
     font-weight: bold;
     font-size: 16px;
 }

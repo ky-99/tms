@@ -3,7 +3,21 @@
     "allow": [
       "Bash(npm run build:*)",
       "Bash(find:*)",
-      "Bash(xattr:*)"
+      "Bash(xattr:*)",
+      "Bash(grep:*)",
+      "Bash(npm install)",
+      "Bash(ls:*)",
+      "Bash(cp:*)",
+      "Bash(rm:*)",
+      "Bash(npm run dev:*)",
+      "Bash(sqlite3:*)",
+      "Bash(pkill:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(rg:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npm start)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

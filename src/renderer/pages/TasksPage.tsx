@@ -3,16 +3,18 @@
  * Displays tasks with filtering and management capabilities
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Task, Tag, TaskStatus, TaskPriority } from '../types';
 import { useTaskContext, useErrorContext } from '../contexts';
-import { useLocalStorage, useDebounce } from '../hooks';
-import { flattenTasks, filterTasks } from '../utils/taskUtils';
+import { useLocalStorage, useDebounce, useModalPosition } from '../hooks';
+import { flattenTasks, isParentTask, sortTasksMultiple } from '../utils/taskUtils';
 import { Button, LoadingSpinner, TextInput, Modal } from '../components/ui';
-import { TaskFiltersModal } from '../components/tasks/TaskFiltersModal';
+import NotionLikeFilterModal from '../components/tasks/NotionLikeFilterModal';
+import NotionLikeSortModal, { SortOption } from '../components/tasks/NotionLikeSortModal';
 import TaskList from '../components/TaskList';
-import TaskModal from '../components/TaskModal';
+import TaskDetailModal from '../components/TaskDetailModal';
+import TaskMergeModal from '../components/TaskMergeModal';
 import TaskItem from '../components/TaskItem';
 
 const TasksPage: React.FC = () => {
@@ -32,10 +34,14 @@ const TasksPage: React.FC = () => {
   const { rootId } = useParams<{ rootId?: string }>();
   const navigate = useNavigate();
 
-  // Modal state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [parentTaskId, setParentTaskId] = useState<number | undefined>(undefined);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  // TaskDetailModal state (統一)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [createParentId, setCreateParentId] = useState<number | undefined>(undefined);
+
+  // TaskMergeModal state
+  const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
 
   // Filter state with localStorage persistence
   const [searchQuery, setSearchQuery] = useLocalStorage('taskSearch', '');
@@ -43,16 +49,22 @@ const TasksPage: React.FC = () => {
   const [selectedStatuses, setSelectedStatuses] = useLocalStorage<TaskStatus[]>('selectedStatuses', []);
   const [selectedPriorities, setSelectedPriorities] = useLocalStorage<TaskPriority[]>('selectedPriorities', []);
   const [dateFilterFrom, setDateFilterFrom] = useLocalStorage('dateFilterFrom', '');
+  const [includeParentTasks, setIncludeParentTasks] = useLocalStorage('includeParentTasks', true);
   const [dateFilterTo, setDateFilterTo] = useLocalStorage('dateFilterTo', '');
+  const [sortOptions, setSortOptions] = useLocalStorage<SortOption[]>('taskSortOptions', []);
   
   // UI state
   const [showTagFilter, setShowTagFilter] = useState(false);
+  const [showSortModal, setShowSortModal] = useState(false);
   const [expandedSections, setExpandedSections] = useLocalStorage('expandedFilterSections', {
     status: false,
     priority: false,
     tags: false,
     dates: false
   });
+  const filterButtonRef = useRef<HTMLButtonElement>(null);
+  const sortButtonRef = useRef<HTMLButtonElement>(null);
+  const filterModalPosition = useModalPosition(filterButtonRef, showTagFilter, { x: -460, y: 5 });
 
   // Debounced search
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -109,7 +121,8 @@ const TasksPage: React.FC = () => {
                       selectedPriorities.length > 0 ||
                       selectedTagIds.length > 0 ||
                       dateFilterFrom !== '' ||
-                      dateFilterTo !== '';
+                      dateFilterTo !== '' ||
+                      includeParentTasks === false;
     
     if (!hasFilters) {
       return currentTasks;
@@ -120,6 +133,11 @@ const TasksPage: React.FC = () => {
     
     // Apply filters to the flattened list
     const matchingTasks = allDescendantTasks.filter(task => {
+      // Parent task filter - exclude parent tasks if not included
+      if (includeParentTasks === false && isParentTask(task)) {
+        return false;
+      }
+      
       // Search filter
       if (debouncedSearch.trim() !== '') {
         const searchLower = debouncedSearch.toLowerCase();
@@ -169,7 +187,28 @@ const TasksPage: React.FC = () => {
         isParentInFilter: hadChildren // Flag to indicate this was originally a parent
       };
     });
-  }, [currentTasks, debouncedSearch, selectedStatuses, selectedPriorities, selectedTagIds, dateFilterFrom, dateFilterTo]);
+  }, [currentTasks, debouncedSearch, selectedStatuses, selectedPriorities, selectedTagIds, dateFilterFrom, dateFilterTo, includeParentTasks]);
+
+  // Apply sorting to filtered tasks
+  const sortedTasks = useMemo(() => {
+    if (sortOptions.length === 0) return filteredTasks;
+    
+    // For flat filtered tasks, apply sorting directly
+    if (filteredTasks.length > 0 && !filteredTasks[0].children) {
+      return sortTasksMultiple(filteredTasks, sortOptions);
+    }
+    
+    // For hierarchical tasks, apply sorting to each level
+    const sortHierarchical = (tasks: Task[]): Task[] => {
+      const sorted = sortTasksMultiple(tasks, sortOptions);
+      return sorted.map(task => ({
+        ...task,
+        children: task.children ? sortHierarchical(task.children) : undefined
+      }));
+    };
+    
+    return sortHierarchical(filteredTasks);
+  }, [filteredTasks, sortOptions]);
 
   // Apply expansion state
   const displayedTasks = useMemo(() => {
@@ -181,8 +220,8 @@ const TasksPage: React.FC = () => {
       }));
     };
     
-    return applyExpansion(filteredTasks);
-  }, [filteredTasks, expandedTasks]);
+    return applyExpansion(sortedTasks);
+  }, [sortedTasks, expandedTasks]);
 
 
   // Get breadcrumb path
@@ -217,24 +256,44 @@ const TasksPage: React.FC = () => {
     }
   }, [error, clearError]);
 
-  // Modal handlers
+  // TaskDetailModal handlers (統一)
+  const openDetailModal = (task: Task) => {
+    setSelectedTask(task);
+    setIsCreatingTask(false);
+    setCreateParentId(undefined);
+    setIsDetailModalOpen(true);
+  };
+  
   const openCreateModal = (parentId?: number) => {
-    setParentTaskId(parentId);
-    setEditingTask(null);
-    setIsModalOpen(true);
+    setSelectedTask(null);
+    setIsCreatingTask(true);
+    setCreateParentId(parentId);
+    setIsDetailModalOpen(true);
+  };
+  
+  const openSubTaskModal = (parentId: number) => {
+    openCreateModal(parentId);
+  };
+  
+  const closeDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedTask(null);
+    setIsCreatingTask(false);
+    setCreateParentId(undefined);
+  };
+  
+  // Helper function to find task by ID
+  const findTaskById = (taskList: Task[], id: number): Task | null => {
+    for (const task of taskList) {
+      if (task.id === id) return task;
+      if (task.children) {
+        const found = findTaskById(task.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
   };
 
-  const openEditModal = (task: Task) => {
-    setEditingTask(task);
-    setParentTaskId(undefined);
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setEditingTask(null);
-    setParentTaskId(undefined);
-  };
 
   // Check if any filters are active
   const hasActiveFilters = useMemo(() => {
@@ -244,9 +303,10 @@ const TasksPage: React.FC = () => {
       selectedPriorities.length > 0 ||
       selectedTagIds.length > 0 ||
       dateFilterFrom !== '' ||
-      dateFilterTo !== ''
+      dateFilterTo !== '' ||
+      includeParentTasks === false
     );
-  }, [searchQuery, selectedStatuses, selectedPriorities, selectedTagIds, dateFilterFrom, dateFilterTo]);
+  }, [searchQuery, selectedStatuses, selectedPriorities, selectedTagIds, dateFilterFrom, dateFilterTo, includeParentTasks]);
 
   // Count active filters
   const activeFilterCount = useMemo(() => {
@@ -256,8 +316,9 @@ const TasksPage: React.FC = () => {
     if (selectedPriorities.length > 0) count++;
     if (selectedTagIds.length > 0) count++;
     if (dateFilterFrom || dateFilterTo) count++;
+    if (includeParentTasks === false) count++;
     return count;
-  }, [searchQuery, selectedStatuses, selectedPriorities, selectedTagIds, dateFilterFrom, dateFilterTo]);
+  }, [searchQuery, selectedStatuses, selectedPriorities, selectedTagIds, dateFilterFrom, dateFilterTo, includeParentTasks]);
 
   // Filter handlers
   const handleClearFilters = () => {
@@ -267,6 +328,16 @@ const TasksPage: React.FC = () => {
     setSelectedPriorities([]);
     setDateFilterFrom('');
     setDateFilterTo('');
+    setIncludeParentTasks(true);
+  };
+
+  // Sort handlers
+  const handleSortChange = (newSortOptions: SortOption[]) => {
+    setSortOptions(newSortOptions);
+  };
+
+  const handleClearSort = () => {
+    setSortOptions([]);
   };
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -318,19 +389,40 @@ const TasksPage: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <button
-            className={`search-filter-icon ${hasActiveFilters ? 'has-filters' : ''} ${showTagFilter ? 'active' : ''}`}
-            onClick={() => setShowTagFilter(!showTagFilter)}
-            title={hasActiveFilters ? "フィルター適用中" : "フィルター"}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
-            </svg>
-            {hasActiveFilters && (
-              <span className="filter-badge">!</span>
-            )}
-          </button>
         </div>
+        
+        <button
+          ref={filterButtonRef}
+          className={`search-filter-icon ${hasActiveFilters ? 'has-filters' : ''} ${showTagFilter ? 'active' : ''}`}
+          onClick={() => setShowTagFilter(!showTagFilter)}
+          title={hasActiveFilters ? "フィルター適用中" : "フィルター"}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
+          </svg>
+        </button>
+        
+        <button
+          ref={sortButtonRef}
+          className={`search-sort-icon ${sortOptions.length > 0 ? 'has-sort' : ''} ${showSortModal ? 'active' : ''}`}
+          onClick={() => setShowSortModal(!showSortModal)}
+          title={sortOptions.length > 0 ? "ソート適用中" : "ソート"}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 18h6v-2H3v2zM3 6v2h6V6H3zm0 7h6v-2H3v2zm7-7v2h11V6H10zm0 7h11v-2H10v2zm0 5h11v-2H10v2z"/>
+          </svg>
+          {sortOptions.length > 0 && <span className="sort-count">{sortOptions.length}</span>}
+        </button>
+        
+        <button
+          className="merge-task-icon"
+          onClick={() => setIsMergeModalOpen(true)}
+          title="タスクを統合"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zM17 17H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
+          </svg>
+        </button>
         
         <button
           className="create-task-icon"
@@ -344,32 +436,35 @@ const TasksPage: React.FC = () => {
       </div>
 
       {/* Filter Modal */}
-      {showTagFilter && (
-        <Modal
-          isOpen={showTagFilter}
-          onClose={() => setShowTagFilter(false)}
-          showCloseButton={false}
-          className="filter-modal"
-        >
-          <TaskFiltersModal
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            selectedStatuses={selectedStatuses}
-            onStatusChange={setSelectedStatuses}
-            selectedPriorities={selectedPriorities}
-            onPriorityChange={setSelectedPriorities}
-            selectedTagIds={selectedTagIds}
-            onTagChange={setSelectedTagIds}
-            allTags={tags}
-            dateFilterFrom={dateFilterFrom}
-            dateFilterTo={dateFilterTo}
-            onDateFromChange={setDateFilterFrom}
-            onDateToChange={setDateFilterTo}
-            onClose={() => setShowTagFilter(false)}
-            onClearFilters={handleClearFilters}
-          />
-        </Modal>
-      )}
+      <NotionLikeFilterModal
+        isOpen={showTagFilter}
+        onClose={() => setShowTagFilter(false)}
+        triggerRef={filterButtonRef}
+        selectedStatuses={selectedStatuses}
+        onStatusChange={setSelectedStatuses}
+        selectedPriorities={selectedPriorities}
+        onPriorityChange={setSelectedPriorities}
+        selectedTagIds={selectedTagIds}
+        onTagChange={setSelectedTagIds}
+        allTags={tags}
+        dateFilterFrom={dateFilterFrom}
+        dateFilterTo={dateFilterTo}
+        onDateFromChange={setDateFilterFrom}
+        onDateToChange={setDateFilterTo}
+        includeParentTasks={includeParentTasks}
+        onIncludeParentTasksChange={setIncludeParentTasks}
+        onClearFilters={handleClearFilters}
+      />
+
+      {/* Sort Modal */}
+      <NotionLikeSortModal
+        isOpen={showSortModal}
+        onClose={() => setShowSortModal(false)}
+        triggerRef={sortButtonRef}
+        currentSort={sortOptions}
+        onSortChange={handleSortChange}
+        onClearSort={handleClearSort}
+      />
 
       {/* Breadcrumb */}
       {breadcrumbPath.length > 0 && (
@@ -416,9 +511,9 @@ const TasksPage: React.FC = () => {
               task={currentTargetTask}
               level={0}
               onTasksChange={loadTasks}
-              onAddSubTask={openCreateModal}
+              onAddSubTask={openSubTaskModal}
               onTaskClick={handleTaskClick}
-              onEditTask={openEditModal}
+              onEditTask={openDetailModal}
               onDeleteTask={handleDeleteTask}
               onToggleExpand={toggleTaskExpansion}
             />
@@ -426,10 +521,25 @@ const TasksPage: React.FC = () => {
         ) : displayedTasks.length === 0 ? (
           <div className="empty-state">
             <p className="empty-message">
-              {searchQuery || selectedStatuses.length > 0 || selectedPriorities.length > 0
+              {hasActiveFilters
                 ? 'フィルター条件に一致するタスクがありません'
-                : 'タスクがありません'}
+                : 'タスクが登録されていません'}
             </p>
+            {hasActiveFilters ? (
+              <Button
+                variant="secondary"
+                onClick={handleClearFilters}
+              >
+                フィルターをクリア
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                onClick={() => openCreateModal()}
+              >
+                最初のタスクを作成
+              </Button>
+            )}
             {rootId && displayedTasks.length === 0 && (
               <Button
                 variant="secondary"
@@ -443,21 +553,30 @@ const TasksPage: React.FC = () => {
           <TaskList
             tasks={displayedTasks}
             onTasksChange={loadTasks}
-            onAddSubTask={openCreateModal}
+            onAddSubTask={openSubTaskModal}
             onTaskClick={handleTaskClick}
-            onEditTask={openEditModal}
+            onEditTask={openDetailModal}
             onDeleteTask={handleDeleteTask}
             onToggleExpand={toggleTaskExpansion}
           />
         )}
       </div>
 
-      {/* Task Modal */}
-      <TaskModal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        defaultParentId={parentTaskId}
-        editingTask={editingTask}
+      {/* Task Detail Modal (統一) */}
+      <TaskDetailModal
+        task={selectedTask || undefined}
+        isOpen={isDetailModalOpen}
+        onClose={closeDetailModal}
+        allTasks={tasks}
+        defaultParentId={createParentId}
+        isCreating={isCreatingTask}
+      />
+
+      {/* Task Merge Modal */}
+      <TaskMergeModal
+        isOpen={isMergeModalOpen}
+        onClose={() => setIsMergeModalOpen(false)}
+        allTasks={tasks}
       />
     </div>
   );

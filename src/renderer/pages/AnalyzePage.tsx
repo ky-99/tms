@@ -4,27 +4,29 @@ import PriorityProgressChart from '../components/PriorityProgressChart';
 import TaskStatusPieChart from '../components/TaskStatusPieChart';
 import TagProgressChart from '../components/TagProgressChart';
 import WeeklyTaskCards from '../components/WeeklyTaskCards';
-
-interface Task {
-  id: number;
-  title: string;
-  status: string;
-  priority: string;
-  completed_at?: string;
-  completedAt?: string;
-  due_date?: string;
-  dueDate?: string;
-  children?: Task[];
-}
+import TaskDetailModal from '../components/TaskDetailModal';
+import { TaskWithChildren } from '../types';
 
 const AnalyzePage: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<TaskWithChildren[]>([]);
   const [chartData, setChartData] = useState<{ date: string; completed: number; planned: number }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTask, setSelectedTask] = useState<TaskWithChildren | null>(null);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   useEffect(() => {
     loadTasks();
   }, []);
+
+  const handleTaskClick = (task: TaskWithChildren) => {
+    setSelectedTask(task);
+    setIsTaskModalOpen(true);
+  };
+
+  const handleCloseTaskModal = () => {
+    setIsTaskModalOpen(false);
+    setSelectedTask(null);
+  };
 
   const loadTasks = async () => {
     try {
@@ -44,8 +46,8 @@ const AnalyzePage: React.FC = () => {
   };
 
   // 今週の期日タスクの中で完了しているもののみを収集
-  const collectCompletedTasks = (taskList: Task[]): Task[] => {
-    const completed: Task[] = [];
+  const collectCompletedTasks = (taskList: TaskWithChildren[]): TaskWithChildren[] => {
+    const completed: TaskWithChildren[] = [];
     
     // 今週の開始（月曜日）と終了（日曜日）を計算
     const today = new Date();
@@ -57,7 +59,7 @@ const AnalyzePage: React.FC = () => {
     sunday.setDate(monday.getDate() + 6);
     sunday.setHours(23, 59, 59, 999);
     
-    const collectRecursive = (tasks: Task[]) => {
+    const collectRecursive = (tasks: TaskWithChildren[]) => {
       tasks.forEach(task => {
         // タスクが完了していることをチェック
         if (task.status === 'completed') {
@@ -84,10 +86,10 @@ const AnalyzePage: React.FC = () => {
   };
 
   // 全階層のタスク数をカウント
-  const countAllTasks = (taskList: Task[]): number => {
+  const countAllTasks = (taskList: TaskWithChildren[]): number => {
     let count = 0;
     
-    const countRecursive = (tasks: Task[]) => {
+    const countRecursive = (tasks: TaskWithChildren[]) => {
       tasks.forEach(task => {
         count++;
         if (task.children) {
@@ -101,7 +103,7 @@ const AnalyzePage: React.FC = () => {
   };
 
   // 今週月曜日から日曜日までの日付ごとに集計（バーンアップチャート用）
-  const aggregateTasksByDate = (completedTasks: Task[], allTasksFromRoot: Task[]): { date: string; completed: number; planned: number }[] => {
+  const aggregateTasksByDate = (completedTasks: TaskWithChildren[], allTasksFromRoot: TaskWithChildren[]): { date: string; completed: number; planned: number }[] => {
     const completedMap = new Map<string, number>();
     
     // 今週の日曜日から土曜日までのデータを作成（日曜日週始まり）
@@ -124,10 +126,10 @@ const AnalyzePage: React.FC = () => {
     const weekStart = new Date(sunday);
     
     // ダッシュボードと同じロジックで全タスクを平坦化
-    const flattenTasks = (taskList: Task[]): Task[] => {
-      const result: Task[] = [];
+    const flattenTasks = (taskList: TaskWithChildren[]): TaskWithChildren[] => {
+      const result: TaskWithChildren[] = [];
       
-      const addTask = (task: Task) => {
+      const addTask = (task: TaskWithChildren) => {
         result.push(task);
         if (task.children) {
           task.children.forEach(addTask);
@@ -175,9 +177,37 @@ const AnalyzePage: React.FC = () => {
         if (task.status === 'completed') {
           const completedAt = task.completedAt || task.completed_at;
           if (completedAt) {
-            const completedDate = new Date(completedAt);
-            // その日までに完了していればカウント
-            if (completedDate <= date) {
+            // UTC時刻として解釈されているデータをローカル時刻として扱う
+            let completedDate: Date;
+            
+            // SQLiteのdatetime文字列をローカル時刻として確実に解釈
+            if (typeof completedAt === 'string') {
+              // SQLiteのdatetime形式: "YYYY-MM-DD HH:MM:SS"
+              const dateTimeMatch = completedAt.match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/);
+              if (dateTimeMatch) {
+                const [, year, month, day, hour, minute, second] = dateTimeMatch;
+                // ローカル時刻として明示的に作成
+                completedDate = new Date(
+                  parseInt(year),
+                  parseInt(month) - 1, // 月は0ベース
+                  parseInt(day),
+                  parseInt(hour),
+                  parseInt(minute),
+                  parseInt(second)
+                );
+              } else {
+                completedDate = new Date(completedAt);
+              }
+            } else {
+              completedDate = new Date(completedAt);
+            }
+            
+            // その日の日付のみで比較（時刻は無視）
+            const completedDateOnly = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
+            const targetDateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            
+            // その日またはそれ以前に完了していればカウント
+            if (completedDateOnly <= targetDateOnly) {
               completedCount++;
             }
           }
@@ -281,10 +311,20 @@ const AnalyzePage: React.FC = () => {
             <h2>今週のタスク状況</h2>
           </div>
           <div className="chart-content">
-            <WeeklyTaskCards tasks={tasks} />
+            <WeeklyTaskCards tasks={tasks} onTaskClick={handleTaskClick} />
           </div>
         </div>
       </div>
+      
+      {/* タスク詳細モーダル */}
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          isOpen={isTaskModalOpen}
+          onClose={handleCloseTaskModal}
+          allTasks={tasks}
+        />
+      )}
     </div>
   );
 };

@@ -52,18 +52,20 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTasksChange, onAddSubTask,
 
   return (
     <div className="task-list">
-      {tasks.map(task => (
-        <TaskItem
-          key={task.id}
-          task={task}
-          level={0}
-          onTasksChange={onTasksChange}
-          onAddSubTask={onAddSubTask}
-          onTaskClick={onTaskClick}
-          onEditTask={onEditTask}
-          onDeleteTask={onDeleteTask}
-          onToggleExpand={onToggleExpand}
-        />
+      {tasks.map((task, index) => (
+        <div key={task.id}>
+          <TaskItem
+            task={task}
+            level={0}
+            onTasksChange={onTasksChange}
+            onAddSubTask={onAddSubTask}
+            onTaskClick={onTaskClick}
+            onEditTask={onEditTask}
+            onDeleteTask={onDeleteTask}
+            onToggleExpand={onToggleExpand}
+          />
+          {index < tasks.length - 1 && <div className="task-divider" />}
+        </div>
       ))}
     </div>
   );
