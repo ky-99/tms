@@ -2,9 +2,26 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
 import { initializeDatabase } from './database/init';
 import { TaskRepository } from './database/taskRepository';
+import { registerWorkspaceHandlers } from './main/workspaceHandlers';
+import { getWorkspaceManager } from './database/workspaceManager';
 
 let mainWindow: BrowserWindow | null = null;
 let taskRepository: TaskRepository | null = null;
+
+function getTaskRepository(): TaskRepository {
+  if (!taskRepository) {
+    const workspaceManager = getWorkspaceManager();
+    taskRepository = new TaskRepository(workspaceManager);
+  }
+  return taskRepository;
+}
+
+function resetTaskRepository(): void {
+  taskRepository = null;
+}
+
+// Export for use in workspace handlers
+(global as any).resetTaskRepository = resetTaskRepository;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -27,18 +44,16 @@ function createWindow() {
 
 app.whenReady().then(async () => {
   try {
-    console.log('Initializing database...');
-    initializeDatabase();
-    console.log('Database initialized successfully');
+    const workspaceManager = getWorkspaceManager();
     
-    taskRepository = new TaskRepository();
-    console.log('TaskRepository created successfully');
+    // Register workspace handlers
+    registerWorkspaceHandlers();
   } catch (error) {
-    console.error('Failed to initialize database:', error);
+    console.error('Failed to initialize workspace manager:', error);
     // Show error dialog to user
     const { dialog } = require('electron');
     const errorMessage = error instanceof Error ? error.message : String(error);
-    dialog.showErrorBox('Database Error', `Failed to initialize database: ${errorMessage}\n\nPlease check permissions and try again.`);
+    dialog.showErrorBox('Database Error', `Failed to initialize workspace manager: ${errorMessage}\n\nPlease check permissions and try again.`);
   }
 
   createWindow();
@@ -57,11 +72,9 @@ app.on('window-all-closed', () => {
 });
 
 ipcMain.handle('get-all-tasks', async () => {
-  if (!taskRepository) {
-    throw new Error('Database not initialized');
-  }
   try {
-    return taskRepository.getAllTasksAsTree();
+    const taskRepo = getTaskRepository();
+    return taskRepo.getAllTasksAsTree();
   } catch (error) {
     console.error('Error getting tasks:', error);
     return [];
@@ -69,39 +82,59 @@ ipcMain.handle('get-all-tasks', async () => {
 });
 
 ipcMain.handle('create-task', async (_, taskData) => {
-  if (!taskRepository) {
-    throw new Error('Database not initialized');
+  try {
+    const taskRepo = getTaskRepository();
+    return taskRepo.createTask(taskData);
+  } catch (error) {
+    console.error('Error creating task:', error);
+    throw error;
   }
-  return taskRepository.createTask(taskData);
+});
+
+ipcMain.handle('create-task-after', async (_, taskData, afterTaskId) => {
+  try {
+    const taskRepo = getTaskRepository();
+    return taskRepo.createTaskAfter(taskData, afterTaskId);
+  } catch (error) {
+    console.error('Error creating task after:', error);
+    throw error;
+  }
 });
 
 ipcMain.handle('update-task', async (_, { id, updates }) => {
-  if (!taskRepository) {
-    throw new Error('Database not initialized');
+  try {
+    const taskRepo = getTaskRepository();
+    return taskRepo.updateTask(id, updates);
+  } catch (error) {
+    console.error('Error updating task:', error);
+    throw error;
   }
-  return taskRepository.updateTask(id, updates);
 });
 
 ipcMain.handle('delete-task', async (_, id) => {
-  if (!taskRepository) {
-    throw new Error('Database not initialized');
+  try {
+    const taskRepo = getTaskRepository();
+    return taskRepo.deleteTask(id);
+  } catch (error) {
+    console.error('Error deleting task:', error);
+    throw error;
   }
-  return taskRepository.deleteTask(id);
 });
 
 ipcMain.handle('create-tag', async (_, name, color, textColor) => {
-  if (!taskRepository) {
-    throw new Error('Database not initialized');
+  try {
+    const taskRepo = getTaskRepository();
+    return taskRepo.createTag(name, color, textColor);
+  } catch (error) {
+    console.error('Error creating tag:', error);
+    throw error;
   }
-  return taskRepository.createTag(name, color, textColor);
 });
 
 ipcMain.handle('get-all-tags', async () => {
-  if (!taskRepository) {
-    throw new Error('Database not initialized');
-  }
   try {
-    return taskRepository.getAllTags();
+    const taskRepo = getTaskRepository();
+    return taskRepo.getAllTags();
   } catch (error) {
     console.error('Error getting tags:', error);
     return [];
@@ -109,43 +142,61 @@ ipcMain.handle('get-all-tags', async () => {
 });
 
 ipcMain.handle('add-tag-to-task', async (_, taskId, tagId) => {
-  if (!taskRepository) {
-    throw new Error('Database not initialized');
+  try {
+    const taskRepo = getTaskRepository();
+    return taskRepo.addTagToTask(taskId, tagId);
+  } catch (error) {
+    console.error('Error adding tag to task:', error);
+    throw error;
   }
-  return taskRepository.addTagToTask(taskId, tagId);
 });
 
 ipcMain.handle('remove-tag-from-task', async (_, taskId, tagId) => {
-  if (!taskRepository) {
-    throw new Error('Database not initialized');
+  try {
+    const taskRepo = getTaskRepository();
+    return taskRepo.removeTagFromTask(taskId, tagId);
+  } catch (error) {
+    console.error('Error removing tag from task:', error);
+    throw error;
   }
-  return taskRepository.removeTagFromTask(taskId, tagId);
 });
 
 ipcMain.handle('update-tag', async (_, id, name, color, textColor) => {
-  if (!taskRepository) {
-    throw new Error('Database not initialized');
+  try {
+    const taskRepo = getTaskRepository();
+    return taskRepo.updateTag(id, name, color, textColor);
+  } catch (error) {
+    console.error('Error updating tag:', error);
+    throw error;
   }
-  return taskRepository.updateTag(id, name, color, textColor);
 });
 
 ipcMain.handle('delete-tag', async (_, id) => {
-  if (!taskRepository) {
-    throw new Error('Database not initialized');
+  try {
+    const taskRepo = getTaskRepository();
+    return taskRepo.deleteTag(id);
+  } catch (error) {
+    console.error('Error deleting tag:', error);
+    throw error;
   }
-  return taskRepository.deleteTag(id);
 });
 
 ipcMain.handle('get-tags-by-task-id', async (_, taskId) => {
-  if (!taskRepository) {
-    throw new Error('Database not initialized');
+  try {
+    const taskRepo = getTaskRepository();
+    return taskRepo.getTagsByTaskId(taskId);
+  } catch (error) {
+    console.error('Error getting tags by task ID:', error);
+    throw error;
   }
-  return taskRepository.getTagsByTaskId(taskId);
 });
 
 ipcMain.handle('get-routine-tasks', async () => {
-  if (!taskRepository) {
-    throw new Error('Database not initialized');
+  try {
+    const taskRepo = getTaskRepository();
+    return taskRepo.getRoutineTasks();
+  } catch (error) {
+    console.error('Error getting routine tasks:', error);
+    return [];
   }
-  return taskRepository.getRoutineTasks();
 });

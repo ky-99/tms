@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Task } from '../types';
 import { useTaskContext } from '../contexts/TaskContext';
+import { useShortcut } from '../contexts/ShortcutContext';
 import StatusPriorityModal from './StatusPriorityModal';
 import { isParentTask } from '../utils/taskUtils';
 
@@ -121,6 +122,7 @@ interface TaskDetailModalProps {
   allTasks?: Task[];
   defaultParentId?: number;
   isCreating?: boolean;
+  onStatusChange?: () => void;
 }
 
 const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ 
@@ -129,10 +131,12 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   onClose, 
   allTasks = [], 
   defaultParentId,
-  isCreating = false 
+  isCreating = false,
+  onStatusChange
 }) => {
   const navigate = useNavigate();
   const { updateTask, createTask, tasks } = useTaskContext();
+  const { setCurrentContext, clearSelection } = useShortcut();
   
   // 楽観的更新用
   const [optimisticTitle, setOptimisticTitle] = useState<string | null>(null);
@@ -231,6 +235,18 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       }
     }
   }, [task, isEditingTitle, isEditingDescription, isEditingDueDate, optimisticDescription]);
+
+  // モーダルのオープン/クローズ時の処理
+  React.useEffect(() => {
+    if (isOpen) {
+      // モーダルが開いたときは選択状態を解除し、modalOpenコンテキストに設定
+      clearSelection();
+      setCurrentContext('modalOpen');
+    } else {
+      // モーダルが閉じたときはグローバルコンテキストに戻す
+      setCurrentContext('global');
+    }
+  }, [isOpen, clearSelection, setCurrentContext]);
 
   // モーダルが開いたときに新規作成モードの場合は編集状態をリセット
   const [isInitialized, setIsInitialized] = React.useState(false);
@@ -475,13 +491,18 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     
     if (isCreating) {
       // 新規作成時はステートを更新するだけ
-      setEditedStatus(newStatus as 'pending' | 'in_progress' | 'completed' | 'cancelled');
+      setEditedStatus(newStatus as 'pending' | 'in_progress' | 'completed');
       return;
     }
     
     if (newStatus !== task.status) {
       try {
-        await updateTask(task.id, { status: newStatus as 'pending' | 'in_progress' | 'completed' | 'cancelled' });
+        // ステータス変更の開始を親コンポーネントに通知
+        if (onStatusChange) {
+          onStatusChange();
+        }
+        
+        await updateTask(task.id, { status: newStatus as 'pending' | 'in_progress' | 'completed' });
       } catch (error) {
         console.error('Failed to update task status:', error);
       }

@@ -6,20 +6,18 @@
 import { TaskStatus, TaskPriority } from '../types';
 
 // Task status constants
-export const TASK_STATUSES: TaskStatus[] = ['pending', 'in_progress', 'completed', 'cancelled'];
+export const TASK_STATUSES: TaskStatus[] = ['pending', 'in_progress', 'completed'];
 
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   pending: '未着手',
   in_progress: '進行中',
-  completed: '完了',
-  cancelled: 'キャンセル'
+  completed: '完了'
 };
 
 export const TASK_STATUS_COLORS: Record<TaskStatus, string> = {
   pending: '#6b7280',      // 灰色
   in_progress: '#3b82f6',  // 青色
-  completed: '#10b981',    // 緑色
-  cancelled: '#ef4444'     // 赤色
+  completed: '#10b981'     // 緑色
 };
 
 // Priority constants

@@ -3,11 +3,12 @@
  * Displays tasks with filtering and management capabilities
  */
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { unstable_batchedUpdates } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Task, Tag, TaskStatus, TaskPriority } from '../types';
-import { useTaskContext, useErrorContext } from '../contexts';
-import { useLocalStorage, useDebounce, useModalPosition } from '../hooks';
+import { useTaskContext, useErrorContext, useShortcut } from '../contexts';
+import { useLocalStorage, useDebounce } from '../hooks';
 import { flattenTasks, isParentTask, sortTasksMultiple } from '../utils/taskUtils';
 import { Button, LoadingSpinner, TextInput, Modal } from '../components/ui';
 import NotionLikeFilterModal from '../components/tasks/NotionLikeFilterModal';
@@ -30,15 +31,37 @@ const TasksPage: React.FC = () => {
     setExpandedTasks
   } = useTaskContext();
   const { showError, showSuccess, clearError } = useErrorContext();
-  
+  const { setCurrentContext, currentContext } = useShortcut();
   const { rootId } = useParams<{ rootId?: string }>();
   const navigate = useNavigate();
+  
+  // 初回読み込み完了を追跡するためのRef
+  const initialLoadCompleted = useRef(false);
+  
+  // Force load tasks if they're not loaded yet (初回のみ)
+  useEffect(() => {
+    if (!initialLoadCompleted.current) {
+      loadTasks().finally(() => {
+        initialLoadCompleted.current = true;
+      });
+    }
+  }, []); // 初回のみ実行
+  
+  const setTasksPageContext = useCallback(() => {
+    setCurrentContext('tasksPage');
+  }, [setCurrentContext]);
+  
+  // より確実にコンテキストを設定
+  React.useEffect(() => {
+    setCurrentContext('tasksPage');
+  }, [setCurrentContext]);
 
   // TaskDetailModal state (統一)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [createParentId, setCreateParentId] = useState<number | undefined>(undefined);
+  const [stableSelectedTask, setStableSelectedTask] = useState<Task | null>(null);
+  const [isStatusChanging, setIsStatusChanging] = useState(false);
 
   // TaskMergeModal state
   const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
@@ -50,24 +73,20 @@ const TasksPage: React.FC = () => {
   const [selectedPriorities, setSelectedPriorities] = useLocalStorage<TaskPriority[]>('selectedPriorities', []);
   const [dateFilterFrom, setDateFilterFrom] = useLocalStorage('dateFilterFrom', '');
   const [includeParentTasks, setIncludeParentTasks] = useLocalStorage('includeParentTasks', true);
+  const [maintainHierarchy, setMaintainHierarchy] = useLocalStorage('maintainHierarchy', false);
   const [dateFilterTo, setDateFilterTo] = useLocalStorage('dateFilterTo', '');
   const [sortOptions, setSortOptions] = useLocalStorage<SortOption[]>('taskSortOptions', []);
   
   // UI state
   const [showTagFilter, setShowTagFilter] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
-  const [expandedSections, setExpandedSections] = useLocalStorage('expandedFilterSections', {
-    status: false,
-    priority: false,
-    tags: false,
-    dates: false
-  });
+  const [isClearingFilters, setIsClearingFilters] = useState(false);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const sortButtonRef = useRef<HTMLButtonElement>(null);
-  const filterModalPosition = useModalPosition(filterButtonRef, showTagFilter, { x: -460, y: 5 });
+  
 
-  // Debounced search
-  const debouncedSearch = useDebounce(searchQuery, 300);
+  // Debounced search - shorter delay for better responsiveness
+  const debouncedSearch = useDebounce(searchQuery, 150);
 
   // Get tasks for current view
   const currentTasks = useMemo(() => {
@@ -111,25 +130,81 @@ const TasksPage: React.FC = () => {
   // Check if current task is a leaf node (no children)
   const isLeafNode = currentTargetTask && (!currentTargetTask.children || currentTargetTask.children.length === 0);
 
-  // Apply filters to all tasks under current position (including all descendants)
-  const filteredTasks = useMemo(() => {
-    if (!currentTasks.length) return [];
-    
-    // If no filters are applied, return the original tree structure
-    const hasFilters = debouncedSearch.trim() !== '' || 
-                      selectedStatuses.length > 0 || 
-                      selectedPriorities.length > 0 ||
-                      selectedTagIds.length > 0 ||
-                      dateFilterFrom !== '' ||
-                      dateFilterTo !== '' ||
-                      includeParentTasks === false;
-    
-    if (!hasFilters) {
-      return currentTasks;
+  // Helper function to check if a task matches all active filters
+  const doesTaskMatchFilters = useCallback((task: Task): boolean => {
+    // Search filter
+    if (debouncedSearch.trim() !== '') {
+      const searchLower = debouncedSearch.toLowerCase();
+      const matchesSearch = 
+        task.title.toLowerCase().includes(searchLower) ||
+        (task.description && task.description.toLowerCase().includes(searchLower));
+      if (!matchesSearch) return false;
     }
     
+    // Status filter
+    if (selectedStatuses.length > 0 && !selectedStatuses.includes(task.status)) {
+      return false;
+    }
+    
+    // Priority filter
+    if (selectedPriorities.length > 0 && !selectedPriorities.includes(task.priority)) {
+      return false;
+    }
+    
+    // Tag filter (if implemented)
+    if (selectedTagIds.length > 0) {
+      const hasMatchingTag = task.tagIds && task.tagIds.some(tagId => selectedTagIds.includes(tagId));
+      if (!hasMatchingTag) return false;
+    }
+    
+    // Date filter (if implemented)
+    if (dateFilterFrom || dateFilterTo) {
+      if (!task.dueDate) return false;
+      const taskDate = new Date(task.dueDate);
+      if (dateFilterFrom && taskDate < new Date(dateFilterFrom)) return false;
+      if (dateFilterTo && taskDate > new Date(dateFilterTo)) return false;
+    }
+    
+    return true;
+  }, [debouncedSearch, selectedStatuses, selectedPriorities, selectedTagIds, dateFilterFrom, dateFilterTo]);
+
+  // Hierarchical filtering function
+  const filterTasksHierarchically = useCallback((tasks: Task[]): Task[] => {
+    const filterTaskRecursively = (task: Task): Task | null => {
+      // First, recursively filter children
+      const filteredChildren = task.children 
+        ? task.children.map(filterTaskRecursively).filter((child): child is Task => child !== null)
+        : [];
+
+      // Check if this task itself matches the filters
+      const taskMatches = doesTaskMatchFilters(task);
+
+      // Include this task if:
+      // 1. The task itself matches the filters, OR
+      // 2. It has children that match (and we want to preserve hierarchy)
+      const shouldInclude = taskMatches || filteredChildren.length > 0;
+
+      if (!shouldInclude) {
+        return null;
+      }
+
+      // Return the task with filtered children
+      return {
+        ...task,
+        children: filteredChildren,
+        expanded: expandedTasks.has(task.id) || filteredChildren.length > 0 // Auto-expand if has matching children
+      };
+    };
+
+    return tasks
+      .map(filterTaskRecursively)
+      .filter((task): task is Task => task !== null);
+  }, [expandedTasks, doesTaskMatchFilters]);
+
+  // Flat filtering function (original logic)
+  const filterTasksFlat = useCallback((tasks: Task[]): Task[] => {
     // Flatten all tasks from current position downward to include all descendants
-    const allDescendantTasks = flattenTasks(currentTasks);
+    const allDescendantTasks = flattenTasks(tasks);
     
     // Apply filters to the flattened list
     const matchingTasks = allDescendantTasks.filter(task => {
@@ -138,40 +213,7 @@ const TasksPage: React.FC = () => {
         return false;
       }
       
-      // Search filter
-      if (debouncedSearch.trim() !== '') {
-        const searchLower = debouncedSearch.toLowerCase();
-        const matchesSearch = 
-          task.title.toLowerCase().includes(searchLower) ||
-          (task.description && task.description.toLowerCase().includes(searchLower));
-        if (!matchesSearch) return false;
-      }
-      
-      // Status filter
-      if (selectedStatuses.length > 0 && !selectedStatuses.includes(task.status)) {
-        return false;
-      }
-      
-      // Priority filter
-      if (selectedPriorities.length > 0 && !selectedPriorities.includes(task.priority)) {
-        return false;
-      }
-      
-      // Tag filter (if implemented)
-      if (selectedTagIds.length > 0) {
-        const hasMatchingTag = task.tagIds && task.tagIds.some(tagId => selectedTagIds.includes(tagId));
-        if (!hasMatchingTag) return false;
-      }
-      
-      // Date filter (if implemented)
-      if (dateFilterFrom || dateFilterTo) {
-        if (!task.dueDate) return false;
-        const taskDate = new Date(task.dueDate);
-        if (dateFilterFrom && taskDate < new Date(dateFilterFrom)) return false;
-        if (dateFilterTo && taskDate > new Date(dateFilterTo)) return false;
-      }
-      
-      return true;
+      return doesTaskMatchFilters(task);
     });
     
     // Convert matching tasks back to a flat list with parent information preserved
@@ -187,7 +229,35 @@ const TasksPage: React.FC = () => {
         isParentInFilter: hadChildren // Flag to indicate this was originally a parent
       };
     });
-  }, [currentTasks, debouncedSearch, selectedStatuses, selectedPriorities, selectedTagIds, dateFilterFrom, dateFilterTo, includeParentTasks]);
+  }, [includeParentTasks, doesTaskMatchFilters]);
+
+  // Apply filters to all tasks under current position (including all descendants)
+  const filteredTasks = useMemo(() => {
+    if (!currentTasks.length) return [];
+    
+    // If no filters are applied, return the original tree structure
+    const hasFilters = debouncedSearch.trim() !== '' || 
+                      selectedStatuses.length > 0 || 
+                      selectedPriorities.length > 0 ||
+                      selectedTagIds.length > 0 ||
+                      dateFilterFrom !== '' ||
+                      dateFilterTo !== '' ||
+                      includeParentTasks === false ||
+                      maintainHierarchy === true;
+    
+    if (!hasFilters) {
+      return currentTasks;
+    }
+
+    // Two different filtering modes
+    if (maintainHierarchy) {
+      // Hierarchical filtering: preserve structure and include parents when children match
+      return filterTasksHierarchically(currentTasks);
+    } else {
+      // Flat filtering: convert to flat list
+      return filterTasksFlat(currentTasks);
+    }
+  }, [currentTasks, debouncedSearch, selectedStatuses, selectedPriorities, selectedTagIds, dateFilterFrom, dateFilterTo, includeParentTasks, maintainHierarchy, filterTasksHierarchically, filterTasksFlat]);
 
   // Apply sorting to filtered tasks
   const sortedTasks = useMemo(() => {
@@ -224,30 +294,44 @@ const TasksPage: React.FC = () => {
   }, [sortedTasks, expandedTasks]);
 
 
+
   // Get breadcrumb path
   const breadcrumbPath = useMemo(() => {
-    if (!rootId) return [];
+    // Don't calculate if we're still loading or don't have a rootId
+    if (!rootId || loading || tasks.length === 0) {
+      return [];
+    }
     
     const targetId = parseInt(rootId);
     const path: Task[] = [];
     
+    // Recursive function to find the path to the target task
     const findPath = (taskList: Task[], currentPath: Task[]): boolean => {
       for (const task of taskList) {
         const newPath = [...currentPath, task];
+        
         if (task.id === targetId) {
+          // Found the target task, save the path
           path.push(...newPath);
           return true;
         }
-        if (task.children && findPath(task.children, newPath)) {
-          return true;
+        
+        // Recursively search in children
+        if (task.children && task.children.length > 0) {
+          if (findPath(task.children, newPath)) {
+            return true;
+          }
         }
       }
       return false;
     };
     
-    findPath(tasks, []);
+    // Start the search from the root tasks
+    const found = findPath(tasks, []);
+    
+    
     return path;
-  }, [tasks, rootId]);
+  }, [tasks, rootId, loading]);
 
   // Clear error when component mounts
   useEffect(() => {
@@ -256,16 +340,71 @@ const TasksPage: React.FC = () => {
     }
   }, [error, clearError]);
 
+  // Set shortcut context when component mounts or when rootId changes
+  useEffect(() => {
+    setTasksPageContext();
+    // クリーンアップ関数を削除 - TasksPageがアンマウントされるときのみリセット
+  }, [setTasksPageContext, rootId]);
+  
+  // コンポーネントがアンマウントされるときのみコンテキストをリセット
+  useEffect(() => {
+    return () => {
+      setCurrentContext('global');
+    };
+  }, [setCurrentContext]);
+
+  // ステータス変更の検出とモーダル保護
+  useEffect(() => {
+    if (isStatusChanging) {
+      // ステータス変更中は一定時間後にフラグをリセット
+      const timer = setTimeout(() => {
+        setIsStatusChanging(false);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isStatusChanging]);
+
+  // モーダルが開いているときは、選択されたタスクの最新情報を保持
+  // stableSelectedTaskを基準にして、モーダルの安定性を保証
+  const currentSelectedTask = useMemo(() => {
+    if (!stableSelectedTask || !isDetailModalOpen) return null;
+    
+    // contextTasksから最新のタスクデータを検索
+    const findTask = (tasks: Task[], targetId: number): Task | null => {
+      for (const task of tasks) {
+        if (task.id === targetId) {
+          return task;
+        }
+        if (task.children) {
+          const found = findTask(task.children, targetId);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    
+    const foundTask = findTask(tasks, stableSelectedTask.id);
+    
+    // ステータス変更中は、タスクが見つからなくてもstableSelectedTaskを返す
+    // これにより、ステータス変更中の一瞬の空白期間でもモーダルが落ちない
+    if (isStatusChanging && !foundTask) {
+      return stableSelectedTask;
+    }
+    
+    // 最新のタスクが見つからない場合でも、stableSelectedTaskを返してモーダルを維持
+    return foundTask || stableSelectedTask;
+  }, [stableSelectedTask, isDetailModalOpen, tasks, isStatusChanging]);
+
   // TaskDetailModal handlers (統一)
   const openDetailModal = (task: Task) => {
-    setSelectedTask(task);
+    setStableSelectedTask(task);
     setIsCreatingTask(false);
     setCreateParentId(undefined);
     setIsDetailModalOpen(true);
   };
   
   const openCreateModal = (parentId?: number) => {
-    setSelectedTask(null);
+    setStableSelectedTask(null);
     setIsCreatingTask(true);
     setCreateParentId(parentId);
     setIsDetailModalOpen(true);
@@ -277,9 +416,12 @@ const TasksPage: React.FC = () => {
   
   const closeDetailModal = () => {
     setIsDetailModalOpen(false);
-    setSelectedTask(null);
     setIsCreatingTask(false);
     setCreateParentId(undefined);
+    // モーダルが完全に閉じるまで少し待ってからstableSelectedTaskをクリア
+    setTimeout(() => {
+      setStableSelectedTask(null);
+    }, 300);
   };
   
   // Helper function to find task by ID
@@ -295,7 +437,7 @@ const TasksPage: React.FC = () => {
   };
 
 
-  // Check if any filters are active
+  // Check if any filters are active - use immediate searchQuery for instant button visibility
   const hasActiveFilters = useMemo(() => {
     return (
       searchQuery.trim() !== '' ||
@@ -304,31 +446,33 @@ const TasksPage: React.FC = () => {
       selectedTagIds.length > 0 ||
       dateFilterFrom !== '' ||
       dateFilterTo !== '' ||
-      includeParentTasks === false
+      includeParentTasks === false ||
+      maintainHierarchy === true
     );
-  }, [searchQuery, selectedStatuses, selectedPriorities, selectedTagIds, dateFilterFrom, dateFilterTo, includeParentTasks]);
+  }, [searchQuery, selectedStatuses, selectedPriorities, selectedTagIds, dateFilterFrom, dateFilterTo, includeParentTasks, maintainHierarchy]);
 
-  // Count active filters
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (searchQuery.trim()) count++;
-    if (selectedStatuses.length > 0) count++;
-    if (selectedPriorities.length > 0) count++;
-    if (selectedTagIds.length > 0) count++;
-    if (dateFilterFrom || dateFilterTo) count++;
-    if (includeParentTasks === false) count++;
-    return count;
-  }, [searchQuery, selectedStatuses, selectedPriorities, selectedTagIds, dateFilterFrom, dateFilterTo, includeParentTasks]);
+  // Clear the clearing flag when debounced search clears and we have no active filters
+  useEffect(() => {
+    if (isClearingFilters && !hasActiveFilters && debouncedSearch === '') {
+      setIsClearingFilters(false);
+    }
+  }, [isClearingFilters, hasActiveFilters, debouncedSearch]);
+
 
   // Filter handlers
   const handleClearFilters = () => {
-    setSearchQuery('');
-    setSelectedTagIds([]);
-    setSelectedStatuses([]);
-    setSelectedPriorities([]);
-    setDateFilterFrom('');
-    setDateFilterTo('');
-    setIncludeParentTasks(true);
+    // React 18のautomatic batchingを利用した同期バッチ更新
+    unstable_batchedUpdates(() => {
+      setIsClearingFilters(true);
+      setSearchQuery('');
+      setSelectedTagIds([]);
+      setSelectedStatuses([]);
+      setSelectedPriorities([]);
+      setDateFilterFrom('');
+      setDateFilterTo('');
+      setIncludeParentTasks(true);
+      setMaintainHierarchy(false);
+    });
   };
 
   // Sort handlers
@@ -340,37 +484,108 @@ const TasksPage: React.FC = () => {
     setSortOptions([]);
   };
 
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
 
   // Navigate to task
   const handleTaskClick = (taskId: number) => {
     navigate(`/tasks/${taskId}`);
   };
 
+  // Navigation shortcut handlers
+  const handleNavigateToParent = useCallback(() => {
+    if (breadcrumbPath.length > 1) {
+      // We have a parent, navigate to it
+      const parentTask = breadcrumbPath[breadcrumbPath.length - 2];
+      navigate(`/tasks/${parentTask.id}`);
+    } else if (breadcrumbPath.length === 1) {
+      // We're at a root task, navigate to home
+      navigate('/tasks');
+    }
+    // No error message needed - silent operation
+  }, [breadcrumbPath, navigate]);
+
+  // ショートカットイベントリスナー
+  useEffect(() => {
+    const handleShortcutEvents = (event: CustomEvent) => {
+      switch (event.type) {
+        case 'openTaskEditModal':
+          if (event.detail && event.detail.task) {
+            openDetailModal(event.detail.task);
+          }
+          break;
+        case 'openFilterModal':
+          setShowTagFilter(true);
+          break;
+        case 'openSortModal':
+          setShowSortModal(true);
+          break;
+        case 'openTaskCreateModal':
+          const parentId = event.detail?.parentId;
+          openCreateModal(parentId);
+          break;
+        case 'openMergeModal':
+          setIsMergeModalOpen(true);
+          break;
+        case 'navigateToParent':
+          handleNavigateToParent();
+          break;
+        case 'toggleTaskExpansion':
+          if (event.detail && event.detail.task) {
+            toggleTaskExpansion(event.detail.task.id);
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('openTaskEditModal', handleShortcutEvents as EventListener);
+    window.addEventListener('openFilterModal', handleShortcutEvents as EventListener);
+    window.addEventListener('openSortModal', handleShortcutEvents as EventListener);
+    window.addEventListener('openTaskCreateModal', handleShortcutEvents as EventListener);
+    window.addEventListener('openMergeModal', handleShortcutEvents as EventListener);
+    window.addEventListener('navigateToParent', handleShortcutEvents as EventListener);
+    window.addEventListener('toggleTaskExpansion', handleShortcutEvents as EventListener);
+
+    return () => {
+      window.removeEventListener('openTaskEditModal', handleShortcutEvents as EventListener);
+      window.removeEventListener('openFilterModal', handleShortcutEvents as EventListener);
+      window.removeEventListener('openSortModal', handleShortcutEvents as EventListener);
+      window.removeEventListener('openTaskCreateModal', handleShortcutEvents as EventListener);
+      window.removeEventListener('openMergeModal', handleShortcutEvents as EventListener);
+      window.removeEventListener('navigateToParent', handleShortcutEvents as EventListener);
+      window.removeEventListener('toggleTaskExpansion', handleShortcutEvents as EventListener);
+    };
+  }, [toggleTaskExpansion, handleNavigateToParent]);
+
   const handleDeleteTask = async (taskId: number) => {
     try {
-      // Actually delete the task using TaskContext
+      // 削除前に必要な情報を保存
+      const taskToDelete = findTaskById(tasks, taskId);
+      const currentTaskId = rootId ? parseInt(rootId) : null;
+      const isCurrentTask = currentTaskId === taskId;
+      
+      // Handle navigation immediately if it's the current task
+      if (isCurrentTask && taskToDelete) {
+        if (taskToDelete.parentId) {
+          navigate(`/tasks/${taskToDelete.parentId}`);
+        } else {
+          navigate('/tasks');
+        }
+      }
+      
+      // Delete task immediately
       await deleteTask(taskId);
       
       // Show success message
       showSuccess('タスクを削除しました');
       
-      // Handle navigation after successful deletion
-      if (displayedTasks.length === 1 && displayedTasks[0].id === taskId) {
-        // If this was the last task, navigate back
-        navigate('/tasks');
-      }
     } catch (error) {
       showError('タスクの削除に失敗しました', error instanceof Error ? error.message : '');
     }
   };
 
-  if (loading && tasks.length === 0) {
+  // 初回読み込み中のみローディング画面を表示
+  if (loading && !initialLoadCompleted.current) {
     return (
       <div className="loading-container">
         <LoadingSpinner size="lg" text="タスクを読み込み中..." />
@@ -453,6 +668,8 @@ const TasksPage: React.FC = () => {
         onDateToChange={setDateFilterTo}
         includeParentTasks={includeParentTasks}
         onIncludeParentTasksChange={setIncludeParentTasks}
+        maintainHierarchy={maintainHierarchy}
+        onMaintainHierarchyChange={setMaintainHierarchy}
         onClearFilters={handleClearFilters}
       />
 
@@ -516,30 +733,41 @@ const TasksPage: React.FC = () => {
               onEditTask={openDetailModal}
               onDeleteTask={handleDeleteTask}
               onToggleExpand={toggleTaskExpansion}
+              isDetailView={true}
             />
           </div>
         ) : displayedTasks.length === 0 ? (
           <div className="empty-state">
             <p className="empty-message">
-              {hasActiveFilters
-                ? 'フィルター条件に一致するタスクがありません'
-                : 'タスクが登録されていません'}
+              {(() => {
+                // フィルタークリア中または条件に一致しない場合のメッセージ
+                const shouldShowFilterMessage = hasActiveFilters || isClearingFilters || (currentTasks.length > 0 && displayedTasks.length === 0);
+                
+                return shouldShowFilterMessage
+                  ? 'フィルター条件に一致するタスクがありません'
+                  : 'タスクが登録されていません';
+              })()}
             </p>
-            {hasActiveFilters ? (
-              <Button
-                variant="secondary"
-                onClick={handleClearFilters}
-              >
-                フィルターをクリア
-              </Button>
-            ) : (
-              <Button
-                variant="primary"
-                onClick={() => openCreateModal()}
-              >
-                最初のタスクを作成
-              </Button>
-            )}
+            {(() => {
+              // フィルタークリア中またはフィルターがある場合はクリアボタンを表示
+              const shouldShowClearButton = hasActiveFilters || isClearingFilters || (currentTasks.length > 0 && displayedTasks.length === 0);
+              
+              return shouldShowClearButton ? (
+                <Button
+                  variant="secondary"
+                  onClick={handleClearFilters}
+                >
+                  フィルターをクリア
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  onClick={() => openCreateModal()}
+                >
+                  最初のタスクを作成
+                </Button>
+              );
+            })()}
             {rootId && displayedTasks.length === 0 && (
               <Button
                 variant="secondary"
@@ -558,19 +786,23 @@ const TasksPage: React.FC = () => {
             onEditTask={openDetailModal}
             onDeleteTask={handleDeleteTask}
             onToggleExpand={toggleTaskExpansion}
+            isDetailView={!!rootId}
           />
         )}
       </div>
 
       {/* Task Detail Modal (統一) */}
-      <TaskDetailModal
-        task={selectedTask || undefined}
-        isOpen={isDetailModalOpen}
-        onClose={closeDetailModal}
-        allTasks={tasks}
-        defaultParentId={createParentId}
-        isCreating={isCreatingTask}
-      />
+      {(stableSelectedTask || isCreatingTask) && (
+        <TaskDetailModal
+          task={currentSelectedTask || stableSelectedTask || undefined}
+          isOpen={isDetailModalOpen}
+          onClose={closeDetailModal}
+          allTasks={tasks}
+          defaultParentId={createParentId}
+          isCreating={isCreatingTask}
+          onStatusChange={() => setIsStatusChanging(true)}
+        />
+      )}
 
       {/* Task Merge Modal */}
       <TaskMergeModal

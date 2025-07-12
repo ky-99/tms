@@ -3,7 +3,7 @@
  * Centralizes all task-related types to eliminate duplication
  */
 
-export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+export type TaskStatus = 'pending' | 'in_progress' | 'completed';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type RoutineType = 'daily' | 'weekly' | 'monthly';
 
@@ -58,7 +58,10 @@ export interface LegacyTaskFields {
   routine_parent_id?: number | null;
 }
 
-export type ApiTask = BaseTask & LegacyTaskFields;
+export type ApiTask = BaseTask & LegacyTaskFields & {
+  children?: ApiTask[];
+  expanded?: boolean;
+};
 
 // Task creation payload
 export interface CreateTaskPayload {

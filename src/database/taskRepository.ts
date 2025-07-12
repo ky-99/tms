@@ -1,31 +1,118 @@
 import Database from 'better-sqlite3';
 import { getDatabase } from './init';
 import { Task, CreateTaskInput, UpdateTaskInput, Tag, Attachment, Comment } from '../types/task';
+import { WorkspaceManager } from './workspaceManager';
 
 export class TaskRepository {
-  private db: Database.Database;
+  private workspaceManager: WorkspaceManager;
 
-  constructor() {
+  constructor(workspaceManager: WorkspaceManager) {
+    this.workspaceManager = workspaceManager;
+    this.fixPositionValues(true); // 強制的にマイグレーションを実行
+  }
+
+  private getDb(): Database.Database {
+    const db = this.workspaceManager.getCurrentTaskDatabase();
+    if (!db) {
+      throw new Error('No active workspace database');
+    }
+    return db;
+  }
+
+  // 既存データのposition値を修正するマイグレーション関数
+  public fixPositionValues(force: boolean = false): void {
     try {
-      this.db = getDatabase();
-      console.log('TaskRepository: Database connection established');
+      const db = this.getDb();
+      
+      if (!force) {
+        // 既にposition値が設定されているかチェック
+        // 少なくとも1つのタスクが0以外のposition値を持っているかチェック
+        const totalTasks = db.prepare(`SELECT COUNT(*) as count FROM tasks`).get() as { count: number };
+        const tasksWithZeroPosition = db.prepare(`
+          SELECT COUNT(*) as count 
+          FROM tasks 
+          WHERE position = 0
+        `).get() as { count: number };
+        
+        // すべてのタスクのpositionが0の場合、マイグレーションが必要
+        const needsMigration = totalTasks.count > 0 && tasksWithZeroPosition.count === totalTasks.count;
+        
+        if (!needsMigration) {
+          return;
+        }
+      }
+      
+      
+      // 全てのタスクを取得し、親ごとにグループ化
+      const allTasks = db.prepare(`
+        SELECT id, parent_id, created_at 
+        FROM tasks 
+        ORDER BY parent_id, created_at
+      `).all() as { id: number, parent_id: number | null, created_at: string }[];
+      
+      // 親IDごとにタスクをグループ化
+      const tasksByParent = new Map<number | null, { id: number, created_at: string }[]>();
+      
+      for (const task of allTasks) {
+        const parentId = task.parent_id;
+        if (!tasksByParent.has(parentId)) {
+          tasksByParent.set(parentId, []);
+        }
+        tasksByParent.get(parentId)!.push({ id: task.id, created_at: task.created_at });
+      }
+      
+      // 各親グループでposition値を設定
+      const updateStmt = db.prepare('UPDATE tasks SET position = ? WHERE id = ?');
+      
+      for (const [parentId, tasks] of tasksByParent) {
+        // 作成日時順にソート
+        tasks.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        
+        // position値を設定
+        tasks.forEach((task, index) => {
+          updateStmt.run(index, task.id);
+        });
+        
+      }
+      
+      
     } catch (error) {
-      console.error('TaskRepository: Failed to get database connection:', error);
-      throw error;
     }
   }
 
   // タスクをツリー構造で取得
   getAllTasksAsTree(): Task[] {
-    const tasks = this.db.prepare(`
-      SELECT id, parent_id as parentId, title, description, status, priority,
-             due_date as dueDate, created_at as createdAt, updated_at as updatedAt,
-             completed_at as completedAt, position, expanded,
-             is_routine as isRoutine, routine_type as routineType,
-             last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
-      FROM tasks
-      ORDER BY id
-    `).all() as Task[];
+    const db = this.getDb();
+    
+    // Check if routine columns exist
+    const tableInfo = db.prepare("PRAGMA table_info(tasks)").all();
+    const columnNames = (tableInfo as any[]).map(col => col.name);
+    const hasRoutineColumns = columnNames.includes('is_routine');
+    
+    let query;
+    if (hasRoutineColumns) {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               due_date as dueDate, created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               is_routine as isRoutine, routine_type as routineType,
+               last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
+        FROM tasks
+        ORDER BY COALESCE(parent_id, -1), position, id
+      `;
+    } else {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               due_date as dueDate, created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               0 as isRoutine, NULL as routineType,
+               NULL as lastGeneratedAt, NULL as routineParentId
+        FROM tasks
+        ORDER BY COALESCE(parent_id, -1), position, id
+      `;
+    }
+    
+    const tasks = db.prepare(query).all() as Task[];
 
     // 各タスクにタグ情報を追加し、NULLを空文字列に正規化
     const tasksWithTags = tasks.map(task => ({
@@ -34,7 +121,9 @@ export class TaskRepository {
       tags: this.getTagsByTaskId(task.id)
     }));
 
-    return this.buildTree(tasksWithTags);
+    const treeStructure = this.buildTree(tasksWithTags);
+    
+    return treeStructure;
   }
 
   // 特定のタスクとその子タスクを取得
@@ -52,14 +141,35 @@ export class TaskRepository {
 
   // IDでタスクを取得
   getTaskById(id: number): Task | null {
-    const task = this.db.prepare(`
-      SELECT id, parent_id as parentId, title, description, status, priority,
-             due_date as dueDate, created_at as createdAt, updated_at as updatedAt,
-             completed_at as completedAt, position, expanded,
-             is_routine as isRoutine, routine_type as routineType,
-             last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
-      FROM tasks WHERE id = ?
-    `).get(id) as Task | undefined;
+    const db = this.getDb();
+    
+    // Check if routine columns exist
+    const tableInfo = db.prepare("PRAGMA table_info(tasks)").all();
+    const columnNames = (tableInfo as any[]).map(col => col.name);
+    const hasRoutineColumns = columnNames.includes('is_routine');
+    
+    let query;
+    if (hasRoutineColumns) {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               due_date as dueDate, created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               is_routine as isRoutine, routine_type as routineType,
+               last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
+        FROM tasks WHERE id = ?
+      `;
+    } else {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               due_date as dueDate, created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               0 as isRoutine, NULL as routineType,
+               NULL as lastGeneratedAt, NULL as routineParentId
+        FROM tasks WHERE id = ?
+      `;
+    }
+    
+    const task = db.prepare(query).get(id) as Task | undefined;
 
     // データベースのNULLを空文字列に正規化
     if (task) {
@@ -71,15 +181,37 @@ export class TaskRepository {
 
   // 親IDで子タスクを取得
   getChildrenByParentId(parentId: number): Task[] {
-    const children = this.db.prepare(`
-      SELECT id, parent_id as parentId, title, description, status, priority,
-             due_date as dueDate, created_at as createdAt, updated_at as updatedAt,
-             completed_at as completedAt, position, expanded,
-             is_routine as isRoutine, routine_type as routineType,
-             last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
-      FROM tasks WHERE parent_id = ?
-      ORDER BY id
-    `).all(parentId) as Task[];
+    const db = this.getDb();
+    
+    // Check if routine columns exist
+    const tableInfo = db.prepare("PRAGMA table_info(tasks)").all();
+    const columnNames = (tableInfo as any[]).map(col => col.name);
+    const hasRoutineColumns = columnNames.includes('is_routine');
+    
+    let query;
+    if (hasRoutineColumns) {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               due_date as dueDate, created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               is_routine as isRoutine, routine_type as routineType,
+               last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
+        FROM tasks WHERE parent_id = ?
+        ORDER BY position, id
+      `;
+    } else {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               due_date as dueDate, created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               0 as isRoutine, NULL as routineType,
+               NULL as lastGeneratedAt, NULL as routineParentId
+        FROM tasks WHERE parent_id = ?
+        ORDER BY position, id
+      `;
+    }
+    
+    const children = db.prepare(query).all(parentId) as Task[];
 
     // 再帰的に子タスクを取得し、NULLを空文字列に正規化
     return children.map(child => ({
@@ -91,29 +223,174 @@ export class TaskRepository {
 
   // タスクを作成
   createTask(input: CreateTaskInput): Task {
-    const stmt = this.db.prepare(`
-      INSERT INTO tasks (parent_id, title, description, status, priority, due_date, position, expanded, 
-                        is_routine, routine_type, routine_parent_id)
-      VALUES (@parentId, @title, @description, @status, @priority, @dueDate, @position, @expanded,
-              @isRoutine, @routineType, @routineParentId)
-    `);
+    const db = this.getDb();
+    
+    // Check if routine columns exist
+    const tableInfo = db.prepare("PRAGMA table_info(tasks)").all();
+    const columnNames = (tableInfo as any[]).map(col => col.name);
+    const hasRoutineColumns = columnNames.includes('is_routine');
+    
+    let stmt;
+    if (hasRoutineColumns) {
+      stmt = db.prepare(`
+        INSERT INTO tasks (parent_id, title, description, status, priority, due_date, position, expanded, 
+                          is_routine, routine_type, routine_parent_id)
+        VALUES (@parentId, @title, @description, @status, @priority, @dueDate, @position, @expanded,
+                @isRoutine, @routineType, @routineParentId)
+      `);
+    } else {
+      stmt = db.prepare(`
+        INSERT INTO tasks (parent_id, title, description, status, priority, due_date, position, expanded)
+        VALUES (@parentId, @title, @description, @status, @priority, @dueDate, @position, @expanded)
+      `);
+    }
 
-    const params = {
+    // もしpositionが指定されていない場合は、同じ親を持つタスクの最大位置+1を使用
+    let position = input.position;
+    if (position === undefined) {
+      let maxPositionResult: { maxPosition: number | null };
+      
+      if (input.parentId === null || input.parentId === undefined) {
+        // 親がNULLの場合
+        maxPositionResult = db.prepare(`
+          SELECT MAX(position) as maxPosition 
+          FROM tasks 
+          WHERE parent_id IS NULL
+        `).get() as { maxPosition: number | null };
+      } else {
+        // 親がある場合
+        maxPositionResult = db.prepare(`
+          SELECT MAX(position) as maxPosition 
+          FROM tasks 
+          WHERE parent_id = ?
+        `).get(input.parentId) as { maxPosition: number | null };
+      }
+      
+      position = (maxPositionResult.maxPosition || -1) + 1;
+    }
+
+    let params: any = {
       parentId: input.parentId !== undefined ? input.parentId : null,
       title: input.title,
       description: input.description === '' ? null : (input.description || null),
       status: input.status || 'pending',
       priority: input.priority || 'medium',
       dueDate: input.dueDate || null,
-      position: input.position !== undefined ? input.position : 0,
-      expanded: input.expanded !== undefined ? (input.expanded ? 1 : 0) : 0,
-      isRoutine: input.isRoutine ? 1 : 0,
-      routineType: input.routineType || null,
-      routineParentId: input.routineParentId || null
+      position: position,
+      expanded: input.expanded !== undefined ? (input.expanded ? 1 : 0) : 0
     };
+    
+    if (hasRoutineColumns) {
+      params.isRoutine = input.isRoutine ? 1 : 0;
+      params.routineType = input.routineType || null;
+      params.routineParentId = input.routineParentId || null;
+    }
 
     const result = stmt.run(params);
-    return this.getTaskById(result.lastInsertRowid as number)!;
+    const newTaskId = result.lastInsertRowid as number;
+    
+    // 新しいタスクが作成されたら、親タスクのステータスを自動更新
+    if (input.parentId) {
+      this.updateParentTaskStatuses(newTaskId);
+    }
+    
+    return this.getTaskById(newTaskId)!;
+  }
+
+  // 特定のタスクの後に新しいタスクを挿入
+  createTaskAfter(input: CreateTaskInput, afterTaskId: number): Task {
+    const afterTask = this.getTaskById(afterTaskId);
+    if (!afterTask) {
+      throw new Error('Reference task not found');
+    }
+
+
+    // 同じ親を持つタスクを確認
+    const db = this.getDb();
+    let siblingTasksQuery: any;
+    let siblingParams: any[];
+    
+    if (afterTask.parentId === null) {
+      siblingTasksQuery = db.prepare(`
+        SELECT id, title, position 
+        FROM tasks 
+        WHERE parent_id IS NULL 
+        ORDER BY position
+      `);
+      siblingParams = [];
+    } else {
+      siblingTasksQuery = db.prepare(`
+        SELECT id, title, position 
+        FROM tasks 
+        WHERE parent_id = ? 
+        ORDER BY position
+      `);
+      siblingParams = [afterTask.parentId];
+    }
+
+    const siblingTasks = siblingTasksQuery.all(...siblingParams);
+
+    // 同じ親を持つタスクの中で、参照タスクより後にあるタスクの位置を+1する
+    // まず、すべてのタスクのpositionが0かどうかチェック
+    let siblingTasksWithNonZeroPosition: any[];
+    
+    if (afterTask.parentId === null) {
+      siblingTasksWithNonZeroPosition = db.prepare(`
+        SELECT id FROM tasks 
+        WHERE parent_id IS NULL AND position > 0
+      `).all();
+    } else {
+      siblingTasksWithNonZeroPosition = db.prepare(`
+        SELECT id FROM tasks 
+        WHERE parent_id = ? AND position > 0
+      `).all(afterTask.parentId);
+    }
+    
+    // すべてのタスクのpositionが0の場合、先にマイグレーションを実行
+    if (siblingTasksWithNonZeroPosition.length === 0) {
+      this.fixPositionValues(true); // 強制実行
+      
+      // マイグレーション後、参照タスクを再取得
+      const updatedAfterTask = this.getTaskById(afterTaskId);
+      if (!updatedAfterTask) {
+        throw new Error('Reference task not found after migration');
+      }
+      afterTask.position = updatedAfterTask.position;
+    }
+    
+    let updatePositionsStmt: any;
+    let updateParams: any[];
+    
+    if (afterTask.parentId === null) {
+      // 親がNULLの場合
+      updatePositionsStmt = db.prepare(`
+        UPDATE tasks 
+        SET position = position + 1 
+        WHERE parent_id IS NULL AND position > ?
+      `);
+      updateParams = [afterTask.position];
+    } else {
+      // 親がある場合
+      updatePositionsStmt = db.prepare(`
+        UPDATE tasks 
+        SET position = position + 1 
+        WHERE parent_id = ? AND position > ?
+      `);
+      updateParams = [afterTask.parentId, afterTask.position];
+    }
+
+    const updateResult = updatePositionsStmt.run(...updateParams);
+
+    // 新しいタスクを参照タスクの次の位置に挿入
+    const newTaskInput = {
+      ...input,
+      parentId: afterTask.parentId,
+      position: afterTask.position + 1
+    };
+
+    const newTask = this.createTask(newTaskInput);
+    
+    return newTask;
   }
 
   // タスクを更新
@@ -157,117 +434,184 @@ export class TaskRepository {
       updates.push('expanded = @expanded');
       params.expanded = input.expanded ? 1 : 0;
     }
-    if (input.isRoutine !== undefined) {
+    // Check if routine columns exist before trying to update them
+    const db = this.getDb();
+    const tableInfo = db.prepare("PRAGMA table_info(tasks)").all();
+    const columnNames = (tableInfo as any[]).map(col => col.name);
+    const hasRoutineColumns = columnNames.includes('is_routine');
+    
+    if (hasRoutineColumns && input.isRoutine !== undefined) {
       updates.push('is_routine = @isRoutine');
       params.isRoutine = input.isRoutine ? 1 : 0;
     }
-    if (input.routineType !== undefined) {
+    if (hasRoutineColumns && input.routineType !== undefined) {
       updates.push('routine_type = @routineType');
       params.routineType = input.routineType;
     }
 
     if (updates.length === 0) return this.getTaskById(id);
-
-    const stmt = this.db.prepare(`
+    const stmt = db.prepare(`
       UPDATE tasks SET ${updates.join(', ')} WHERE id = @id
     `);
 
     stmt.run(params);
 
-    // ステータスが更新された場合、親タスクの自動完了/未完了をチェック
+    // ステータスが更新された場合、親タスクのステータスを自動更新
     if (input.status !== undefined) {
-      if (input.status === 'completed') {
-        this.checkAndUpdateParentCompletion(id);
-      } else {
-        this.checkAndUpdateParentIncomplete(id);
-      }
+      this.updateParentTaskStatuses(id);
     }
 
     return this.getTaskWithChildren(id);
   }
 
-  // 親タスクの自動完了をチェックして更新
-  private checkAndUpdateParentCompletion(taskId: number): void {
-    const task = this.getTaskById(taskId);
-    if (!task || !task.parentId) return;
-
-    // 親タスクの全ての子タスクを取得
-    const siblings = this.db.prepare(`
-      SELECT status FROM tasks WHERE parent_id = ?
-    `).all(task.parentId) as { status: string }[];
-
-    // 全ての子タスクが完了しているかチェック
-    const allCompleted = siblings.every(sibling => sibling.status === 'completed');
-
-    if (allCompleted) {
-      // 親タスクを完了に更新
-      const parentUpdateStmt = this.db.prepare(`
-        UPDATE tasks SET status = 'completed', completed_at = datetime('now', 'localtime') WHERE id = ?
-      `);
-      parentUpdateStmt.run(task.parentId);
-
-      // 再帰的に祖父タスクもチェック
-      this.checkAndUpdateParentCompletion(task.parentId);
+  // 親タスクのステータスを子タスクがない場合にリセット
+  private resetParentTaskStatus(parentId: number): void {
+    const db = this.getDb();
+    // 子タスクが全て削除された場合、親タスクのステータスを pending に戻す
+    db.prepare(`
+      UPDATE tasks SET status = 'pending', completed_at = NULL WHERE id = ?
+    `).run(parentId);
+    
+    // 再帰的に祖父タスクもチェック
+    const parentTask = this.getTaskById(parentId);
+    if (parentTask && parentTask.parentId) {
+      this.updateParentTaskStatuses(parentId);
     }
   }
 
-  // 親タスクの自動未完了をチェックして更新
-  private checkAndUpdateParentIncomplete(taskId: number): void {
-    const task = this.getTaskById(taskId);
-    if (!task || !task.parentId) return;
+  // 親タスクのステータスを子タスクに基づいて自動更新
+  private updateParentTaskStatuses(childTaskId: number): void {
+    const task = this.getTaskById(childTaskId);
+    if (!task || !task.parentId) {
+      return;
+    }
 
-    // 親タスクが完了状態の場合のみ処理
-    const parent = this.getTaskById(task.parentId);
-    if (!parent || parent.status !== 'completed') return;
+    const parentId = task.parentId;
+    
+    // 親タスクの情報を取得
+    const parentTask = this.getTaskById(parentId);
+    if (!parentTask) {
+      return;
+    }
+    
+    // 親タスクの全ての子タスクのステータスを取得
+    const db = this.getDb();
+    const childStatuses = db.prepare(`
+      SELECT status FROM tasks WHERE parent_id = ?
+    `).all(parentId) as { status: string }[];
 
-    // 親タスクを進行中に戻す
-    const parentUpdateStmt = this.db.prepare(`
-      UPDATE tasks SET status = 'in_progress', completed_at = NULL WHERE id = ?
-    `);
-    parentUpdateStmt.run(task.parentId);
+    const statuses = childStatuses.map(child => child.status);
+    
+    // 新しいステータスを計算
+    let newStatus: string;
+    
+    // 全て未着手の場合（最優先でチェック）
+    if (statuses.every(status => status === 'pending')) {
+      newStatus = 'pending';
+    }
+    // 全て完了している場合
+    else if (statuses.every(status => status === 'completed')) {
+      newStatus = 'completed';
+    }
+    // 1つでも進行中がある場合
+    else if (statuses.some(status => status === 'in_progress')) {
+      newStatus = 'in_progress';
+    }
+    // 1つでも完了がある場合（進行中がない場合）
+    else if (statuses.some(status => status === 'completed')) {
+      newStatus = 'in_progress';
+    }
+    // その他の場合
+    else {
+      newStatus = 'in_progress';
+    }
+
+    // 現在の親タスクのステータスと比較
+    if (parentTask.status === newStatus) {
+      return;
+    }
+
+    // 親タスクのステータスを更新
+    if (newStatus === 'completed') {
+      db.prepare(`
+        UPDATE tasks SET status = ?, completed_at = datetime('now', 'localtime') WHERE id = ?
+      `).run(newStatus, parentId);
+    } else {
+      db.prepare(`
+        UPDATE tasks SET status = ?, completed_at = NULL WHERE id = ?
+      `).run(newStatus, parentId);
+    }
 
     // 再帰的に祖父タスクもチェック
-    this.checkAndUpdateParentIncomplete(task.parentId);
+    this.updateParentTaskStatuses(parentId);
   }
 
   // タスクを削除（子タスクも自動的に削除される）
   deleteTask(id: number): boolean {
-    const stmt = this.db.prepare('DELETE FROM tasks WHERE id = ?');
+    const db = this.getDb();
+    
+    // 削除前に親タスクのIDを取得
+    const taskToDelete = this.getTaskById(id);
+    const parentId = taskToDelete?.parentId;
+    
+    const stmt = db.prepare('DELETE FROM tasks WHERE id = ?');
     const result = stmt.run(id);
+    
+    // 削除が成功し、親タスクがある場合は親タスクのステータスを自動更新
+    if (result.changes > 0 && parentId) {
+      // 親タスクのIDを使って自動更新（削除されたタスクのIDは使用不可）
+      const parentTask = this.getTaskById(parentId);
+      if (parentTask) {
+        // 親タスクの任意の子タスクを取得して updateParentTaskStatuses を呼び出す
+        const childTasks = this.getChildrenByParentId(parentId);
+        if (childTasks.length > 0) {
+          // 子タスクがある場合は、最初の子タスクのIDを使用
+          this.updateParentTaskStatuses(childTasks[0].id);
+        } else {
+          // 子タスクがない場合は、親タスクの状態を直接更新
+          this.resetParentTaskStatus(parentId);
+        }
+      }
+    }
+    
     return result.changes > 0;
   }
 
   // タグを作成（既存の場合は取得）
   createTag(name: string, color: string = '#808080', textColor: string = '#000000'): Tag {
+    const db = this.getDb();
     // まず既存のタグを検索
-    const existingTag = this.db.prepare('SELECT * FROM tags WHERE name = ?').get(name) as Tag | undefined;
+    const existingTag = db.prepare('SELECT * FROM tags WHERE name = ?').get(name) as Tag | undefined;
     
     if (existingTag) {
       return existingTag;
     }
     
     // 存在しない場合は新規作成
-    const stmt = this.db.prepare('INSERT INTO tags (name, color, text_color) VALUES (?, ?, ?)');
+    const stmt = db.prepare('INSERT INTO tags (name, color, text_color) VALUES (?, ?, ?)');
     const result = stmt.run(name, color, textColor);
     
-    return this.db.prepare('SELECT * FROM tags WHERE id = ?').get(result.lastInsertRowid) as Tag;
+    return db.prepare('SELECT * FROM tags WHERE id = ?').get(result.lastInsertRowid) as Tag;
   }
 
   // タスクにタグを追加
   addTagToTask(taskId: number, tagId: number): void {
-    const stmt = this.db.prepare('INSERT OR IGNORE INTO task_tags (task_id, tag_id) VALUES (?, ?)');
+    const db = this.getDb();
+    const stmt = db.prepare('INSERT OR IGNORE INTO task_tags (task_id, tag_id) VALUES (?, ?)');
     stmt.run(taskId, tagId);
   }
 
   // タスクからタグを削除
   removeTagFromTask(taskId: number, tagId: number): void {
-    const stmt = this.db.prepare('DELETE FROM task_tags WHERE task_id = ? AND tag_id = ?');
+    const db = this.getDb();
+    const stmt = db.prepare('DELETE FROM task_tags WHERE task_id = ? AND tag_id = ?');
     stmt.run(taskId, tagId);
   }
 
   // タスクのタグを取得
   getTagsByTaskId(taskId: number): Tag[] {
-    return this.db.prepare(`
+    const db = this.getDb();
+    return db.prepare(`
       SELECT t.* FROM tags t
       JOIN task_tags tt ON t.id = tt.tag_id
       WHERE tt.task_id = ?
@@ -276,57 +620,64 @@ export class TaskRepository {
 
   // 全タグを取得
   getAllTags(): Tag[] {
-    return this.db.prepare('SELECT * FROM tags ORDER BY name').all() as Tag[];
+    const db = this.getDb();
+    return db.prepare('SELECT * FROM tags ORDER BY name').all() as Tag[];
   }
 
   // タグを更新
   updateTag(id: number, name: string, color: string, textColor: string): Tag | null {
-    const stmt = this.db.prepare('UPDATE tags SET name = ?, color = ?, text_color = ? WHERE id = ?');
+    const db = this.getDb();
+    const stmt = db.prepare('UPDATE tags SET name = ?, color = ?, text_color = ? WHERE id = ?');
     const result = stmt.run(name, color, textColor, id);
     
     if (result.changes > 0) {
-      return this.db.prepare('SELECT * FROM tags WHERE id = ?').get(id) as Tag;
+      return db.prepare('SELECT * FROM tags WHERE id = ?').get(id) as Tag;
     }
     return null;
   }
 
   // タグを削除
   deleteTag(id: number): boolean {
+    const db = this.getDb();
     // まず関連するタスクタグを削除
-    this.db.prepare('DELETE FROM task_tags WHERE tag_id = ?').run(id);
+    db.prepare('DELETE FROM task_tags WHERE tag_id = ?').run(id);
     // タグ自体を削除
-    const stmt = this.db.prepare('DELETE FROM tags WHERE id = ?');
+    const stmt = db.prepare('DELETE FROM tags WHERE id = ?');
     const result = stmt.run(id);
     return result.changes > 0;
   }
 
   // 添付ファイルを追加
   addAttachment(taskId: number, fileName: string, filePath: string, fileSize?: number, mimeType?: string): Attachment {
-    const stmt = this.db.prepare(`
+    const db = this.getDb();
+    const stmt = db.prepare(`
       INSERT INTO attachments (task_id, file_name, file_path, file_size, mime_type)
       VALUES (?, ?, ?, ?, ?)
     `);
     const result = stmt.run(taskId, fileName, filePath, fileSize || null, mimeType || null);
     
-    return this.db.prepare('SELECT * FROM attachments WHERE id = ?').get(result.lastInsertRowid) as Attachment;
+    return db.prepare('SELECT * FROM attachments WHERE id = ?').get(result.lastInsertRowid) as Attachment;
   }
 
   // タスクの添付ファイルを取得
   getAttachmentsByTaskId(taskId: number): Attachment[] {
-    return this.db.prepare('SELECT * FROM attachments WHERE task_id = ?').all(taskId) as Attachment[];
+    const db = this.getDb();
+    return db.prepare('SELECT * FROM attachments WHERE task_id = ?').all(taskId) as Attachment[];
   }
 
   // コメントを追加
   addComment(taskId: number, content: string): Comment {
-    const stmt = this.db.prepare('INSERT INTO comments (task_id, content) VALUES (?, ?)');
+    const db = this.getDb();
+    const stmt = db.prepare('INSERT INTO comments (task_id, content) VALUES (?, ?)');
     const result = stmt.run(taskId, content);
     
-    return this.db.prepare('SELECT * FROM comments WHERE id = ?').get(result.lastInsertRowid) as Comment;
+    return db.prepare('SELECT * FROM comments WHERE id = ?').get(result.lastInsertRowid) as Comment;
   }
 
   // タスクのコメントを取得
   getCommentsByTaskId(taskId: number): Comment[] {
-    return this.db.prepare('SELECT * FROM comments WHERE task_id = ? ORDER BY created_at DESC').all(taskId) as Comment[];
+    const db = this.getDb();
+    return db.prepare('SELECT * FROM comments WHERE task_id = ? ORDER BY created_at DESC').all(taskId) as Comment[];
   }
 
   // ツリー構造を構築するヘルパー関数（最適化版）
@@ -334,35 +685,65 @@ export class TaskRepository {
     if (tasks.length === 0) return [];
 
     const taskMap = new Map<number, Task>();
-    const rootTasks: Task[] = [];
+    const childrenMap = new Map<number, Task[]>(); // 親ID -> 子タスク配列
 
-    // パフォーマンス改善: 一回のループで処理
+    // 全てのタスクをマップに追加し、親子関係を整理
     for (const task of tasks) {
       const taskWithChildren = { ...task, children: [] };
       taskMap.set(task.id, taskWithChildren);
       
       if (task.parentId === null) {
-        rootTasks.push(taskWithChildren);
+        // ルートタスクの場合は何もしない（後で処理）
+      } else {
+        // 子タスクの場合は親ID別に整理
+        if (!childrenMap.has(task.parentId)) {
+          childrenMap.set(task.parentId, []);
+        }
+        childrenMap.get(task.parentId)!.push(taskWithChildren);
       }
     }
 
-    // 親子関係の構築（rootタスク以外のみ処理）
+    // 各親の子タスクをposition順でソート
+    for (const [parentId, children] of childrenMap) {
+      children.sort((a, b) => (a.position || 0) - (b.position || 0));
+      
+      // 親タスクに子タスクを追加
+      const parent = taskMap.get(parentId);
+      if (parent) {
+        parent.children = children;
+      }
+    }
+
+    // ルートタスクを収集してposition順でソート
+    const rootTasks: Task[] = [];
     for (const task of tasks) {
-      if (task.parentId !== null) {
-        const parent = taskMap.get(task.parentId);
-        const child = taskMap.get(task.id);
-        if (parent && child) {
-          parent.children!.push(child);
+      if (task.parentId === null) {
+        const rootTask = taskMap.get(task.id);
+        if (rootTask) {
+          rootTasks.push(rootTask);
         }
       }
     }
 
+    rootTasks.sort((a, b) => (a.position || 0) - (b.position || 0));
     return rootTasks;
   }
 
   // 全てのルーティンタスクを取得
   getRoutineTasks(): Task[] {
-    const tasks = this.db.prepare(`
+    const db = this.getDb();
+    
+    // Check if routine columns exist
+    const tableInfo = db.prepare("PRAGMA table_info(tasks)").all();
+    const columnNames = (tableInfo as any[]).map(col => col.name);
+    const hasRoutineColumns = columnNames.includes('is_routine');
+    
+    if (!hasRoutineColumns) {
+      // If routine columns don't exist, return empty array
+      return [];
+    }
+    
+    const tasks = db.prepare(`
       SELECT id, parent_id as parentId, title, description, status, priority,
              due_date as dueDate, created_at as createdAt, updated_at as updatedAt,
              completed_at as completedAt, position, expanded,
@@ -380,8 +761,39 @@ export class TaskRepository {
     }));
   }
 
+  // 既存のタスクの位置を修正する（全てのタスクが位置0になっている場合に使用）
+  fixTaskPositions(): void {
+    const db = this.getDb();
+    // 全てのタスクをIDでソートして取得
+    const allTasks = db.prepare(`
+      SELECT id, parent_id as parentId
+      FROM tasks
+      ORDER BY id
+    `).all() as Array<{id: number, parentId: number | null}>;
+    
+    // 親IDごとにグループ化
+    const tasksByParent = new Map<number | null, number[]>();
+    allTasks.forEach(task => {
+      const parentId = task.parentId;
+      if (!tasksByParent.has(parentId)) {
+        tasksByParent.set(parentId, []);
+      }
+      tasksByParent.get(parentId)!.push(task.id);
+    });
+    
+    // 各親グループ内でpositionを設定
+    tasksByParent.forEach((taskIds, parentId) => {
+      taskIds.forEach((taskId, index) => {
+        db.prepare(`
+          UPDATE tasks SET position = ? WHERE id = ?
+        `).run(index, taskId);
+      });
+    });
+  }
+
   // データベースを閉じる
   close(): void {
-    this.db.close();
+    const db = this.getDb();
+    db.close();
   }
 }

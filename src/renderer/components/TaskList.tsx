@@ -9,11 +9,12 @@ interface TaskListProps {
   onAddSubTask?: (parentId: number) => void;
   onTaskClick?: (taskId: number) => void;
   onEditTask?: (task: Task) => void;
-  onDeleteTask?: (taskId: number) => void;
+  onDeleteTask?: (taskId: number) => Promise<void>;
   onToggleExpand?: (taskId: number) => void;
+  isDetailView?: boolean;
 }
 
-const TaskList: React.FC<TaskListProps> = ({ tasks, onTasksChange, onAddSubTask, onTaskClick, onEditTask, onDeleteTask, onToggleExpand }) => {
+const TaskList: React.FC<TaskListProps> = ({ tasks, onTasksChange, onAddSubTask, onTaskClick, onEditTask, onDeleteTask, onToggleExpand, isDetailView = false }) => {
   const navigate = useNavigate();
 
   const handleReturnToHome = () => {
@@ -63,6 +64,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTasksChange, onAddSubTask,
             onEditTask={onEditTask}
             onDeleteTask={onDeleteTask}
             onToggleExpand={onToggleExpand}
+            isDetailView={isDetailView}
           />
           {index < tasks.length - 1 && <div className="task-divider" />}
         </div>

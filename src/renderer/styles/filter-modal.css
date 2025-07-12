@@ -265,10 +265,6 @@ html body .filter-modal .modal-body {
   color: #059669;
 }
 
-.filter-option-card[data-status="cancelled"] {
-  background-color: #fee2e2;
-  color: #dc2626;
-}
 
 /* Priority specific colors - unselected */
 .filter-option-card[data-priority="low"] {
@@ -314,7 +310,6 @@ html body .filter-modal .modal-body {
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
-.filter-option-card.selected[data-status="cancelled"],
 .filter-option-card.selected[data-priority="urgent"] {
   border-color: #ef4444;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);

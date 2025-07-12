@@ -31,3 +31,24 @@ body {
     margin: 0;
     padding: 0;
 }
+
+/* Spinning animation for loading states */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+/* Duplicating button styles */
+.operation-btn.duplicating {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.operation-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

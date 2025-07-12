@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Task, Tag } from '../types';
 import { getStatusText, getPriorityText, getContrastColor } from '../utils';
 import { useTaskContext } from '../contexts/TaskContext';
+import { useShortcut } from '../contexts/ShortcutContext';
 import StatusPriorityModal from './StatusPriorityModal';
 import { isParentTask } from '../utils/taskUtils';
 
@@ -12,12 +13,14 @@ interface TaskItemProps {
   onAddSubTask?: (parentId: number) => void;
   onTaskClick?: (taskId: number) => void;
   onEditTask?: (task: Task) => void;
-  onDeleteTask?: (taskId: number) => void;
+  onDeleteTask?: (taskId: number) => Promise<void>;
   onToggleExpand?: (taskId: number) => void;
+  isDetailView?: boolean; // 子タスクの詳細画面として表示されている場合true
 }
 
-const TaskItem: React.FC<TaskItemProps> = ({ task, level, onTasksChange, onAddSubTask, onTaskClick, onEditTask, onDeleteTask, onToggleExpand }) => {
-  const { updateTask } = useTaskContext();
+const TaskItem: React.FC<TaskItemProps> = ({ task, level, onTasksChange, onAddSubTask, onTaskClick, onEditTask, onDeleteTask, onToggleExpand, isDetailView = false }) => {
+  const { updateTask, createTaskAfter } = useTaskContext();
+  const { setCurrentContext, setHoveredTask } = useShortcut();
   const [isClicked, setIsClicked] = useState(false);
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
@@ -27,20 +30,17 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, level, onTasksChange, onAddSu
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#8b5cf6');
   const [needsRefresh, setNeedsRefresh] = useState(false);
-  const [clickTimeout, setClickTimeout] = useState<NodeJS.Timeout | null>(null);
-  const [lastClickTime, setLastClickTime] = useState<number>(0);
   
-  // インライン編集用の状態
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [editedTitle, setEditedTitle] = useState(task.title);
-  const [optimisticTitle, setOptimisticTitle] = useState<string | null>(null);
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [isEditingPriority, setIsEditingPriority] = useState(false);
   const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
   const [isOperationMode, setIsOperationMode] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
   const statusRef = useRef<HTMLSpanElement>(null);
   const priorityRef = useRef<HTMLSpanElement>(null);
 
+  // 選択状態をホバーベースのみに変更
+  const isSelected = false; // クリック選択を完全に削除
 
   const toggleExpand = () => {
     if (onToggleExpand) {
@@ -49,109 +49,13 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, level, onTasksChange, onAddSu
   };
 
   const handleSingleClick = () => {
-    const now = Date.now();
-    const timeSinceLastClick = now - lastClickTime;
-    
-    // 既存のタイムアウトがあればクリア
-    if (clickTimeout) {
-      clearTimeout(clickTimeout);
-      setClickTimeout(null);
-    }
-    
-    // 前回のクリックから200ms以内なら、ダブルクリックとみなす
-    if (timeSinceLastClick < 200 && lastClickTime > 0) {
-      // ダブルクリックとして処理
-      handleTaskDoubleClick();
-      setLastClickTime(0); // リセット
-      return;
-    }
-    
-    // シングルクリックとして処理
-    setLastClickTime(now);
-    
-    // 子タスクがある場合のみ展開/折りたたみの遅延処理を設定
-    if (hasChildren) {
-      const timeout = setTimeout(() => {
-        // ダブルクリックが発生していない場合のみ展開/折りたたみ
-        if (lastClickTime > 0) {
-          toggleExpand();
-        }
-        setClickTimeout(null);
-        setLastClickTime(0); // リセット
-      }, 200);
-      
-      setClickTimeout(timeout);
-    } else {
-      // 子タスクがない場合は即座にダブルクリック処理
-      const timeout = setTimeout(() => {
-        if (lastClickTime > 0) {
-          handleTaskDoubleClick();
-        }
-        setClickTimeout(null);
-        setLastClickTime(0);
-      }, 200);
-      
-      setClickTimeout(timeout);
-    }
+    // タスクコンテンツ全体のクリックでは何もしない（タイトルクリックのみでナビゲーション）
   };
 
-  // タイトル編集用のハンドラー
+
+  // タイトルクリック時のタスク遷移ハンドラー
   const handleTitleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsEditingTitle(true);
-    setEditedTitle(task.title);
-  };
-
-  const handleTitleSave = async () => {
-    if (editedTitle.trim() && editedTitle !== task.title) {
-      try {
-        // 楽観的更新：即座にUIを更新
-        setOptimisticTitle(editedTitle.trim());
-        setIsEditingTitle(false);
-        
-        await updateTask(task.id, { title: editedTitle.trim() });
-        
-        // 成功時に楽観的更新をクリア
-        setOptimisticTitle(null);
-      } catch (error) {
-        console.error('Failed to update task title:', error);
-        // エラー時は楽観的更新を元に戻す
-        setOptimisticTitle(null);
-        setEditedTitle(task.title);
-        setIsEditingTitle(true);
-      }
-    } else {
-      setIsEditingTitle(false);
-    }
-  };
-
-  const handleTitleCancel = () => {
-    setEditedTitle(task.title);
-    setIsEditingTitle(false);
-  };
-
-  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleTitleSave();
-    } else if (e.key === 'Escape') {
-      handleTitleCancel();
-    }
-  };
-
-  const handleAddSubTask = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onAddSubTask) {
-      onAddSubTask(task.id);
-    }
-  };
-
-  const handleTaskDoubleClick = () => {
-    // シングルクリックのタイムアウトをキャンセル
-    if (clickTimeout) {
-      clearTimeout(clickTimeout);
-      setClickTimeout(null);
-    }
-    
     if (onTaskClick) {
       setIsClicked(true);
       setTimeout(() => setIsClicked(false), 300);
@@ -162,6 +66,15 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, level, onTasksChange, onAddSu
       }, 100);
     }
   };
+
+
+  const handleAddSubTask = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onAddSubTask) {
+      onAddSubTask(task.id);
+    }
+  };
+
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -179,7 +92,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, level, onTasksChange, onAddSu
     if (window.confirm('このタスクを削除しますか？')) {
       try {
         if (onDeleteTask) {
-          onDeleteTask(task.id);
+          await onDeleteTask(task.id);
         }
         setIsOperationMode(false);
       } catch (error) {
@@ -338,23 +251,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, level, onTasksChange, onAddSu
     }
   }, [showTagEditor]);
 
-  // クリックタイムアウトのクリーンアップ
-  React.useEffect(() => {
-    return () => {
-      if (clickTimeout) {
-        clearTimeout(clickTimeout);
-      }
-    };
-  }, [clickTimeout]);
 
-  // タスクのタイトルが外部から更新された場合に同期
-  React.useEffect(() => {
-    setEditedTitle(task.title);
-    // 楽観的更新がない場合のみ更新
-    if (optimisticTitle === null) {
-      setOptimisticTitle(null);
-    }
-  }, [task.title]);
 
   // タグエディター外クリックで閉じる
   React.useEffect(() => {
@@ -385,6 +282,20 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, level, onTasksChange, onAddSu
     }
   }, [showTagEditor]);
 
+  // ルーティンタスク切り替えショートカットイベントリスナー
+  React.useEffect(() => {
+    const handleToggleRoutineEvent = (event: CustomEvent) => {
+      if (event.detail && event.detail.task && event.detail.task.id === task.id) {
+        // イベントから最新のタスクデータを取得してhandleToggleRoutineに渡す
+        const latestTaskData = event.detail.task;
+        handleToggleRoutineWithTaskData(latestTaskData);
+      }
+    };
+
+    window.addEventListener('toggleRoutineTask', handleToggleRoutineEvent as EventListener);
+    return () => window.removeEventListener('toggleRoutineTask', handleToggleRoutineEvent as EventListener);
+  }, [task.id]);
+
   const handleEditTask = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onEditTask) {
@@ -392,13 +303,84 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, level, onTasksChange, onAddSu
     }
   };
 
-  const handleDeleteTask = (e: React.MouseEvent) => {
+  const handleDeleteTask = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onDeleteTask && confirm(`「${task.title}」を削除してもよろしいですか？`)) {
-      onDeleteTask(task.id);
+      await onDeleteTask(task.id);
     }
   };
 
+  const handleToggleRoutine = async () => {
+    const isRoutine = Boolean(task.isRoutine || task.is_routine);
+    
+    try {
+      await updateTask(task.id, { 
+        isRoutine: !isRoutine,
+        routineType: !isRoutine ? 'daily' : null
+      });
+    } catch (error) {
+      console.error('Failed to update task:', error);
+    }
+    // onTasksChange is not needed since updateTask handles state updates
+  };
+
+  const handleToggleRoutineWithTaskData = async (taskData: Task) => {
+    const isRoutine = Boolean(taskData.isRoutine || taskData.is_routine);
+    
+    try {
+      await updateTask(taskData.id, { 
+        isRoutine: !isRoutine,
+        routineType: !isRoutine ? 'daily' : null
+      });
+    } catch (error) {
+      console.error('Failed to update task with latest data:', error);
+    }
+    // onTasksChange is not needed since updateTask handles state updates
+  };
+
+  const handleDuplicate = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    // 複製中の場合は複製を禁止
+    if (isDuplicating) {
+      return;
+    }
+    
+    try {
+      setIsDuplicating(true);
+      const duplicatedTask: Partial<Task> = {
+        title: `${task.title} (コピー)`,
+        description: task.description,
+        status: 'pending',
+        priority: task.priority,
+        dueDate: task.dueDate,
+        parentId: task.parentId,
+      };
+      
+      await createTaskAfter(duplicatedTask, task.id);
+      setIsOperationMode(false);
+    } catch (error) {
+      console.error('Failed to duplicate task:', error);
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
+
+  // ホバーによる一時的な選択状態の管理
+  const handleMouseEnter = () => {
+    if (!isOperationMode) {
+      setHoveredTask(task);
+      setCurrentContext('taskSelected');
+    }
+  };
+
+  const handleMouseLeave = () => {
+    // マウスが離れたときはホバー状態を解除
+    if (!isOperationMode) {
+      setHoveredTask(null);
+      setCurrentContext('global');
+    }
+  };
 
   const hasChildren = task.children && task.children.length > 0;
   const isParentInFilter = task.isParentInFilter; // Parent task in filtered view
@@ -433,10 +415,9 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, level, onTasksChange, onAddSu
         <div className={`task-expand-container ${isLeafNode ? 'leaf-node' : ''}`}>
           <div 
             className={`task-expand ${hasChildren ? 'has-children' : ''} ${isLeafNode ? 'leaf-node' : ''} ${isParentInFilter ? 'parent-in-filter' : ''}`} 
-            onClick={isParentInFilter ? undefined : (hasChildren ? toggleExpand : undefined)}
-            onDoubleClick={isParentInFilter ? () => onTaskClick?.(task.id) : undefined}
-            title={isParentInFilter ? 'ダブルクリックでタスクページに移動' : (hasChildren ? (task.expanded ? '折りたたむ' : '展開する') : '')}
-            style={{ cursor: (hasChildren || isParentInFilter) ? 'pointer' : 'default' }}
+            onClick={hasChildren ? toggleExpand : undefined}
+            title={hasChildren ? (task.expanded ? '折りたたむ' : '展開する') : ''}
+            style={{ cursor: hasChildren ? 'pointer' : 'default' }}
           >
             {isParentInFilter ? '◎' : getExpandIcon()}
           </div>
@@ -444,41 +425,27 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, level, onTasksChange, onAddSu
         
         <div 
           className="task-content"
-          onClick={!isEditingTitle && !isEditingStatus && !isEditingPriority && !isOperationMode ? (isParentInFilter ? undefined : handleSingleClick) : undefined}
+          onClick={!isEditingStatus && !isEditingPriority && !isOperationMode ? handleSingleClick : undefined}
           onContextMenu={handleContextMenu}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           style={{ 
             cursor: 'pointer'
           }}
         >
           <div className="task-header">
             <span className="task-title">
-              {isEditingTitle ? (
-                <input
-                  type="text"
-                  value={editedTitle}
-                  onChange={(e) => setEditedTitle(e.target.value)}
-                  onBlur={(e) => {
-                    e.stopPropagation();
-                    handleTitleSave();
-                  }}
-                  onKeyDown={handleTitleKeyDown}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  autoFocus
-                  className="task-title-input"
-                />
-              ) : (
-                <span onClick={handleTitleClick} className="task-title-text">
-                  {optimisticTitle || task.title}
-                </span>
-              )}
+              <span onClick={handleTitleClick} className="task-title-text">
+                {task.title}
+              </span>
             </span>
             <span 
               ref={statusRef}
-              className={`status ${task.status} ${isParentTask(task) ? 'parent-task-status' : ''}`}
+              className={`status ${task.status} ${(isParentTask(task) || task.isParentInFilter) ? 'parent-task-status' : ''}`}
               onClick={(e) => {
                 e.stopPropagation();
-                // 親タスクの場合はステータス編集を無効にする
-                if (isParentTask(task)) {
+                // 親タスクまたはフィルタ中の親タスクの場合はステータス編集を無効にする
+                if (isParentTask(task) || task.isParentInFilter) {
                   return;
                 }
                 
@@ -491,8 +458,8 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, level, onTasksChange, onAddSu
                 }
                 setIsEditingStatus(true);
               }}
-              style={{ cursor: isParentTask(task) ? 'default' : 'pointer' }}
-              title={isParentTask(task) ? '親タスクのステータスは子タスクから自動計算されます' : undefined}
+              style={{ cursor: (isParentTask(task) || task.isParentInFilter) ? 'default' : 'pointer' }}
+              title={(isParentTask(task) || task.isParentInFilter) ? '親タスクのステータスは子タスクから自動計算されます' : undefined}
             >
               {getStatusText(task.status)}
             </span>
@@ -595,6 +562,8 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, level, onTasksChange, onAddSu
           )}
         </div>
 
+        {/* 選択インジケーターを削除（ホバーベースに移行） */}
+
         {/* 操作モード時のクイックアクション */}
         {isOperationMode && (
           <div className="task-operation-actions">
@@ -624,12 +593,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, level, onTasksChange, onAddSu
               className={`operation-btn ${(task.isRoutine || task.is_routine) ? 'routine-active' : 'routine-btn'}`}
               onClick={async (e) => {
                 e.stopPropagation();
-                const isRoutine = task.isRoutine || task.is_routine;
-                await window.taskAPI.updateTask(task.id, { 
-                  isRoutine: !isRoutine,
-                  routineType: !isRoutine ? 'daily' : null
-                });
-                onTasksChange();
+                await handleToggleRoutine();
               }}
               title={(task.isRoutine || task.is_routine) ? 'ルーティンを解除' : 'ルーティンに設定'}
             >
@@ -637,6 +601,24 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, level, onTasksChange, onAddSu
                 <path d="M12,6V9L16,5L12,1V4A8,8 0 0,0 4,12C4,13.57 4.46,15.03 5.24,16.26L6.7,14.8C6.25,13.97 6,13 6,12A6,6 0 0,1 12,6M18.76,7.74L17.3,9.2C17.74,10.04 18,11 18,12A6,6 0 0,1 12,18V15L8,19L12,23V20A8,8 0 0,0 20,12C20,10.43 19.54,8.97 18.76,7.74Z"/>
               </svg>
             </button>
+            {!isDetailView && (
+              <button
+                className={`operation-btn duplicate-btn ${isDuplicating ? 'duplicating' : ''}`}
+                onClick={handleDuplicate}
+                disabled={isDuplicating}
+                title={isDuplicating ? '複製中...' : 'タスクを複製'}
+              >
+                {isDuplicating ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="spinning">
+                    <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/>
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/>
+                  </svg>
+                )}
+              </button>
+            )}
             <button
               className="operation-btn delete-btn"
               onClick={handleQuickDelete}
@@ -704,12 +686,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, level, onTasksChange, onAddSu
             className="context-menu-item" 
             onClick={async (e) => {
               e.stopPropagation();
-              const isRoutine = task.isRoutine || task.is_routine;
-              await window.taskAPI.updateTask(task.id, { 
-                isRoutine: !isRoutine,
-                routineType: !isRoutine ? 'daily' : null
-              });
-              onTasksChange();
+              await handleToggleRoutine();
               closeContextMenu();
             }}
           >
@@ -899,7 +876,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, level, onTasksChange, onAddSu
             setIsEditingStatus(false);
             if (newStatus !== task.status) {
               try {
-                await updateTask(task.id, { status: newStatus as 'pending' | 'in_progress' | 'completed' | 'cancelled' });
+                await updateTask(task.id, { status: newStatus as 'pending' | 'in_progress' | 'completed' });
               } catch (error) {
                 console.error('Failed to update task status:', error);
                 setIsEditingStatus(true);
@@ -946,6 +923,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, level, onTasksChange, onAddSu
                 onEditTask={onEditTask}
                 onDeleteTask={onDeleteTask}
                 onToggleExpand={onToggleExpand}
+                isDetailView={isDetailView}
               />
               {index < task.children!.length - 1 && <div className="task-divider" style={{ marginLeft: `${(level + 1) * 30}px` }} />}
             </div>

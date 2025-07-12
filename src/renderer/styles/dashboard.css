@@ -7,22 +7,24 @@
 }
 
 
-.empty-state {
+.dashboard .empty-state {
     text-align: center;
     padding: 60px 20px;
     color: #6b7280;
     background: white;
-    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
     margin: 40px 0;
 }
 
-.empty-state h2 {
-    font-size: 24px;
+.dashboard .empty-state h2 {
+    font-size: 16px;
     margin-bottom: 12px;
-    color: #374151;
+    color: #6b7280;
+    font-weight: normal;
 }
 
-.empty-state p {
+.dashboard .empty-state p {
     font-size: 16px;
     margin: 0;
     line-height: 1.5;
@@ -46,7 +48,7 @@
     flex-direction: column;
     gap: 16px;
     min-height: calc(100vh - 160px);
-    padding: 0 24px 24px;
+    padding: 0 0 24px;
 }
 
 .dashboard-section {
@@ -90,24 +92,30 @@
     border-radius: 4px !important;
 }
 
-.task-card:hover {
-    background: #f9fafb;
-}
 
 .task-card.overdue {
-    border-color: #fecaca;
-    background: #fef2f2;
+    border-color: #dc2626;
+    background: #fee2e2;
 }
 
+
 .task-card.completed-today {
-    background: #d1fae5 !important;
-    border-color: #10b981 !important;
+    background: #dcfce7 !important;
+    border-color: #16a34a !important;
     opacity: 1 !important;
 }
 
+
 .task-card.completed:not(.completed-today) {
     opacity: 0.7;
+    transition: all 0.2s ease;
 }
+
+.task-card.routine-task {
+    background: #fff3e0 !important;
+    border-color: #ef6c00 !important;
+}
+
 
 .task-card.operation-mode {
     border-color: #3b82f6 !important;
@@ -116,6 +124,7 @@
     background: #eff6ff !important;
 }
 
+
 .task-operation-actions {
     position: absolute;
     top: -8px;
@@ -123,7 +132,7 @@
     display: flex;
     gap: 4px;
     background: white;
-    border-radius: 6px;
+    border-radius: 4px;
     padding: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     border: 1px solid #d1d5db;
@@ -269,5 +278,18 @@
 
 .calendar-section .calendar-view {
     border: none;
-    border-radius: 8px;
+    border-radius: 4px;
+}
+
+/* タスクツリー概要セクション */
+.tree-overview-section {
+    padding: 0;
+    overflow: hidden;
+}
+
+.tree-overview-section .task-tree-overview {
+    border: none;
+    border-radius: 0;
+    margin: 0;
+    box-shadow: none;
 }

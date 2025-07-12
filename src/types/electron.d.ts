@@ -1,6 +1,7 @@
 export interface TaskAPI {
   getAllTasks: () => Promise<any[]>;
   createTask: (taskData: any) => Promise<any>;
+  createTaskAfter: (taskData: any, afterTaskId: number) => Promise<any>;
   updateTask: (id: number, updates: any) => Promise<any>;
   deleteTask: (id: number) => Promise<boolean>;
   createTag: (name: string, color: string, textColor?: string) => Promise<any>;

@@ -24,10 +24,6 @@
     color: #388e3c;
 }
 
-.status.cancelled {
-    background-color: #ffebee;
-    color: #c62828;
-}
 
 .priority {
     font-size: 10px;
@@ -61,14 +57,64 @@
 
 /* Parent task status - visually distinct and non-interactive */
 .status.parent-task-status {
-    opacity: 0.7;
+    opacity: 0.8;
     border: 1px dashed #9ca3af;
-    background-color: #f9fafb !important;
-    color: #6b7280 !important;
+    cursor: default;
 }
 
 .status.parent-task-status::after {
     content: " (自動)";
     font-size: 8px;
     opacity: 0.6;
+}
+
+/* Parent task status with better contrast colors */
+.status.parent-task-status.pending {
+    background-color: #f1f5f9 !important;
+    color: #64748b !important;
+    border-color: #cbd5e1;
+}
+
+.status.parent-task-status.in_progress {
+    background-color: #dbeafe !important;
+    color: #2563eb !important;
+    border-color: #93c5fd;
+}
+
+.status.parent-task-status.completed {
+    background-color: #dcfce7 !important;
+    color: #16a34a !important;
+    border-color: #86efac;
+}
+
+/* Parent task priority - visually distinct and non-interactive */
+.priority.parent-task-priority {
+    opacity: 0.8;
+    border: 1px dashed #9ca3af;
+    cursor: default;
+}
+
+/* Parent task priority with better contrast colors */
+.priority.parent-task-priority.low {
+    background-color: #f8fafc !important;
+    color: #64748b !important;
+    border-color: #cbd5e1;
+}
+
+.priority.parent-task-priority.medium {
+    background-color: #eff6ff !important;
+    color: #3b82f6 !important;
+    border-color: #bae6fd;
+}
+
+.priority.parent-task-priority.high {
+    background-color: #fef3c7 !important;
+    color: #f59e0b !important;
+    border-color: #fde68a;
+}
+
+.priority.parent-task-priority.urgent {
+    background-color: #fee2e2 !important;
+    color: #dc2626 !important;
+    border-color: #fecaca;
 }

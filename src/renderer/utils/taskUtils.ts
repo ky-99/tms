@@ -28,7 +28,7 @@ export const flattenTasks = (tasks: Task[]): Task[] => {
  * Handles legacy snake_case to camelCase conversion
  */
 export const normalizeTask = (apiTask: ApiTask): Task => {
-  return {
+  const normalized = {
     ...apiTask,
     dueDate: apiTask.dueDate || apiTask.due_date,
     createdAt: apiTask.createdAt || apiTask.created_at,
@@ -39,6 +39,13 @@ export const normalizeTask = (apiTask: ApiTask): Task => {
     lastGeneratedAt: apiTask.lastGeneratedAt || (apiTask as any).last_generated_at,
     routineParentId: apiTask.routineParentId || (apiTask as any).routine_parent_id,
   };
+  
+  // Recursively normalize children if they exist
+  if (apiTask.children && apiTask.children.length > 0) {
+    normalized.children = apiTask.children.map(normalizeTask);
+  }
+  
+  return normalized;
 };
 
 /**
@@ -56,8 +63,7 @@ export const getStatusText = (status: TaskStatus): string => {
   const statusMap: Record<TaskStatus, string> = {
     'pending': '未着手',
     'in_progress': '進行中', 
-    'completed': '完了',
-    'cancelled': 'キャンセル'
+    'completed': '完了'
   };
   return statusMap[status];
 };
@@ -130,6 +136,11 @@ export const calculateParentTaskStatus = (task: Task): TaskStatus => {
   const children = task.children!;
   const statuses = children.map(child => child.status);
   
+  // 全て未着手の場合（最優先でチェック）
+  if (statuses.every(status => status === 'pending')) {
+    return 'pending';
+  }
+  
   // 全て完了している場合
   if (statuses.every(status => status === 'completed')) {
     return 'completed';
@@ -143,16 +154,6 @@ export const calculateParentTaskStatus = (task: Task): TaskStatus => {
   // 1つでも完了がある場合（進行中がない場合）
   if (statuses.some(status => status === 'completed')) {
     return 'in_progress';
-  }
-  
-  // 全て未着手の場合
-  if (statuses.every(status => status === 'pending')) {
-    return 'pending';
-  }
-  
-  // 全てキャンセルされている場合
-  if (statuses.every(status => status === 'cancelled')) {
-    return 'cancelled';
   }
   
   // その他の場合（混在状態）は進行中とする
@@ -214,7 +215,7 @@ const compareTasksByField = (
       bValue = priorityOrder[b.priority];
       break;
     case 'status':
-      const statusOrder = { 'pending': 1, 'in_progress': 2, 'completed': 3, 'cancelled': 4 };
+      const statusOrder = { 'pending': 1, 'in_progress': 2, 'completed': 3 };
       aValue = statusOrder[a.status];
       bValue = statusOrder[b.status];
       break;

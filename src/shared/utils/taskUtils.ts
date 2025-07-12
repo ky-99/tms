@@ -174,8 +174,7 @@ export const calculateTaskState = (task: Task): TaskCardState => {
 const STATUS_MAP: Record<TaskStatus, string> = {
   'pending': '未着手',
   'in_progress': '進行中',
-  'completed': '完了',
-  'cancelled': 'キャンセル'
+  'completed': '完了'
 };
 
 const PRIORITY_MAP: Record<TaskPriority, string> = {

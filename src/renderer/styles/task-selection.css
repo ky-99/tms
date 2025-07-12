@@ -1,0 +1,79 @@
+/* Task selection styles */
+
+.task-item.selected {
+  background-color: #e6f3ff !important;
+  box-shadow: inset 4px 0 0 #007acc, 0 2px 8px rgba(0, 122, 204, 0.2) !important;
+}
+
+.task-card.selected {
+  background-color: #e6f3ff !important;
+  border: 2px solid #007acc !important;
+  box-shadow: 0 4px 12px rgba(0, 122, 204, 0.3) !important;
+}
+
+.task-item.selected .task-title {
+  color: #005a9e !important;
+  font-weight: 500;
+}
+
+.task-card.selected .task-title {
+  color: #005a9e !important;
+  font-weight: 500;
+}
+
+/* Selection indicator */
+.task-selection-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  background-color: #007acc;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+
+.task-item.selected .task-selection-indicator,
+.task-card.selected .task-selection-indicator {
+  opacity: 1;
+}
+
+.task-selection-indicator::after {
+  content: '✓';
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .task-item.selected {
+    background-color: #1a365d !important;
+    box-shadow: inset 4px 0 0 #4a9eff, 0 2px 8px rgba(74, 158, 255, 0.2) !important;
+  }
+  
+  .task-card.selected {
+    background-color: #1a365d !important;
+    border-color: #4a9eff !important;
+  }
+  
+  .task-item.selected .task-title,
+  .task-card.selected .task-title {
+    color: #9cc7f0 !important;
+  }
+  
+  .task-selection-indicator {
+    background-color: #4a9eff;
+  }
+}
+
+/* Keyboard focus styles */
+.task-item:focus-within.selected,
+.task-card:focus-within.selected {
+  outline: 2px solid #007acc;
+  outline-offset: 2px;
+}
+

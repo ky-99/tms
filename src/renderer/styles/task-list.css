@@ -18,7 +18,11 @@
     gap: 5px; /* ギャップを狭めてボタンとコンテンツを近づける */
     position: relative;
     transition: all 0.2s ease;
+    border-radius: 4px;
+    margin: 2px 0;
 }
+
+
 
 .task-item:last-child {
     border-bottom: none;
@@ -212,27 +216,10 @@
 
 /* ルーティンタスクのスタイル */
 .task-item.routine-task {
-    background: linear-gradient(135deg, #fff5e6 0%, #fff9f0 100%) !important;
-    border-left: 3px solid #ff9800 !important;
+    background: #fff3e0 !important;
     position: relative;
 }
 
-.task-item.routine-task::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: repeating-linear-gradient(
-        45deg,
-        transparent,
-        transparent 10px,
-        rgba(255, 152, 0, 0.03) 10px,
-        rgba(255, 152, 0, 0.03) 20px
-    );
-    pointer-events: none;
-}
 
 .task-item.routine-task .task-header {
     position: relative;

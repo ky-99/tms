@@ -19,6 +19,8 @@
 @import './dashboard.css';
 @import './weekly-task-cards.css';
 @import './calendar-view.css';
+@import './task-tree-overview.css';
+@import './task-selection.css';
 
 /* Page layouts */
 @import './tasks-page.css';
@@ -50,5 +52,4 @@
 @import './toast.css';
 
 /* Page specific styles */
-@import './dump-page.css';
-@import './shortcuts-page.css';
+@import './workspace-page.css';

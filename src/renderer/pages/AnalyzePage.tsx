@@ -1,49 +1,98 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import CompletedTasksChart from '../components/CompletedTasksChart';
 import PriorityProgressChart from '../components/PriorityProgressChart';
 import TaskStatusPieChart from '../components/TaskStatusPieChart';
 import TagProgressChart from '../components/TagProgressChart';
 import WeeklyTaskCards from '../components/WeeklyTaskCards';
 import TaskDetailModal from '../components/TaskDetailModal';
+import { useTaskContext } from '../contexts/TaskContext';
 import { TaskWithChildren } from '../types';
 
 const AnalyzePage: React.FC = () => {
-  const [tasks, setTasks] = useState<TaskWithChildren[]>([]);
+  const { tasks: contextTasks, loading } = useTaskContext();
   const [chartData, setChartData] = useState<{ date: string; completed: number; planned: number }[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<TaskWithChildren | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [stableSelectedTask, setStableSelectedTask] = useState<TaskWithChildren | null>(null);
+  const [isStatusChanging, setIsStatusChanging] = useState(false);
+  
+  // 初回読み込み完了を追跡するためのRef
+  const initialLoadCompleted = useRef(false);
 
-  useEffect(() => {
-    loadTasks();
+  const handleTaskClick = useCallback((task: TaskWithChildren) => {
+    setSelectedTask(task);
+    setStableSelectedTask(task);
+    setIsTaskModalOpen(true);
   }, []);
 
-  const handleTaskClick = (task: TaskWithChildren) => {
-    setSelectedTask(task);
-    setIsTaskModalOpen(true);
-  };
-
-  const handleCloseTaskModal = () => {
+  const handleCloseTaskModal = useCallback(() => {
     setIsTaskModalOpen(false);
     setSelectedTask(null);
-  };
+    // モーダルが完全に閉じるまで少し待ってからstableSelectedTaskをクリア
+    setTimeout(() => {
+      setStableSelectedTask(null);
+    }, 300);
+  }, []);
 
-  const loadTasks = async () => {
-    try {
-      setLoading(true);
-      const allTasks = await window.taskAPI.getAllTasks();
-      setTasks(allTasks);
-      
-      // 完了タスクのデータを集計
-      const completedTasks = collectCompletedTasks(allTasks);
-      const aggregatedData = aggregateTasksByDate(completedTasks, allTasks);
-      setChartData(aggregatedData);
-    } catch (error) {
-      console.error('タスクの読み込みに失敗しました:', error);
-    } finally {
-      setLoading(false);
+  const updateChartData = useCallback((allTasks: TaskWithChildren[]) => {
+    // 完了タスクのデータを集計
+    const completedTasks = collectCompletedTasks(allTasks);
+    const aggregatedData = aggregateTasksByDate(completedTasks, allTasks);
+    setChartData(aggregatedData);
+  }, []);
+
+  // TaskContextのタスクが変更されたときにチャートデータを更新
+  useEffect(() => {
+    if (contextTasks.length > 0) {
+      updateChartData(contextTasks);
+      // 初回読み込み完了フラグを設定
+      if (!initialLoadCompleted.current) {
+        initialLoadCompleted.current = true;
+      }
     }
-  };
+  }, [contextTasks, updateChartData]);
+
+  // ステータス変更の検出とモーダル保護
+  useEffect(() => {
+    if (isStatusChanging) {
+      // ステータス変更中は一定時間後にフラグをリセット
+      const timer = setTimeout(() => {
+        setIsStatusChanging(false);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isStatusChanging]);
+
+  // モーダルが開いているときは、選択されたタスクの最新情報を保持
+  // stableSelectedTaskを基準にして、モーダルの安定性を保証
+  const currentSelectedTask = useMemo(() => {
+    if (!stableSelectedTask || !isTaskModalOpen) return null;
+    
+    // contextTasksから最新のタスクデータを検索
+    const findTask = (tasks: TaskWithChildren[], targetId: number): TaskWithChildren | null => {
+      for (const task of tasks) {
+        if (task.id === targetId) {
+          return task;
+        }
+        if (task.children) {
+          const found = findTask(task.children, targetId);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    
+    const foundTask = findTask(contextTasks, stableSelectedTask.id);
+    
+    // ステータス変更中は、タスクが見つからなくてもstableSelectedTaskを返す
+    // これにより、ステータス変更中の一瞬の空白期間でもモーダルが落ちない
+    if (isStatusChanging && !foundTask) {
+      return stableSelectedTask;
+    }
+    
+    // 最新のタスクが見つからない場合でも、stableSelectedTaskを返してモーダルを維持
+    return foundTask || stableSelectedTask;
+  }, [stableSelectedTask, isTaskModalOpen, contextTasks, isStatusChanging]);
 
   // 今週の期日タスクの中で完了しているもののみを収集
   const collectCompletedTasks = (taskList: TaskWithChildren[]): TaskWithChildren[] => {
@@ -255,7 +304,8 @@ const AnalyzePage: React.FC = () => {
     return result;
   };
 
-  if (loading) {
+  // 初回読み込み中のみローディング画面を表示
+  if (loading && !initialLoadCompleted.current) {
     return (
       <div className="analyze-page">
         <div className="loading">読み込み中...</div>
@@ -280,7 +330,7 @@ const AnalyzePage: React.FC = () => {
             <h2>タグ別進行数</h2>
           </div>
           <div className="chart-content">
-            <TagProgressChart tasks={tasks} />
+            <TagProgressChart tasks={contextTasks} />
           </div>
         </div>
       </div>
@@ -291,7 +341,7 @@ const AnalyzePage: React.FC = () => {
             <h2>重要度別進行度</h2>
           </div>
           <div className="chart-content">
-            <PriorityProgressChart tasks={tasks} />
+            <PriorityProgressChart tasks={contextTasks} />
           </div>
         </div>
         
@@ -300,7 +350,7 @@ const AnalyzePage: React.FC = () => {
             <h2>タスク別進行数</h2>
           </div>
           <div className="chart-content">
-            <TaskStatusPieChart tasks={tasks} />
+            <TaskStatusPieChart tasks={contextTasks} />
           </div>
         </div>
       </div>
@@ -311,18 +361,19 @@ const AnalyzePage: React.FC = () => {
             <h2>今週のタスク状況</h2>
           </div>
           <div className="chart-content">
-            <WeeklyTaskCards tasks={tasks} onTaskClick={handleTaskClick} />
+            <WeeklyTaskCards tasks={contextTasks} onTaskClick={handleTaskClick} />
           </div>
         </div>
       </div>
       
       {/* タスク詳細モーダル */}
-      {selectedTask && (
+      {stableSelectedTask && (
         <TaskDetailModal
-          task={selectedTask}
+          task={currentSelectedTask || stableSelectedTask}
           isOpen={isTaskModalOpen}
           onClose={handleCloseTaskModal}
-          allTasks={tasks}
+          allTasks={contextTasks}
+          onStatusChange={() => setIsStatusChanging(true)}
         />
       )}
     </div>

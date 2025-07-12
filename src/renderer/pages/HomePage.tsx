@@ -1,25 +1,64 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import TaskCard from '../components/TaskCard';
 import CalendarView from '../components/CalendarView';
+import TaskTreeOverview from '../components/TaskTreeOverview';
 import TaskDetailModal from '../components/TaskDetailModal';
 import { useTaskContext } from '../contexts/TaskContext';
+import { useShortcut } from '../contexts/ShortcutContext';
 import { Task } from '../types';
 
 
 const HomePage: React.FC = () => {
   const { tasks, loading, error, loadTasks } = useTaskContext();
+  const { setCurrentContext } = useShortcut();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [stableSelectedTask, setStableSelectedTask] = useState<Task | null>(null);
+  const [isStatusChanging, setIsStatusChanging] = useState(false);
+  
+  // 初回読み込み完了を追跡するためのRef
+  const initialLoadCompleted = useRef(false);
 
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
+    setStableSelectedTask(task);
     setIsTaskModalOpen(true);
   };
 
   const handleCloseTaskModal = () => {
     setIsTaskModalOpen(false);
     setSelectedTask(null);
+    setIsCreatingTask(false);
+    // モーダルが完全に閉じるまで少し待ってからstableSelectedTaskをクリア
+    setTimeout(() => {
+      setStableSelectedTask(null);
+    }, 300);
   };
+
+  const openCreateModal = () => {
+    setSelectedTask(null);
+    setStableSelectedTask(null);
+    setIsCreatingTask(true);
+    setIsTaskModalOpen(true);
+  };
+
+  // ダッシュボードのコンテキストを設定
+  useEffect(() => {
+    setCurrentContext('dashboard');
+    
+    // クリーンアップ時にグローバルに戻す
+    return () => {
+      setCurrentContext('global');
+    };
+  }, [setCurrentContext]);
+
+  // タスクが読み込まれた際に初回読み込み完了フラグを設定
+  useEffect(() => {
+    if (tasks.length > 0 && !initialLoadCompleted.current) {
+      initialLoadCompleted.current = true;
+    }
+  }, [tasks]);
 
   useEffect(() => {
     // 日付変更を検知して自動更新
@@ -61,7 +100,49 @@ const HomePage: React.FC = () => {
       cleanup();
       clearInterval(intervalId);
     };
-  }, [loadTasks]);
+  }, []); // loadTasks依存を削除して無限ループを防ぐ
+
+  // ステータス変更の検出とモーダル保護
+  useEffect(() => {
+    if (isStatusChanging) {
+      // ステータス変更中は一定時間後にフラグをリセット
+      const timer = setTimeout(() => {
+        setIsStatusChanging(false);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isStatusChanging]);
+
+  // モーダルが開いているときは、選択されたタスクの最新情報を保持
+  // stableSelectedTaskを基準にして、モーダルの安定性を保証
+  const currentSelectedTask = useMemo(() => {
+    if (!stableSelectedTask || !isTaskModalOpen) return null;
+    
+    // contextTasksから最新のタスクデータを検索
+    const findTask = (tasks: Task[], targetId: number): Task | null => {
+      for (const task of tasks) {
+        if (task.id === targetId) {
+          return task;
+        }
+        if (task.children) {
+          const found = findTask(task.children, targetId);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    
+    const foundTask = findTask(tasks, stableSelectedTask.id);
+    
+    // ステータス変更中は、タスクが見つからなくてもstableSelectedTaskを返す
+    // これにより、ステータス変更中の一瞬の空白期間でもモーダルが落ちない
+    if (isStatusChanging && !foundTask) {
+      return stableSelectedTask;
+    }
+    
+    // 最新のタスクが見つからない場合でも、stableSelectedTaskを返してモーダルを維持
+    return foundTask || stableSelectedTask;
+  }, [stableSelectedTask, isTaskModalOpen, tasks, isStatusChanging]);
 
   // メモ化された日付計算
   const todayTimestamp = useMemo(() => {
@@ -122,13 +203,8 @@ const HomePage: React.FC = () => {
     };
   }, [flatTasks, todayTimestamp]);
 
-  if (loading) {
-    return <div className="loading">ダッシュボードを読み込んでいます...</div>;
-  }
-
-
-
-  if (loading) {
+  // 初回読み込み中のみローディング画面を表示
+  if (loading && !initialLoadCompleted.current) {
     return <div className="loading">ダッシュボードを読み込んでいます...</div>;
   }
 
@@ -142,7 +218,6 @@ const HomePage: React.FC = () => {
         {tasks.length === 0 ? (
           <div className="empty-state">
             <h2>タスクが登録されていません</h2>
-            <p>新しいタスクを作成してスタートしましょう</p>
           </div>
         ) : (
           <>
@@ -151,7 +226,7 @@ const HomePage: React.FC = () => {
                 <h2 className="section-title overdue">期限切れ ({overdueTasks.length})</h2>
                 <div className="task-cards">
                   {overdueTasks.map(task => (
-                    <TaskCard key={task.id} task={task} onTaskClick={() => handleTaskClick(task)} />
+                    <TaskCard key={task.id} task={task} onTaskClick={() => handleTaskClick(task)} disableSelection={true} />
                   ))}
                 </div>
               </div>
@@ -162,7 +237,7 @@ const HomePage: React.FC = () => {
               <div className="task-cards">
                 {todayTasks.length > 0 ? (
                   todayTasks.map(task => (
-                    <TaskCard key={task.id} task={task} onTaskClick={() => handleTaskClick(task)} />
+                    <TaskCard key={task.id} task={task} onTaskClick={() => handleTaskClick(task)} disableSelection={true} />
                   ))
                 ) : (
                   <p className="no-tasks">今日のタスクはありません</p>
@@ -173,17 +248,25 @@ const HomePage: React.FC = () => {
             <div className="dashboard-section calendar-section">
               <CalendarView tasks={flatTasks} onTaskClick={handleTaskClick} />
             </div>
+
+            {/* タスクツリー概要 - 今後の開発用に一時的に非表示
+            <div className="dashboard-section tree-overview-section">
+              <TaskTreeOverview tasks={tasks} onTaskClick={handleTaskClick} />
+            </div>
+            */}
           </>
         )}
       </div>
 
       {/* タスク詳細モーダル */}
-      {selectedTask && (
+      {(stableSelectedTask || isCreatingTask) && (
         <TaskDetailModal
-          task={selectedTask}
+          task={currentSelectedTask || stableSelectedTask || undefined}
           isOpen={isTaskModalOpen}
           onClose={handleCloseTaskModal}
           allTasks={tasks}
+          isCreating={isCreatingTask}
+          onStatusChange={() => setIsStatusChanging(true)}
         />
       )}
     </div>

@@ -77,7 +77,7 @@ const NotionLikeSortModal: React.FC<NotionLikeSortModalProps> = ({
     };
   }, [isOpen, triggerRef]);
 
-  // Click outside to close
+  // Modal interaction management and click outside to close
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
@@ -86,8 +86,87 @@ const NotionLikeSortModal: React.FC<NotionLikeSortModalProps> = ({
     };
 
     if (isOpen) {
+      // Disable background scroll and interactions
+      document.body.style.overflow = 'hidden';
+      document.body.style.userSelect = 'none';
+      document.body.style.pointerEvents = 'none';
+      
+      // Re-enable pointer events for the modal
+      if (modalRef.current) {
+        modalRef.current.style.pointerEvents = 'auto';
+      }
+      
+      // Prevent keyboard scrolling
+      const preventScroll = (e: KeyboardEvent) => {
+        const scrollKeys = ['Space', 'PageUp', 'PageDown', 'End', 'Home', 'ArrowUp', 'ArrowDown'];
+        if (scrollKeys.includes(e.code)) {
+          e.preventDefault();
+        }
+      };
+      
+      // Prevent wheel scrolling
+      const preventWheel = (e: WheelEvent) => {
+        const target = e.target as HTMLElement;
+        const isInModal = modalRef.current?.contains(target);
+        
+        if (!isInModal) {
+          e.preventDefault();
+        } else {
+          // Always prevent background scroll when inside modal
+          e.preventDefault();
+          
+          // Check if the modal content can scroll and handle it manually
+          const modalContent = modalRef.current?.querySelector('.notion-sort-content') as HTMLElement;
+          if (modalContent) {
+            const isScrollable = modalContent.scrollHeight > modalContent.clientHeight;
+            
+            if (isScrollable) {
+              // Let the modal handle the scroll
+              modalContent.scrollTop += e.deltaY;
+            }
+            // If not scrollable, just prevent the scroll (don't pass to background)
+          }
+        }
+      };
+      
+      // Prevent touch scrolling
+      const preventTouch = (e: TouchEvent) => {
+        const target = e.target as HTMLElement;
+        const isInModal = modalRef.current?.contains(target);
+        
+        if (!isInModal) {
+          e.preventDefault();
+        } else {
+          // Check if the modal content can scroll
+          const modalContent = modalRef.current?.querySelector('.notion-sort-content') as HTMLElement;
+          if (modalContent) {
+            const isScrollable = modalContent.scrollHeight > modalContent.clientHeight;
+            
+            if (!isScrollable) {
+              // If modal is not scrollable, prevent touch scroll
+              e.preventDefault();
+            }
+            // If scrollable, let the modal handle it naturally
+          }
+        }
+      };
+      
       document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', preventScroll);
+      document.addEventListener('wheel', preventWheel, { passive: false });
+      document.addEventListener('touchmove', preventTouch, { passive: false });
+      
+      return () => {
+        // Restore background interactions
+        document.body.style.overflow = '';
+        document.body.style.userSelect = '';
+        document.body.style.pointerEvents = '';
+        
+        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('keydown', preventScroll);
+        document.removeEventListener('wheel', preventWheel);
+        document.removeEventListener('touchmove', preventTouch);
+      };
     }
   }, [isOpen, onClose]);
 
@@ -160,16 +239,34 @@ const NotionLikeSortModal: React.FC<NotionLikeSortModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div
-      ref={modalRef}
-      className="notion-sort-modal"
-      style={{
-        position: 'fixed',
-        top: position.top,
-        left: position.left,
-        zIndex: 1000,
-      }}
-    >
+    <>
+      {/* Background overlay to block interactions */}
+      {isOpen && (
+        <div
+          className="notion-sort-overlay"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 999,
+            backgroundColor: 'transparent',
+            cursor: 'default',
+          }}
+        />
+      )}
+      
+      <div
+        ref={modalRef}
+        className="notion-sort-modal"
+        style={{
+          position: 'fixed',
+          top: position.top,
+          left: position.left,
+          zIndex: 1000,
+        }}
+      >
       <div className="notion-sort-content">
         {/* Header */}
         <div className="notion-sort-header">
@@ -218,6 +315,7 @@ const NotionLikeSortModal: React.FC<NotionLikeSortModalProps> = ({
         </div>
       </div>
     </div>
+    </>
   );
 };
 

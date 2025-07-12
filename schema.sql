@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     position INTEGER NOT NULL DEFAULT 0,
     expanded BOOLEAN DEFAULT 1,
     FOREIGN KEY (parent_id) REFERENCES tasks(id) ON DELETE CASCADE,
-    CHECK (status IN ('pending', 'in_progress', 'completed', 'cancelled')),
+    CHECK (status IN ('pending', 'in_progress', 'completed')),
     CHECK (priority IN ('low', 'medium', 'high', 'urgent'))
 );
 

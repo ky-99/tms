@@ -20,6 +20,8 @@ interface NotionLikeFilterModalProps {
   onDateToChange: (date: string) => void;
   includeParentTasks: boolean;
   onIncludeParentTasksChange: (include: boolean) => void;
+  maintainHierarchy: boolean;
+  onMaintainHierarchyChange: (maintain: boolean) => void;
   onClearFilters: () => void;
 }
 
@@ -40,6 +42,8 @@ const NotionLikeFilterModal: React.FC<NotionLikeFilterModalProps> = ({
   onDateToChange,
   includeParentTasks,
   onIncludeParentTasksChange,
+  maintainHierarchy,
+  onMaintainHierarchyChange,
   onClearFilters,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
@@ -56,7 +60,6 @@ const NotionLikeFilterModal: React.FC<NotionLikeFilterModalProps> = ({
     { value: 'pending' as TaskStatus, label: '未着手', color: '#6b7280' },
     { value: 'in_progress' as TaskStatus, label: '進行中', color: '#3b82f6' },
     { value: 'completed' as TaskStatus, label: '完了', color: '#10b981' },
-    { value: 'cancelled' as TaskStatus, label: 'キャンセル', color: '#ef4444' },
   ];
 
   const priorityOptions = [
@@ -78,7 +81,7 @@ const NotionLikeFilterModal: React.FC<NotionLikeFilterModalProps> = ({
       const scrollX = window.scrollX || 0;
       const scrollY = window.scrollY || 0;
 
-      const modalWidth = 280;
+      const modalWidth = 460;
       const modalHeight = 500;
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
@@ -225,6 +228,7 @@ const NotionLikeFilterModal: React.FC<NotionLikeFilterModalProps> = ({
     onTagChange(newTagIds);
   };
 
+
   // Toggle section expansion
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({
@@ -245,7 +249,7 @@ const NotionLikeFilterModal: React.FC<NotionLikeFilterModalProps> = ({
       case 'dates':
         return (dateFilterFrom || dateFilterTo) ? 1 : 0;
       case 'options':
-        return includeParentTasks ? 0 : 1;
+        return (includeParentTasks ? 0 : 1) + (maintainHierarchy ? 1 : 0);
       default:
         return 0;
     }
@@ -297,7 +301,8 @@ const NotionLikeFilterModal: React.FC<NotionLikeFilterModalProps> = ({
               selectedTagIds.length === 0 &&
               !dateFilterFrom &&
               !dateFilterTo &&
-              includeParentTasks === true
+              includeParentTasks === true &&
+              maintainHierarchy === false
             }
           >
             クリア
@@ -447,6 +452,7 @@ const NotionLikeFilterModal: React.FC<NotionLikeFilterModalProps> = ({
           </div>
         )}
 
+
         {/* Date Filter */}
         <div className="notion-filter-section">
           <button
@@ -519,6 +525,20 @@ const NotionLikeFilterModal: React.FC<NotionLikeFilterModalProps> = ({
                     <div className="notion-filter-toggle-thumb"></div>
                   </div>
                 </button>
+              </div>
+              <div className="notion-filter-toggle-option">
+                <span className="notion-filter-toggle-label">階層構造を維持</span>
+                <button
+                  className={`notion-filter-toggle ${maintainHierarchy ? 'active' : ''}`}
+                  onClick={() => onMaintainHierarchyChange(!maintainHierarchy)}
+                >
+                  <div className="notion-filter-toggle-slider">
+                    <div className="notion-filter-toggle-thumb"></div>
+                  </div>
+                </button>
+              </div>
+              <div className="notion-filter-option-description">
+                階層構造を維持すると、条件に一致する子タスクがある場合に親タスクも含めて表示されます
               </div>
             </div>
           )}

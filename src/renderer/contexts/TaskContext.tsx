@@ -3,10 +3,11 @@
  * Centralizes task data and operations across the application
  */
 
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, ReactNode } from 'react';
 import { Task, Tag } from '../types';
 import { taskAPI } from '../services';
 import { calculateParentTaskStatus, isParentTask } from '../utils/taskUtils';
+import { workspaceService } from '../services/workspaceService';
 
 // Action types
 type TaskAction =
@@ -34,6 +35,7 @@ interface TaskContextType extends TaskState {
   // Task operations
   loadTasks: () => Promise<void>;
   createTask: (taskData: Partial<Task>) => Promise<Task>;
+  createTaskAfter: (taskData: Partial<Task>, afterTaskId: number) => Promise<Task>;
   updateTask: (id: number, updates: Partial<Task>) => Promise<Task>;
   deleteTask: (id: number) => Promise<void>;
   
@@ -137,20 +139,34 @@ export const TaskProvider: React.FC<TaskProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(taskReducer, initialState);
 
   // Task operations (内部用)
-  const loadTasksInternal = async (skipUpdate: boolean = false) => {
+  const loadTasksInternal = useCallback(async (skipUpdate: boolean = false, showLoading: boolean = true) => {
+    try {
+      if (showLoading) {
+        dispatch({ type: 'SET_LOADING', payload: true });
+      }
+      const tasks = await taskAPI.loadTasks();
+      
+      // 親タスクのステータス自動更新は現在データベースレベルで処理されているため、
+      // ここでの再計算は無効化（無限ループを防ぐため）
+      dispatch({ type: 'SET_TASKS', payload: tasks });
+    } catch (error) {
+      dispatch({ 
+        type: 'SET_ERROR', 
+        payload: error instanceof Error ? error.message : 'タスクの読み込みに失敗しました' 
+      });
+    } finally {
+      if (showLoading) {
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
+    }
+  }, []); // loadTasksInternalをuseCallbackでラップ
+
+  // Task operations (公開用)
+  const loadTasks = useCallback(async () => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       const tasks = await taskAPI.loadTasks();
-      
-      // 初回読み込み時のみ親タスクのステータスを再計算
-      if (!skipUpdate) {
-        await updateAllParentTaskStatuses(tasks);
-        // 更新後のタスクを再読み込み
-        const updatedTasks = await taskAPI.loadTasks();
-        dispatch({ type: 'SET_TASKS', payload: updatedTasks });
-      } else {
-        dispatch({ type: 'SET_TASKS', payload: tasks });
-      }
+      dispatch({ type: 'SET_TASKS', payload: tasks });
     } catch (error) {
       dispatch({ 
         type: 'SET_ERROR', 
@@ -159,19 +175,15 @@ export const TaskProvider: React.FC<TaskProviderProps> = ({ children }) => {
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  };
+  }, []); // 依存なしでシンプルに
 
-  // Task operations (公開用)
-  const loadTasks = async () => {
-    await loadTasksInternal(false);
-  };
-
-  const createTask = async (taskData: Partial<Task>): Promise<Task> => {
+  const createTask = useCallback(async (taskData: Partial<Task>): Promise<Task> => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       const newTask = await taskAPI.createTask(taskData);
-      // Reload all tasks to ensure proper parent-child relationships and tree structure
-      await loadTasks();
+      // 親タスクの自動更新を反映するため全体再読み込み
+      const tasks = await taskAPI.loadTasks();
+      dispatch({ type: 'SET_TASKS', payload: tasks });
       return newTask;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'タスクの作成に失敗しました';
@@ -180,24 +192,36 @@ export const TaskProvider: React.FC<TaskProviderProps> = ({ children }) => {
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  };
+  }, []);
 
-  const updateTask = async (id: number, updates: Partial<Task>): Promise<Task> => {
+  const createTaskAfter = useCallback(async (taskData: Partial<Task>, afterTaskId: number): Promise<Task> => {
+    try {
+      // 複製などの短時間操作ではローディング状態を表示しない（ちらつき防止）
+      const newTask = await taskAPI.createTaskAfter(taskData, afterTaskId);
+      // 位置調整のため全タスクを再読み込み（無限ループを避けるため直接実装）
+      const tasks = await taskAPI.loadTasks();
+      dispatch({ type: 'SET_TASKS', payload: tasks });
+      return newTask;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'タスクの作成に失敗しました';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      throw error;
+    }
+  }, []); // 依存なしでシンプルに
+
+  const updateTask = useCallback(async (id: number, updates: Partial<Task>): Promise<Task> => {
     try {
       // インライン編集の場合はローディング状態を表示しない（ちらつき防止）
       const updatedTask = await taskAPI.updateTask(id, updates);
       
-      // 期限が変更された場合は、全タスクを再読み込みして並び順を更新
-      if ('dueDate' in updates || 'due_date' in updates) {
-        await loadTasks();
+      // 重要な変更（期限、ステータス、ルーティン）の場合は全体再読み込みが必要
+      if ('dueDate' in updates || 'due_date' in updates || 'status' in updates || 'isRoutine' in updates) {
+        // 親タスクの自動更新や並び順の変更を反映するため全体再読み込み
+        const tasks = await taskAPI.loadTasks();
+        dispatch({ type: 'SET_TASKS', payload: tasks });
       } else {
-        // 期限以外の変更は即座にローカル状態を更新
+        // その他の変更（タイトル、説明など）は即座にローカル状態を更新
         dispatch({ type: 'UPDATE_TASK', payload: updatedTask });
-        
-        // ステータスが変更された場合、親タスクのステータスも自動更新
-        if ('status' in updates) {
-          await updateParentTaskStatuses(id, state.tasks);
-        }
       }
       
       return updatedTask;
@@ -206,56 +230,21 @@ export const TaskProvider: React.FC<TaskProviderProps> = ({ children }) => {
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
       throw error;
     }
-  };
+  }, []);
 
-  // 親タスクのステータスを自動更新する関数
-  const updateParentTaskStatuses = async (childTaskId: number, tasks: Task[]): Promise<void> => {
-    const findAndUpdateParents = async (taskList: Task[], targetId: number): Promise<Task | null> => {
-      for (const task of taskList) {
-        if (task.children) {
-          // 直接の子タスクかチェック
-          if (task.children.some(child => child.id === targetId)) {
-            // 親タスクのステータスを再計算
-            const newStatus = calculateParentTaskStatus(task);
-            if (newStatus !== task.status) {
-              try {
-                await taskAPI.updateTask(task.id, { status: newStatus });
-                // さらに上位の親タスクもチェック
-                await findAndUpdateParents(tasks, task.id);
-              } catch (error) {
-                console.error('Failed to update parent task status:', error);
-              }
-            }
-            return task;
-          }
-          
-          // 再帰的に子タスクをチェック
-          const found = await findAndUpdateParents(task.children, targetId);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
-
-    await findAndUpdateParents(tasks, childTaskId);
-    // 親タスクの更新後、全タスクを再読み込み（skipUpdate=trueで無限ループを防ぐ）
-    await loadTasksInternal(true);
-  };
+  // 注意: 親タスクのステータス自動更新は現在データベースレベルで処理されています
+  // この関数は非推奨となり、将来的に削除予定です
 
   // すべての親タスクのステータスを再計算する関数
   const updateAllParentTaskStatuses = async (tasks: Task[]): Promise<void> => {
-    console.log('Updating all parent task statuses...');
-    
     const updateTaskStatuses = async (taskList: Task[]): Promise<void> => {
       for (const task of taskList) {
         if (isParentTask(task)) {
           // 親タスクのステータスを再計算
           const newStatus = calculateParentTaskStatus(task);
-          console.log(`Parent task "${task.title}" (ID: ${task.id}): current status = ${task.status}, calculated status = ${newStatus}`);
           
           if (newStatus !== task.status) {
             try {
-              console.log(`Updating parent task "${task.title}" status from ${task.status} to ${newStatus}`);
               await taskAPI.updateTask(task.id, { status: newStatus });
             } catch (error) {
               console.error('Failed to update parent task status:', error);
@@ -271,26 +260,24 @@ export const TaskProvider: React.FC<TaskProviderProps> = ({ children }) => {
     };
 
     await updateTaskStatuses(tasks);
-    console.log('Finished updating parent task statuses');
   };
 
-  const deleteTask = async (id: number): Promise<void> => {
+  const deleteTask = useCallback(async (id: number): Promise<void> => {
     try {
-      dispatch({ type: 'SET_LOADING', payload: true });
+      // 削除処理ではローディング状態を表示しない（ナビゲーション時のちらつき防止）
       await taskAPI.deleteTask(id);
-      // Reload all tasks to ensure proper tree structure after cascade deletion
-      await loadTasks();
+      // カスケード削除後のツリー構造を確保するため全タスクを再読み込み（無限ループを避けるため直接実装）
+      const tasks = await taskAPI.loadTasks();
+      dispatch({ type: 'SET_TASKS', payload: tasks });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'タスクの削除に失敗しました';
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
       throw error;
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
     }
-  };
+  }, []); // 依存なしでシンプルに
 
   // Tag operations
-  const loadTags = async () => {
+  const loadTags = useCallback(async () => {
     try {
       const tags = await window.taskAPI.getAllTags();
       dispatch({ type: 'SET_TAGS', payload: tags });
@@ -298,7 +285,7 @@ export const TaskProvider: React.FC<TaskProviderProps> = ({ children }) => {
       console.error('Failed to load tags:', error);
       // Don't set error for tags as it's not critical
     }
-  };
+  }, []);
 
   // UI state operations
   const toggleTaskExpansion = (taskId: number) => {
@@ -316,14 +303,54 @@ export const TaskProvider: React.FC<TaskProviderProps> = ({ children }) => {
 
   // Load initial data
   useEffect(() => {
-    loadTasks();
-    loadTags();
-  }, []);
+    // 関数を直接useEffect内部で呼び出して依存関係の問題を回避
+    const initializeData = async () => {
+      try {
+        dispatch({ type: 'SET_LOADING', payload: true });
+        const tasks = await taskAPI.loadTasks();
+        dispatch({ type: 'SET_TASKS', payload: tasks });
+        
+        const tags = await window.taskAPI.getAllTags();
+        dispatch({ type: 'SET_TAGS', payload: tags });
+      } catch (error) {
+        dispatch({ 
+          type: 'SET_ERROR', 
+          payload: error instanceof Error ? error.message : 'データの読み込みに失敗しました' 
+        });
+      } finally {
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
+    };
+    
+    initializeData();
+    
+    // WorkSpace切り替え時の自動更新を監視（ローディング表示なし）
+    const handleWorkspaceChange = async () => {
+      try {
+        // ワークスペース切り替え時はローディング表示せずにサイレント更新
+        const tasks = await taskAPI.loadTasks();
+        dispatch({ type: 'SET_TASKS', payload: tasks });
+        
+        const tags = await window.taskAPI.getAllTags();
+        dispatch({ type: 'SET_TAGS', payload: tags });
+      } catch (error) {
+        dispatch({ 
+          type: 'SET_ERROR', 
+          payload: error instanceof Error ? error.message : 'データの読み込みに失敗しました' 
+        });
+      }
+    };
+    
+    const cleanup = workspaceService.onWorkspaceChanged(handleWorkspaceChange);
+    
+    return cleanup;
+  }, []); // 依存配列を空にして初回のみ実行
 
   const contextValue: TaskContextType = {
     ...state,
     loadTasks,
     createTask,
+    createTaskAfter,
     updateTask,
     deleteTask,
     loadTags,

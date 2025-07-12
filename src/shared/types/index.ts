@@ -9,7 +9,7 @@
  */
 
 // ===== Core Types =====
-export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+export type TaskStatus = 'pending' | 'in_progress' | 'completed';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type RoutineType = 'daily' | 'weekly' | 'monthly';
 

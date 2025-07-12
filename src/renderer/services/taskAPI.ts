@@ -68,6 +68,33 @@ class TaskAPIService {
   }
 
   /**
+   * Creates a new task after a specific task
+   */
+  async createTaskAfter(taskData: Partial<Task>, afterTaskId: number): Promise<Task> {
+    try {
+      const createData = {
+        title: taskData.title || '',
+        description: taskData.description || '',
+        status: taskData.status || 'pending',
+        priority: taskData.priority || 'medium',
+        dueDate: taskData.dueDate || undefined,
+        parentId: taskData.parentId || undefined,
+        tagIds: taskData.tagIds || [],
+        isRoutine: taskData.isRoutine || false,
+        routineType: taskData.isRoutine ? 'daily' : null
+      };
+      
+      // Use the real IPC communication for positioned task creation
+      const newTask = await this.api.createTaskAfter(createData, afterTaskId);
+      
+      return normalizeTask(newTask);
+    } catch (error) {
+      console.error('Failed to create task after:', error);
+      throw new Error('タスクの作成に失敗しました');
+    }
+  }
+
+  /**
    * Updates an existing task
    */
   async updateTask(id: number, updates: Partial<Task>): Promise<Task> {

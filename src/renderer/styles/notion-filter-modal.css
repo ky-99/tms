@@ -282,6 +282,18 @@
   transform: translateX(18px);
 }
 
+/* Option Description */
+.notion-filter-option-description {
+  padding: 8px 12px;
+  font-size: 11px;
+  color: #6b7280;
+  line-height: 1.4;
+  background-color: #f9fafb;
+  border-radius: 4px;
+  margin-top: 8px;
+  border-left: 3px solid #e5e7eb;
+}
+
 /* Custom scrollbar */
 .notion-filter-content::-webkit-scrollbar {
   width: 6px;

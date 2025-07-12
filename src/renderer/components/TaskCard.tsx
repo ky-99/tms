@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTaskContext } from '../contexts/TaskContext';
+import { useShortcut } from '../contexts/ShortcutContext';
 import { Task } from '../types';
 import StatusPriorityModal from './StatusPriorityModal';
 import { isParentTask } from '../utils/taskUtils';
@@ -8,11 +9,14 @@ import { isParentTask } from '../utils/taskUtils';
 interface TaskCardProps {
   task: Task;
   onTaskClick?: () => void;
+  disableSelection?: boolean;
+  isDetailView?: boolean; // 子タスクの詳細画面として表示されている場合true
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskClick }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskClick, disableSelection = false, isDetailView = false }) => {
   const navigate = useNavigate();
-  const { updateTask } = useTaskContext();
+  const { updateTask, createTaskAfter } = useTaskContext();
+  const { setCurrentContext, setHoveredTask } = useShortcut();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(task.title);
   const [optimisticTitle, setOptimisticTitle] = useState<string | null>(null);
@@ -20,8 +24,12 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskClick }) => {
   const [isEditingPriority, setIsEditingPriority] = useState(false);
   const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
   const [isOperationMode, setIsOperationMode] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
   const statusRef = useRef<HTMLSpanElement>(null);
   const priorityRef = useRef<HTMLSpanElement>(null);
+  
+  // 選択状態をホバーベースのみに変更
+  const isSelected = false; // クリック選択を完全に削除
   
   // タスクのタイトルが外部から更新された場合に同期
   useEffect(() => {
@@ -33,13 +41,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskClick }) => {
   }, [task.title]);
 
   const handleCardClick = () => {
-    if (!isEditingTitle && !isEditingStatus && !isEditingPriority && !isOperationMode) {
-      if (onTaskClick) {
-        onTaskClick();
-      } else {
-        navigate(`/tasks/${task.id}`);
-      }
-    }
+    // カード全体のクリックでは何もしない（タイトルクリックのみでナビゲーション）
   };
 
   const handleRightClick = (e: React.MouseEvent) => {
@@ -91,6 +93,50 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskClick }) => {
     }
   };
 
+  const handleDuplicate = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    // 複製中の場合は複製を禁止
+    if (isDuplicating) {
+      return;
+    }
+    
+    try {
+      setIsDuplicating(true);
+      const duplicatedTask: Partial<Task> = {
+        title: `${task.title} (コピー)`,
+        description: task.description,
+        status: 'pending',
+        priority: task.priority,
+        dueDate: task.dueDate,
+        parentId: task.parentId,
+      };
+      
+      await createTaskAfter(duplicatedTask, task.id);
+      setIsOperationMode(false);
+    } catch (error) {
+      console.error('Failed to duplicate task:', error);
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
+
+  // ホバーによる一時的な選択状態の管理
+  const handleMouseEnter = () => {
+    if (!disableSelection && !isOperationMode) {
+      setHoveredTask(task);
+      setCurrentContext('taskSelected');
+    }
+  };
+
+  const handleMouseLeave = () => {
+    // マウスが離れたときはホバー状態を解除
+    if (!disableSelection && !isOperationMode) {
+      setHoveredTask(null);
+      setCurrentContext('global');
+    }
+  };
+
   // 操作モード外クリックで終了
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -109,6 +155,19 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskClick }) => {
   }, [isOperationMode]);
 
   const handleTitleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    // 編集モードでない場合はナビゲーション
+    if (!isEditingTitle && !isEditingStatus && !isEditingPriority && !isOperationMode) {
+      if (onTaskClick) {
+        onTaskClick();
+      } else {
+        navigate(`/tasks/${task.id}`);
+      }
+    }
+  };
+
+  const handleTitleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsEditingTitle(true);
     setEditedTitle(task.title);
@@ -152,8 +211,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskClick }) => {
 
   const handleStatusClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // 親タスクの場合はステータス編集を無効にする
-    if (isParentTask(task)) {
+    // 親タスクまたはフィルタ中の親タスクの場合はステータス編集を無効にする
+    if (isParentTask(task) || task.isParentInFilter) {
       return;
     }
     
@@ -173,7 +232,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskClick }) => {
     
     if (newStatus !== task.status) {
       try {
-        await updateTask(task.id, { status: newStatus as 'pending' | 'in_progress' | 'completed' | 'cancelled' });
+        await updateTask(task.id, { status: newStatus as 'pending' | 'in_progress' | 'completed' });
       } catch (error) {
         console.error('Failed to update task status:', error);
         // エラー時は編集状態に戻る
@@ -269,7 +328,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskClick }) => {
   const { className, style } = useMemo(() => {
     const { isRoutine, isCompleted, isOverdue } = taskState;
     
-    const cls = `task-card ${isOverdue ? 'overdue' : ''} ${!isRoutine && isCompleted ? 'completed completed-today' : ''} ${isOperationMode ? 'operation-mode' : ''} ${isRoutine ? 'routine-task' : ''}`;
+    const cls = `task-card ${isOverdue ? 'overdue' : ''} ${!isRoutine && isCompleted ? 'completed completed-today' : ''} ${isOperationMode ? 'operation-mode' : ''} ${isRoutine ? 'routine-task' : ''} ${isSelected ? 'selected' : ''}`;
     
     const sty = {
       cursor: 'pointer' as const,
@@ -285,13 +344,15 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskClick }) => {
     };
 
     return { className: cls, style: sty };
-  }, [taskState, isOperationMode]);
+  }, [taskState, isOperationMode, isSelected]);
 
   return (
     <div 
       className={className}
       onClick={handleCardClick}
       onContextMenu={handleRightClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       style={style}
     >
       <div className="task-card-header">
@@ -325,7 +386,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskClick }) => {
               className="task-title-input"
             />
           ) : (
-            <span onClick={handleTitleClick} className="task-title-text">
+            <span 
+              onClick={handleTitleClick} 
+              onDoubleClick={handleTitleEditClick}
+              className="task-title-text"
+            >
               {optimisticTitle || task.title}
             </span>
           )}
@@ -333,10 +398,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskClick }) => {
         <div className="task-card-badges">
           <span 
             ref={statusRef}
-            className={`status ${task.status} ${isParentTask(task) ? 'parent-task-status' : ''}`}
+            className={`status ${task.status} ${(isParentTask(task) || task.isParentInFilter) ? 'parent-task-status' : ''}`}
             onClick={handleStatusClick}
-            style={{ cursor: isParentTask(task) ? 'default' : 'pointer' }}
-            title={isParentTask(task) ? '親タスクのステータスは子タスクから自動計算されます' : undefined}
+            style={{ cursor: (isParentTask(task) || task.isParentInFilter) ? 'default' : 'pointer' }}
+            title={(isParentTask(task) || task.isParentInFilter) ? '親タスクのステータスは子タスクから自動計算されます' : undefined}
           >
             {taskState.statusText}
           </span>
@@ -362,6 +427,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskClick }) => {
         )}
       </div>
 
+      {/* 選択インジケーター */}
+      {isSelected && (
+        <div className="task-selection-indicator" />
+      )}
+
       {/* 操作モード時のクイックアクション */}
       {isOperationMode && (
         <div className="task-operation-actions">
@@ -369,7 +439,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskClick }) => {
             className="operation-btn edit-btn"
             onClick={(e) => {
               e.stopPropagation();
-              handleTitleClick(e);
+              handleTitleEditClick(e);
               setIsOperationMode(false);
             }}
             title="タスクを編集"
@@ -396,6 +466,24 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskClick }) => {
               <path d="M12,6V9L16,5L12,1V4A8,8 0 0,0 4,12C4,13.57 4.46,15.03 5.24,16.26L6.7,14.8C6.25,13.97 6,13 6,12A6,6 0 0,1 12,6M18.76,7.74L17.3,9.2C17.74,10.04 18,11 18,12A6,6 0 0,1 12,18V15L8,19L12,23V20A8,8 0 0,0 20,12C20,10.43 19.54,8.97 18.76,7.74Z"/>
             </svg>
           </button>
+          {!isDetailView && (
+            <button
+              className={`operation-btn duplicate-btn ${isDuplicating ? 'duplicating' : ''}`}
+              onClick={handleDuplicate}
+              disabled={isDuplicating}
+              title={isDuplicating ? '複製中...' : 'タスクを複製'}
+            >
+              {isDuplicating ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="spinning">
+                  <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/>
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/>
+                </svg>
+              )}
+            </button>
+          )}
           <button
             className="operation-btn delete-btn"
             onClick={handleQuickDelete}

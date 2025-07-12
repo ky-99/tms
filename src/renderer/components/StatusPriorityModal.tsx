@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useShortcut } from '../contexts/ShortcutContext';
 import '../styles/status-priority-modal.css';
 
 interface StatusPriorityModalProps {
@@ -16,11 +17,12 @@ const StatusPriorityModal: React.FC<StatusPriorityModalProps> = ({
   onClose,
   position
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const { setCurrentContext } = useShortcut();
   const statusOptions = [
     { value: 'pending', label: '未着手' },
     { value: 'in_progress', label: '進行中' },
-    { value: 'completed', label: '完了' },
-    { value: 'cancelled', label: 'キャンセル' }
+    { value: 'completed', label: '完了' }
   ];
 
   const priorityOptions = [
@@ -43,9 +45,75 @@ const StatusPriorityModal: React.FC<StatusPriorityModalProps> = ({
     }
   };
 
+  // モーダルのオープン時の処理
+  useEffect(() => {
+    setCurrentContext('modalOpen');
+    
+    return () => {
+      setCurrentContext('global');
+    };
+  }, [setCurrentContext]);
+
+  // 外部操作ブロックとクリックアウトサイド処理
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    // 背景操作を無効化
+    document.body.style.overflow = 'hidden';
+    document.body.style.userSelect = 'none';
+    document.body.style.pointerEvents = 'none';
+    
+    // モーダルのポインターイベントを再有効化
+    if (modalRef.current) {
+      modalRef.current.style.pointerEvents = 'auto';
+    }
+    
+    // キーボードスクロールを防止
+    const preventScroll = (e: KeyboardEvent) => {
+      const scrollKeys = ['Space', 'PageUp', 'PageDown', 'End', 'Home', 'ArrowUp', 'ArrowDown'];
+      if (scrollKeys.includes(e.code)) {
+        e.preventDefault();
+      }
+    };
+    
+    // ホイールスクロールを完全に防止
+    const preventWheel = (e: WheelEvent) => {
+      e.preventDefault();
+    };
+    
+    // タッチスクロールを完全に防止（モバイル対応）
+    const preventTouch = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+    
+    // イベントリスナーを追加
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', preventScroll);
+    document.addEventListener('wheel', preventWheel, { passive: false });
+    document.addEventListener('touchmove', preventTouch, { passive: false });
+    
+    return () => {
+      // 背景操作を再有効化
+      document.body.style.overflow = '';
+      document.body.style.userSelect = '';
+      document.body.style.pointerEvents = '';
+      
+      // イベントリスナーを削除
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', preventScroll);
+      document.removeEventListener('wheel', preventWheel);
+      document.removeEventListener('touchmove', preventTouch);
+    };
+  }, [onClose]);
+
   return (
     <div className="status-priority-modal-backdrop" onClick={handleBackdropClick}>
       <div 
+        ref={modalRef}
         className="status-priority-modal"
         style={{
           left: position.x,

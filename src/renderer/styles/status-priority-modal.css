@@ -10,18 +10,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  animation: backdropFadeIn 0.1s ease-out;
 }
 
 .status-priority-modal {
   position: absolute;
   background: white;
-  border-radius: 8px;
+  border-radius: 4px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   border: 1px solid #e5e7eb;
   padding: 12px;
-  min-width: 160px;
-  max-width: 220px;
-  animation: modalFadeIn 0.2s ease-out;
+  min-width: 240px;
+  max-width: 300px;
+  animation: modalFadeIn 0.1s ease-out;
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes modalFadeIn {
@@ -48,7 +62,7 @@
 
 .options-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 6px;
 }
 
@@ -123,15 +137,7 @@
   color: white;
 }
 
-.status-priority-modal .option-card.status.cancelled {
-  background-color: #ffebee;
-  color: #c62828;
-}
 
-.status-priority-modal .option-card.status.cancelled.selected {
-  background-color: #c62828;
-  color: white;
-}
 
 /* 優先度用の色 */
 .status-priority-modal .option-card.priority.low {
