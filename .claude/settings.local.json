@@ -23,7 +23,11 @@
       "Bash(npm run lint)",
       "Bash(npm run:*)",
       "Bash(node:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(npm ls:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(mkdir:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }

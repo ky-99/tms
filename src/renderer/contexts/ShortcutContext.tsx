@@ -1,14 +1,21 @@
-import React, { createContext, useContext, useEffect, ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { createContext, useContext, useEffect, ReactNode, useCallback } from 'react';
+import { useLocation } from 'wouter';
 import { useTaskContext } from './TaskContext';
+import { useGlobalAlert } from '../hooks';
+import { hasActiveConfirmDialogs } from '../hooks/useAlert';
 import { Task } from '../types/task';
+import { findTaskById } from '../utils/taskUtils';
 
 interface ShortcutContextValue {
   // 現在のコンテキスト（例：global, taskSelected）
   currentContext: string;
   hoveredTask: Task | null;
+  hoveredCalendarTaskId: number | null;
+  hoveredCalendarDate: string | null;
   setCurrentContext: (context: string) => void;
   setHoveredTask: (task: Task | null) => void;
+  setHoveredCalendarTaskId: (taskId: number | null) => void;
+  setHoveredCalendarDate: (date: string | null) => void;
   clearSelection: () => void;
 }
 
@@ -29,32 +36,31 @@ interface ShortcutProviderProps {
 export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) => {
   const [currentContext, setCurrentContext] = React.useState<string>('global');
   const [hoveredTask, setHoveredTask] = React.useState<Task | null>(null);
+  const [hoveredCalendarTaskId, setHoveredCalendarTaskId] = React.useState<number | null>(null);
+  const [hoveredCalendarDate, setHoveredCalendarDate] = React.useState<string | null>(null);
   const [isDuplicating, setIsDuplicating] = React.useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
+  const [location, setLocation] = useLocation();
+  const { showAlert } = useGlobalAlert();
   const { createTask, createTaskAfter, updateTask, deleteTask, tasks } = useTaskContext();
 
   // 選択状態をクリアする関数
   const clearSelection = () => {
     setHoveredTask(null);
+    setHoveredCalendarTaskId(null);
+    setHoveredCalendarDate(null);
     setCurrentContext('global');
     setIsDuplicating(false); // 複製状態もリセット
   };
 
-  // 最新のタスクデータを取得する関数
-  const getCurrentTaskData = (taskId: number): Task | null => {
-    const findTask = (taskList: Task[]): Task | null => {
-      for (const task of taskList) {
-        if (task.id === taskId) return task;
-        if (task.children) {
-          const found = findTask(task.children);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
-    return findTask(tasks);
-  };
+  // 最新のタスクデータを取得する関数をメモ化
+  const getCurrentTaskData = useCallback((taskId: number): Task | null => {
+    return findTaskById(tasks, taskId);
+  }, [tasks]);
+
+  // findTaskById関数をメモ化
+  const memoizedFindTaskById = useCallback((taskList: Task[], taskId: number): Task | null => {
+    return findTaskById(taskList, taskId);
+  }, []);
 
   // hoveredTaskを最新のデータで同期（無限ループを防ぐため最適化）
   useEffect(() => {
@@ -96,6 +102,11 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
   // キーボードショートカットのハンドラー
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // 確認ダイアログがアクティブな場合は処理しない
+      if (hasActiveConfirmDialogs()) {
+        return;
+      }
+      
       const isCmd = event.metaKey || event.ctrlKey;
       const key = event.key.toLowerCase();
       
@@ -152,10 +163,10 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
       }
 
       // ページナビゲーション（全てのコンテキストで有効）
-      if (isCmd && ['1', '2', '3', '4'].includes(key)) {
+      if (isCmd && ['1', '2', '3', '4', '5'].includes(key)) {
         event.preventDefault();
-        const pages = ['/', '/tasks', '/analyze', '/export'];
-        navigate(pages[parseInt(key) - 1]);
+        const pages = ['/', '/tasks', '/analyze', '/export', '/workspace'];
+        setLocation(pages[parseInt(key) - 1]);
         return;
       }
 
@@ -167,6 +178,52 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
           handleNavigateToParent();
           return;
         }
+      }
+
+      // カレンダー固有の処理（ホバー状態があるときに動作）
+      // カレンダーでホバーされているタスクの削除
+      if ((key === 'delete' || key === 'backspace') && hoveredCalendarTaskId) {
+        // カレンダーでは平坦化されたタスクリストから検索
+        const hoveredCalendarTask = memoizedFindTaskById(tasks, hoveredCalendarTaskId);
+        if (hoveredCalendarTask) {
+          event.preventDefault();
+          
+          // 削除確認ダイアログを表示
+          showAlert(`タスク「${hoveredCalendarTask.title}」を削除してもよろしいですか？この操作は元に戻せません。`, {
+            type: 'danger',
+            title: 'タスクを削除',
+            confirmText: '削除',
+            cancelText: 'キャンセル',
+            showCancel: true,
+            onConfirm: async () => {
+              try {
+                // カレンダーの場合は現在のタスクをチェックして遷移は不要
+                await deleteTask(hoveredCalendarTask.id);
+                setHoveredTask(null);
+                
+                // 成功メッセージを表示
+                showAlert(`タスク「${hoveredCalendarTask.title}」を削除しました`, {
+                  type: 'success',
+                });
+              } catch (error) {
+                // エラーメッセージを表示
+                showAlert('タスクの削除に失敗しました。再度お試しください。', {
+                  type: 'error',
+                  title: 'エラー'
+                });
+              }
+            },
+          });
+          return;
+        }
+      }
+      
+      // カレンダーでホバーされている日付にタスクを作成
+      if (isCmd && key === 'n' && hoveredCalendarDate) {
+        event.preventDefault();
+        const createEvent = new CustomEvent('createTaskWithDate', { detail: { date: hoveredCalendarDate } });
+        window.dispatchEvent(createEvent);
+        return;
       }
 
       // タスクがホバーされている場合のショートカット（モーダル開いている場合は無効）
@@ -195,7 +252,7 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
           
           // 子タスクの詳細画面（leaf node）でのみ複製を禁止
           // hoveredTaskが子を持たない場合のみ禁止
-          const taskMatch = location.pathname.match(/^\/tasks\/(\d+)$/);
+          const taskMatch = location.match(/^\/tasks\/(\d+)$/);
           if (taskMatch) {
             const currentTaskId = parseInt(taskMatch[1]);
             if (hoveredTask.id === currentTaskId && (!hoveredTask.children || hoveredTask.children.length === 0)) {
@@ -261,31 +318,33 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [currentContext, hoveredTask, navigate]); // TaskContext関数依存を削除して無限ループを防ぐ
+    document.addEventListener('keydown', handleKeyDown, { capture: true });
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown, { capture: true });
+    };
+  }, [currentContext, hoveredTask, hoveredCalendarTaskId, hoveredCalendarDate, setLocation, tasks, memoizedFindTaskById, showAlert, deleteTask, setHoveredTask]);
 
-  // ショートカットハンドラー関数
-  const handleCreateTask = () => {
+  // ショートカットハンドラー関数をメモ化
+  const handleCreateTask = useCallback(() => {
     // タスク作成モーダルを開くイベントを発行
     const event = new CustomEvent('openTaskCreateModal');
     window.dispatchEvent(event);
-  };
+  }, []);
 
-  const handleCreateSubTask = (parentTask: Task) => {
+  const handleCreateSubTask = useCallback((parentTask: Task) => {
     // サブタスク作成モーダルを開くイベントを発行
     const event = new CustomEvent('openTaskCreateModal', { detail: { parentId: parentTask.id } });
     window.dispatchEvent(event);
-  };
+  }, []);
 
-  const handleEditTask = (task: Task) => {
+  const handleEditTask = useCallback((task: Task) => {
     // タスク編集モーダルを開く処理
     // 実装はTaskDetailModalで行う
     const event = new CustomEvent('openTaskEditModal', { detail: { task } });
     window.dispatchEvent(event);
-  };
+  }, []);
 
-  const handleDuplicateTask = async (task: Task) => {
+  const handleDuplicateTask = useCallback(async (task: Task) => {
     // 複製中の場合は複製を禁止
     if (isDuplicating) {
       return;
@@ -303,40 +362,66 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
     try {
       setIsDuplicating(true);
       await createTaskAfter(duplicatedTask, task.id);
-      // Toast notification would be handled by the component that receives the task
+      
+      // 複製成功トーストを表示
+      showAlert(`タスク「${task.title}」を複製しました`, {
+        type: 'success',
+      });
     } catch (error) {
-      console.error('Failed to duplicate task:', error);
+      // 複製失敗トーストを表示
+      showAlert('タスクの複製に失敗しました: ' + (error instanceof Error ? error.message : '不明なエラー'), {
+        type: 'error',
+      });
     } finally {
       setIsDuplicating(false);
     }
-  };
+  }, [isDuplicating, createTaskAfter, showAlert]);
 
-  const handleDeleteTask = (task: Task) => {
-    if (window.confirm(`タスク「${task.title}」を削除してもよろしいですか？`)) {
-      // Check if we're deleting the current task in detail view
-      // For Electron apps, we need to check the hash portion of the URL
-      const currentHash = window.location.hash;
-      const currentTaskId = currentHash.match(/#\/tasks\/(\d+)/)?.[1];
-      const isCurrentTask = currentTaskId && parseInt(currentTaskId) === task.id;
-      
-      // Navigate immediately if it's the current task
-      if (isCurrentTask) {
-        if (task.parentId) {
-          navigate(`/tasks/${task.parentId}`);
-        } else {
-          navigate('/tasks');
+  const handleDeleteTask = useCallback((task: Task) => {
+    showAlert(`タスク「${task.title}」を削除してもよろしいですか？この操作は元に戻せません。`, {
+      type: 'danger',
+      title: 'タスクを削除',
+      confirmText: '削除',
+      cancelText: 'キャンセル',
+      showCancel: true,
+      onConfirm: async () => {
+        try {
+          // Check if we're deleting the current task in detail view
+          // For Electron apps, we need to check the hash portion of the URL
+          const currentHash = window.location.hash;
+          const currentTaskId = currentHash.match(/#\/tasks\/(\d+)/)?.[1];
+          const isCurrentTask = currentTaskId && parseInt(currentTaskId) === task.id;
+          
+          // Navigate immediately if it's the current task
+          if (isCurrentTask) {
+            if (task.parentId) {
+              setLocation(`/tasks/${task.parentId}`);
+            } else {
+              setLocation('/tasks');
+            }
+          }
+          
+          // Delete task immediately without delay
+          await deleteTask(task.id);
+          
+          setHoveredTask(null);
+          
+          // Show success message
+          showAlert(`タスク「${task.title}」を削除しました`, {
+            type: 'success',
+          });
+        } catch (error) {
+          // Show error message
+          showAlert('タスクの削除に失敗しました。再度お試しください。', {
+            type: 'error',
+            title: 'エラー'
+          });
         }
-      }
-      
-      // Delete task immediately without delay
-      deleteTask(task.id);
-      
-      // Toast notification would be handled by the component that receives the deletion
-      setHoveredTask(null);
-    }
-  };
+      },
+    });
+  }, [showAlert, deleteTask, setLocation, setHoveredTask]);
 
-  const handleToggleTaskStatus = (task: Task) => {
+  const handleToggleTaskStatus = useCallback((task: Task) => {
     // 親タスクの場合はステータス変更を禁止
     if (task.children && task.children.length > 0) {
       return; // 親タスクは子タスクから自動計算されるため手動変更不可
@@ -347,10 +432,9 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
       status: nextStatus,
       completedAt: nextStatus === 'completed' ? new Date().toISOString() : undefined,
     });
-    // Toast notification would be handled by the component that receives the status change
-  };
+  }, [updateTask]);
 
-  const handleCycleTaskStatus = (task: Task) => {
+  const handleCycleTaskStatus = useCallback((task: Task) => {
     // 親タスクの場合はステータス変更を禁止
     if (task.children && task.children.length > 0) {
       return; // 親タスクは子タスクから自動計算されるため手動変更不可
@@ -377,31 +461,31 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
       status: nextStatus,
       completedAt: nextStatus === 'completed' ? new Date().toISOString() : undefined,
     });
-  };
+  }, [updateTask]);
 
-  const focusSearch = () => {
+  const focusSearch = useCallback(() => {
     const searchInput = document.querySelector('input[type="search"], input[placeholder*="検索"]') as HTMLInputElement;
     if (searchInput) {
       searchInput.focus();
     }
-  };
+  }, []);
 
-  const handleOpenFilterModal = () => {
+  const handleOpenFilterModal = useCallback(() => {
     const event = new CustomEvent('openFilterModal');
     window.dispatchEvent(event);
-  };
+  }, []);
 
-  const handleOpenSortModal = () => {
+  const handleOpenSortModal = useCallback(() => {
     const event = new CustomEvent('openSortModal');
     window.dispatchEvent(event);
-  };
+  }, []);
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = useCallback(() => {
     const event = new CustomEvent('saveChanges');
     window.dispatchEvent(event);
-  };
+  }, []);
 
-  const handleToggleRoutineTask = (task: Task) => {
+  const handleToggleRoutineTask = useCallback((task: Task) => {
     // 最新のタスクデータを取得
     const currentTaskData = getCurrentTaskData(task.id);
     if (currentTaskData) {
@@ -411,38 +495,42 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
       const event = new CustomEvent('toggleRoutineTask', { detail: { task } });
       window.dispatchEvent(event);
     }
-  };
+  }, [getCurrentTaskData]);
 
-  const handleOpenMergeModal = () => {
+  const handleOpenMergeModal = useCallback(() => {
     const event = new CustomEvent('openMergeModal');
     window.dispatchEvent(event);
-  };
+  }, []);
 
-  const handleNavigateToParent = () => {
+  const handleNavigateToParent = useCallback(() => {
     const event = new CustomEvent('navigateToParent');
     window.dispatchEvent(event);
-  };
+  }, []);
 
-  const handleToggleTaskExpansion = (task: Task) => {
+  const handleToggleTaskExpansion = useCallback((task: Task) => {
     const event = new CustomEvent('toggleTaskExpansion', { detail: { task } });
     window.dispatchEvent(event);
-  };
+  }, []);
 
   // ページが変わったときに状態をリセット
   React.useEffect(() => {
     setCurrentContext('global');
     setIsDuplicating(false); // ページ変更時に複製状態もリセット
-  }, [location.pathname]);
+  }, [location]);
 
-  const setCurrentContextWithLog = (context: string) => {
+  const setCurrentContextWithLog = useCallback((context: string) => {
     setCurrentContext(context);
-  };
+  }, [currentContext]);
 
   const value: ShortcutContextValue = {
     currentContext,
     hoveredTask,
+    hoveredCalendarTaskId,
+    hoveredCalendarDate,
     setCurrentContext: setCurrentContextWithLog,
     setHoveredTask,
+    setHoveredCalendarTaskId,
+    setHoveredCalendarDate,
     clearSelection,
   };
 

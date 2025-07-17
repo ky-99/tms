@@ -10,36 +10,96 @@ html, body {
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background-color: #fafafa;
-    color: #111827;
+    font-family: var(--font-family-base);
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
 }
 
 .app {
     display: flex;
+    flex-direction: column;
     min-height: 100vh;
 }
 
 .main-content {
     flex: 1;
-    margin-left: 90px; /* サイドバーの幅分 */
-    padding: 12px;
+    padding: var(--height-header) 0 var(--space-10) 0; /* Top padding for fixed header, bottom padding */
 }
 
 .container {
     width: 100%;
-    margin: 0;
-    padding: 0;
+    max-width: var(--width-container-2xl);
+    margin: 0 auto;
+    padding: 0 var(--container-padding-sm);
 }
 
-/* Spinning animation for loading states */
+@media (min-width: 640px) {
+    .container {
+        padding: 0 var(--container-padding-md);
+    }
+}
+
+@media (min-width: 768px) {
+    .container {
+        padding: 0 var(--container-padding-lg);
+    }
+}
+
+@media (min-width: 1200px) {
+    .container {
+        padding: 0 var(--container-padding-xl);
+    }
+}
+
+@media (min-width: 1600px) {
+    .container {
+        padding: 0 var(--container-padding-2xl);
+        max-width: var(--width-container-2xl);
+    }
+}
+
+/* Animations */
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
 
+@keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(var(--space-5)); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
 .spinning {
     animation: spin 1s linear infinite;
+}
+
+/* Loading placeholder for smooth transitions */
+.loading-placeholder {
+    min-height: 200px;
+    opacity: 0;
+}
+
+/* Smooth fade-in for content */
+.dashboard-content {
+    animation: fadeIn var(--transition-slow) ease-out;
+}
+
+.task-list-container {
+    animation: fadeIn var(--transition-slow) ease-out;
+}
+
+.analytics-grid {
+    animation: fadeIn var(--transition-slow) ease-out;
+}
+
+.export-page {
+    animation: fadeIn var(--transition-slow) ease-out;
+}
+
+.workspace-page {
+    animation: fadeIn var(--transition-slow) ease-out;
 }
 
 /* Duplicating button styles */
@@ -51,4 +111,169 @@ body {
 .operation-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* Toast confirmation dialog styles - Simple and clean */
+.toast-custom {
+    max-width: 380px;
+    width: 100%;
+    background: var(--color-background-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    border: var(--border-width) solid var(--color-border-light);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: var(--font-family-base);
+    position: relative;
+    z-index: var(--z-index-toast);
+    pointer-events: auto;
+}
+
+.toast-content {
+    display: flex;
+    align-items: flex-start;
+    padding: var(--space-10);
+    gap: var(--space-6);
+}
+
+.toast-icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-tight);
+    background: var(--color-background-subtle);
+    color: var(--color-text-muted);
+}
+
+.toast-icon.danger {
+    background: var(--color-error-light);
+    color: var(--color-error);
+}
+
+.toast-icon.prohibition {
+    background: var(--color-warning-light);
+    color: var(--color-warning);
+}
+
+.toast-message {
+    flex: 1;
+    font-size: var(--font-size-base);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+    margin: 0;
+    word-wrap: break-word;
+    padding-top: var(--space-3);
+}
+
+.toast-actions {
+    display: flex;
+    padding: 0 var(--space-10) var(--space-10) var(--space-10);
+    gap: var(--space-4);
+    margin-top: var(--space-2);
+}
+
+.toast-btn {
+    flex: 1;
+    padding: var(--space-4) var(--space-8);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: var(--transition-base);
+    outline: none;
+    min-height: var(--height-button-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast-btn-cancel {
+    color: var(--color-text-muted);
+    background: var(--color-background-subtle);
+    border: var(--border-width) solid var(--color-border-medium);
+}
+
+.toast-btn-cancel:hover {
+    background: var(--color-background-alt);
+    border-color: var(--color-border-dark);
+}
+
+.toast-btn-confirm {
+    color: var(--color-text-inverse);
+    font-weight: var(--font-weight-semibold);
+}
+
+.toast-btn-confirm.primary {
+    background: var(--color-info);
+}
+
+.toast-btn-confirm.primary:hover {
+    background: var(--color-info-dark);
+}
+
+.toast-btn-confirm.danger {
+    background: var(--color-error);
+}
+
+.toast-btn-confirm.danger:hover {
+    background: var(--color-error-dark);
+}
+
+.toast-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-primary-focus);
+}
+
+.toast-btn-confirm.danger:focus {
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5);
+}
+
+/* Toast confirmation dialog animations - Simple and fast */
+@keyframes animate-enter {
+    0% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes animate-leave {
+    0% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.animate-enter {
+    animation: animate-enter var(--transition-base) ease-out;
+    animation-fill-mode: forwards;
+}
+
+.animate-leave {
+    animation: animate-leave var(--transition-base) ease-in;
+    animation-fill-mode: forwards;
+}
+
+/* Modal overlay for blocking external operations during confirmations */
+.toast-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--color-background-overlay);
+    z-index: var(--z-index-modal);
+    backdrop-filter: blur(2px);
+    pointer-events: none;
 }

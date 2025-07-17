@@ -5,24 +5,26 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useRoute, useLocation } from 'wouter';
 import { Task, Tag, TaskStatus, TaskPriority } from '../types';
-import { useTaskContext, useErrorContext, useShortcut } from '../contexts';
+import { useTaskContext, useShortcut } from '../contexts';
 import { useLocalStorage, useDebounce } from '../hooks';
-import { flattenTasks, isParentTask, sortTasksMultiple } from '../utils/taskUtils';
-import { Button, LoadingSpinner, TextInput, Modal } from '../components/ui';
+import { flattenTasks, isParentTask } from '../utils/taskUtils';
+import { sortTasksMultiple } from '../utils/sortUtils';
+import { Button, TextInput, Modal } from '../components/ui';
 import NotionLikeFilterModal from '../components/tasks/NotionLikeFilterModal';
 import NotionLikeSortModal, { SortOption } from '../components/tasks/NotionLikeSortModal';
-import TaskList from '../components/TaskList';
-import TaskDetailModal from '../components/TaskDetailModal';
-import TaskMergeModal from '../components/TaskMergeModal';
-import TaskItem from '../components/TaskItem';
+import TaskList from '../components/tasks/TaskList';
+import TaskDetailModal from '../components/modals/TaskDetailModal';
+import TaskMergeModal from '../components/modals/TaskMergeModal';
+import TaskItem from '../components/tasks/TaskItem';
 
 const TasksPage: React.FC = () => {
   const { 
     tasks, 
     tags,
-    loading, 
+    loading,
+    initialized,
     error, 
     loadTasks,
     deleteTask,
@@ -30,21 +32,14 @@ const TasksPage: React.FC = () => {
     toggleTaskExpansion,
     setExpandedTasks
   } = useTaskContext();
-  const { showError, showSuccess, clearError } = useErrorContext();
   const { setCurrentContext, currentContext } = useShortcut();
-  const { rootId } = useParams<{ rootId?: string }>();
-  const navigate = useNavigate();
-  
-  // 初回読み込み完了を追跡するためのRef
-  const initialLoadCompleted = useRef(false);
+  const [match, params] = useRoute('/tasks/:rootId');
+  const [, setLocation] = useLocation();
+  const rootId = params?.rootId;
   
   // Force load tasks if they're not loaded yet (初回のみ)
   useEffect(() => {
-    if (!initialLoadCompleted.current) {
-      loadTasks().finally(() => {
-        initialLoadCompleted.current = true;
-      });
-    }
+    loadTasks();
   }, []); // 初回のみ実行
   
   const setTasksPageContext = useCallback(() => {
@@ -88,44 +83,34 @@ const TasksPage: React.FC = () => {
   // Debounced search - shorter delay for better responsiveness
   const debouncedSearch = useDebounce(searchQuery, 150);
 
+  // 共通のタスク検索関数（メモ化）
+  const findTaskById = useCallback((taskList: Task[], targetId: number): Task | null => {
+    for (const task of taskList) {
+      if (task.id === targetId) return task;
+      if (task.children) {
+        const found = findTaskById(task.children, targetId);
+        if (found) return found;
+      }
+    }
+    return null;
+  }, []);
+
   // Get tasks for current view
   const currentTasks = useMemo(() => {
     if (!rootId) return tasks;
     
     const targetId = parseInt(rootId);
-    const findTask = (taskList: Task[]): Task | null => {
-      for (const task of taskList) {
-        if (task.id === targetId) return task;
-        if (task.children) {
-          const found = findTask(task.children);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
-    
-    const targetTask = findTask(tasks);
+    const targetTask = findTaskById(tasks, targetId);
     return targetTask?.children || [];
-  }, [tasks, rootId]);
+  }, [tasks, rootId, findTaskById]);
 
   // Get the current target task for leaf node display
   const currentTargetTask = useMemo(() => {
     if (!rootId) return null;
     
     const targetId = parseInt(rootId);
-    const findTask = (taskList: Task[]): Task | null => {
-      for (const task of taskList) {
-        if (task.id === targetId) return task;
-        if (task.children) {
-          const found = findTask(task.children);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
-    
-    return findTask(tasks);
-  }, [tasks, rootId]);
+    return findTaskById(tasks, targetId);
+  }, [tasks, rootId, findTaskById]);
 
   // Check if current task is a leaf node (no children)
   const isLeafNode = currentTargetTask && (!currentTargetTask.children || currentTargetTask.children.length === 0);
@@ -271,7 +256,7 @@ const TasksPage: React.FC = () => {
     // For hierarchical tasks, apply sorting to each level
     const sortHierarchical = (tasks: Task[]): Task[] => {
       const sorted = sortTasksMultiple(tasks, sortOptions);
-      return sorted.map(task => ({
+      return sorted.map((task: Task) => ({
         ...task,
         children: task.children ? sortHierarchical(task.children) : undefined
       }));
@@ -295,28 +280,19 @@ const TasksPage: React.FC = () => {
 
 
 
-  // Get breadcrumb path
-  const breadcrumbPath = useMemo(() => {
-    // Don't calculate if we're still loading or don't have a rootId
-    if (!rootId || loading || tasks.length === 0) {
-      return [];
-    }
-    
-    const targetId = parseInt(rootId);
+  // パスを構築する効率的な関数（メモ化）
+  const buildTaskPath = useCallback((targetId: number): Task[] => {
     const path: Task[] = [];
     
-    // Recursive function to find the path to the target task
     const findPath = (taskList: Task[], currentPath: Task[]): boolean => {
       for (const task of taskList) {
         const newPath = [...currentPath, task];
         
         if (task.id === targetId) {
-          // Found the target task, save the path
           path.push(...newPath);
           return true;
         }
         
-        // Recursively search in children
         if (task.children && task.children.length > 0) {
           if (findPath(task.children, newPath)) {
             return true;
@@ -326,19 +302,21 @@ const TasksPage: React.FC = () => {
       return false;
     };
     
-    // Start the search from the root tasks
-    const found = findPath(tasks, []);
-    
-    
+    findPath(tasks, []);
     return path;
-  }, [tasks, rootId, loading]);
+  }, [tasks]);
 
-  // Clear error when component mounts
-  useEffect(() => {
-    if (error) {
-      clearError();
+  // Get breadcrumb path
+  const breadcrumbPath = useMemo(() => {
+    // Don't calculate if we're still loading or don't have a rootId
+    if (!rootId || loading || tasks.length === 0) {
+      return [];
     }
-  }, [error, clearError]);
+    
+    const targetId = parseInt(rootId);
+    return buildTaskPath(targetId);
+  }, [rootId, loading, tasks.length, buildTaskPath]);
+
 
   // Set shortcut context when component mounts or when rootId changes
   useEffect(() => {
@@ -369,21 +347,7 @@ const TasksPage: React.FC = () => {
   const currentSelectedTask = useMemo(() => {
     if (!stableSelectedTask || !isDetailModalOpen) return null;
     
-    // contextTasksから最新のタスクデータを検索
-    const findTask = (tasks: Task[], targetId: number): Task | null => {
-      for (const task of tasks) {
-        if (task.id === targetId) {
-          return task;
-        }
-        if (task.children) {
-          const found = findTask(task.children, targetId);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
-    
-    const foundTask = findTask(tasks, stableSelectedTask.id);
+    const foundTask = findTaskById(tasks, stableSelectedTask.id);
     
     // ステータス変更中は、タスクが見つからなくてもstableSelectedTaskを返す
     // これにより、ステータス変更中の一瞬の空白期間でもモーダルが落ちない
@@ -393,7 +357,7 @@ const TasksPage: React.FC = () => {
     
     // 最新のタスクが見つからない場合でも、stableSelectedTaskを返してモーダルを維持
     return foundTask || stableSelectedTask;
-  }, [stableSelectedTask, isDetailModalOpen, tasks, isStatusChanging]);
+  }, [stableSelectedTask, isDetailModalOpen, tasks, isStatusChanging, findTaskById]);
 
   // TaskDetailModal handlers (統一)
   const openDetailModal = (task: Task) => {
@@ -424,17 +388,6 @@ const TasksPage: React.FC = () => {
     }, 300);
   };
   
-  // Helper function to find task by ID
-  const findTaskById = (taskList: Task[], id: number): Task | null => {
-    for (const task of taskList) {
-      if (task.id === id) return task;
-      if (task.children) {
-        const found = findTaskById(task.children, id);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
 
 
   // Check if any filters are active - use immediate searchQuery for instant button visibility
@@ -460,7 +413,7 @@ const TasksPage: React.FC = () => {
 
 
   // Filter handlers
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     // React 18のautomatic batchingを利用した同期バッチ更新
     unstable_batchedUpdates(() => {
       setIsClearingFilters(true);
@@ -473,44 +426,52 @@ const TasksPage: React.FC = () => {
       setIncludeParentTasks(true);
       setMaintainHierarchy(false);
     });
-  };
+  }, [setSearchQuery, setSelectedTagIds, setSelectedStatuses, setSelectedPriorities, setDateFilterFrom, setDateFilterTo, setIncludeParentTasks, setMaintainHierarchy]);
 
   // Sort handlers
-  const handleSortChange = (newSortOptions: SortOption[]) => {
+  const handleSortChange = useCallback((newSortOptions: SortOption[]) => {
     setSortOptions(newSortOptions);
-  };
+  }, [setSortOptions]);
 
-  const handleClearSort = () => {
+  const handleClearSort = useCallback(() => {
     setSortOptions([]);
-  };
+  }, [setSortOptions]);
 
 
   // Navigate to task
-  const handleTaskClick = (taskId: number) => {
-    navigate(`/tasks/${taskId}`);
-  };
+  const handleTaskClick = useCallback((taskId: number) => {
+    setLocation(`/tasks/${taskId}`);
+  }, [setLocation]);
 
   // Navigation shortcut handlers
   const handleNavigateToParent = useCallback(() => {
     if (breadcrumbPath.length > 1) {
       // We have a parent, navigate to it
       const parentTask = breadcrumbPath[breadcrumbPath.length - 2];
-      navigate(`/tasks/${parentTask.id}`);
+      setLocation(`/tasks/${parentTask.id}`);
     } else if (breadcrumbPath.length === 1) {
       // We're at a root task, navigate to home
-      navigate('/tasks');
+      setLocation('/tasks');
     }
     // No error message needed - silent operation
-  }, [breadcrumbPath, navigate]);
+  }, [breadcrumbPath, setLocation]);
 
-  // ショートカットイベントリスナー
+  // ショートカットイベントリスナー（最適化）
   useEffect(() => {
+    const eventTypes = [
+      'openTaskEditModal',
+      'openFilterModal', 
+      'openSortModal',
+      'openTaskCreateModal',
+      'openMergeModal',
+      'navigateToParent',
+      'toggleTaskExpansion'
+    ];
+
     const handleShortcutEvents = (event: CustomEvent) => {
       switch (event.type) {
         case 'openTaskEditModal':
-          if (event.detail && event.detail.task) {
-            openDetailModal(event.detail.task);
-          }
+          if (event.detail?.task) openDetailModal(event.detail.task);
           break;
         case 'openFilterModal':
           setShowTagFilter(true);
@@ -519,8 +480,7 @@ const TasksPage: React.FC = () => {
           setShowSortModal(true);
           break;
         case 'openTaskCreateModal':
-          const parentId = event.detail?.parentId;
-          openCreateModal(parentId);
+          openCreateModal(event.detail?.parentId);
           break;
         case 'openMergeModal':
           setIsMergeModalOpen(true);
@@ -529,31 +489,21 @@ const TasksPage: React.FC = () => {
           handleNavigateToParent();
           break;
         case 'toggleTaskExpansion':
-          if (event.detail && event.detail.task) {
-            toggleTaskExpansion(event.detail.task.id);
-          }
-          break;
-        default:
+          if (event.detail?.task) toggleTaskExpansion(event.detail.task.id);
           break;
       }
     };
 
-    window.addEventListener('openTaskEditModal', handleShortcutEvents as EventListener);
-    window.addEventListener('openFilterModal', handleShortcutEvents as EventListener);
-    window.addEventListener('openSortModal', handleShortcutEvents as EventListener);
-    window.addEventListener('openTaskCreateModal', handleShortcutEvents as EventListener);
-    window.addEventListener('openMergeModal', handleShortcutEvents as EventListener);
-    window.addEventListener('navigateToParent', handleShortcutEvents as EventListener);
-    window.addEventListener('toggleTaskExpansion', handleShortcutEvents as EventListener);
+    // 全イベントリスナーを一括登録
+    eventTypes.forEach(type => {
+      window.addEventListener(type, handleShortcutEvents as EventListener);
+    });
 
+    // 一括削除
     return () => {
-      window.removeEventListener('openTaskEditModal', handleShortcutEvents as EventListener);
-      window.removeEventListener('openFilterModal', handleShortcutEvents as EventListener);
-      window.removeEventListener('openSortModal', handleShortcutEvents as EventListener);
-      window.removeEventListener('openTaskCreateModal', handleShortcutEvents as EventListener);
-      window.removeEventListener('openMergeModal', handleShortcutEvents as EventListener);
-      window.removeEventListener('navigateToParent', handleShortcutEvents as EventListener);
-      window.removeEventListener('toggleTaskExpansion', handleShortcutEvents as EventListener);
+      eventTypes.forEach(type => {
+        window.removeEventListener(type, handleShortcutEvents as EventListener);
+      });
     };
   }, [toggleTaskExpansion, handleNavigateToParent]);
 
@@ -567,9 +517,9 @@ const TasksPage: React.FC = () => {
       // Handle navigation immediately if it's the current task
       if (isCurrentTask && taskToDelete) {
         if (taskToDelete.parentId) {
-          navigate(`/tasks/${taskToDelete.parentId}`);
+          setLocation(`/tasks/${taskToDelete.parentId}`);
         } else {
-          navigate('/tasks');
+          setLocation('/tasks');
         }
       }
       
@@ -577,21 +527,11 @@ const TasksPage: React.FC = () => {
       await deleteTask(taskId);
       
       // Show success message
-      showSuccess('タスクを削除しました');
       
     } catch (error) {
-      showError('タスクの削除に失敗しました', error instanceof Error ? error.message : '');
     }
   };
 
-  // 初回読み込み中のみローディング画面を表示
-  if (loading && !initialLoadCompleted.current) {
-    return (
-      <div className="loading-container">
-        <LoadingSpinner size="lg" text="タスクを読み込み中..." />
-      </div>
-    );
-  }
 
   return (
     <div className="tasks-page">
@@ -689,7 +629,7 @@ const TasksPage: React.FC = () => {
           <ol>
             <li>
               <button
-                onClick={() => navigate('/tasks')}
+                onClick={() => setLocation('/tasks')}
                 className="breadcrumb-link"
               >
                 ホーム
@@ -702,7 +642,7 @@ const TasksPage: React.FC = () => {
                   <span className="breadcrumb-current">{task.title}</span>
                 ) : (
                   <button
-                    onClick={() => navigate(`/tasks/${task.id}`)}
+                    onClick={() => setLocation(`/tasks/${task.id}`)}
                     className="breadcrumb-link"
                   >
                     {task.title}
@@ -735,6 +675,10 @@ const TasksPage: React.FC = () => {
               onToggleExpand={toggleTaskExpansion}
               isDetailView={true}
             />
+          </div>
+        ) : !initialized ? (
+          <div className="loading-placeholder">
+            {/* 初期化中は何も表示しない */}
           </div>
         ) : displayedTasks.length === 0 ? (
           <div className="empty-state">
@@ -771,7 +715,7 @@ const TasksPage: React.FC = () => {
             {rootId && displayedTasks.length === 0 && (
               <Button
                 variant="secondary"
-                onClick={() => navigate('/tasks')}
+                onClick={() => setLocation('/tasks')}
               >
                 タスクホームに戻る
               </Button>
@@ -797,7 +741,6 @@ const TasksPage: React.FC = () => {
           task={currentSelectedTask || stableSelectedTask || undefined}
           isOpen={isDetailModalOpen}
           onClose={closeDetailModal}
-          allTasks={tasks}
           defaultParentId={createParentId}
           isCreating={isCreatingTask}
           onStatusChange={() => setIsStatusChanging(true)}

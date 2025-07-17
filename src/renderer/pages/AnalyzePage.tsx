@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import CompletedTasksChart from '../components/CompletedTasksChart';
-import PriorityProgressChart from '../components/PriorityProgressChart';
-import TaskStatusPieChart from '../components/TaskStatusPieChart';
-import TagProgressChart from '../components/TagProgressChart';
-import WeeklyTaskCards from '../components/WeeklyTaskCards';
-import TaskDetailModal from '../components/TaskDetailModal';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import CompletedTasksChart from '../components/charts/CompletedTasksChart';
+import PriorityProgressChart from '../components/charts/PriorityProgressChart';
+import TaskStatusPieChart from '../components/charts/TaskStatusPieChart';
+import TagProgressChart from '../components/charts/TagProgressChart';
+import TaskTrendChart from '../components/charts/TaskTrendChart';
+import WeeklyTaskCards from '../components/charts/WeeklyTaskCards';
+import WeeklyCompletionChart from '../components/charts/WeeklyCompletionChart';
+import TaskDetailModal from '../components/modals/TaskDetailModal';
 import { useTaskContext } from '../contexts/TaskContext';
 import { TaskWithChildren } from '../types';
 
@@ -16,8 +18,6 @@ const AnalyzePage: React.FC = () => {
   const [stableSelectedTask, setStableSelectedTask] = useState<TaskWithChildren | null>(null);
   const [isStatusChanging, setIsStatusChanging] = useState(false);
   
-  // 初回読み込み完了を追跡するためのRef
-  const initialLoadCompleted = useRef(false);
 
   const handleTaskClick = useCallback((task: TaskWithChildren) => {
     setSelectedTask(task);
@@ -45,10 +45,6 @@ const AnalyzePage: React.FC = () => {
   useEffect(() => {
     if (contextTasks.length > 0) {
       updateChartData(contextTasks);
-      // 初回読み込み完了フラグを設定
-      if (!initialLoadCompleted.current) {
-        initialLoadCompleted.current = true;
-      }
     }
   }, [contextTasks, updateChartData]);
 
@@ -113,7 +109,7 @@ const AnalyzePage: React.FC = () => {
         // タスクが完了していることをチェック
         if (task.status === 'completed') {
           // 期日が今週の範囲内かチェック
-          const dueDateValue = task.dueDate || task.due_date;
+          const dueDateValue = task.dueDate || task.dueDate;
           if (dueDateValue) {
             const dueDate = new Date(dueDateValue);
             dueDate.setHours(0, 0, 0, 0);
@@ -192,19 +188,12 @@ const AnalyzePage: React.FC = () => {
     // 期日タスクの処理用に全タスクを平坦化
     const allTasks = flattenTasks(allTasksFromRoot);
     
-    // デバッグ用ログ
-    console.log('全タスク数:', allTasks.length);
-    const tasksWithDueDate = allTasks.filter(task => task.dueDate || task.due_date);
-    console.log('期日付きタスク数:', tasksWithDueDate.length);
-    console.log('期日付きタスク一覧:', tasksWithDueDate.map(task => ({
-      title: task.title,
-      dueDate: task.dueDate || task.due_date
-    })));
+    const tasksWithDueDate = allTasks.filter(task => task.dueDate || task.dueDate);
     
     // 今週期日のタスクのうち完了済みタスクをカウント
     // （完了日は関係なく、その日時点で完了しているかどうかで判定）
     const weeklyDueTasks = allTasks.filter(task => {
-      const dueDateValue = task.dueDate || task.due_date;
+      const dueDateValue = task.dueDate || task.dueDate;
       if (!dueDateValue) return false;
       
       const dueDate = new Date(dueDateValue);
@@ -224,7 +213,7 @@ const AnalyzePage: React.FC = () => {
       
       weeklyDueTasks.forEach(task => {
         if (task.status === 'completed') {
-          const completedAt = task.completedAt || task.completed_at;
+          const completedAt = task.completedAt || task.completedAt;
           if (completedAt) {
             // UTC時刻として解釈されているデータをローカル時刻として扱う
             let completedDate: Date;
@@ -277,7 +266,7 @@ const AnalyzePage: React.FC = () => {
       
       // 今週分の期日タスクの累積数を計算
       const cumulativePlanned = allTasks.filter(task => {
-        const dueDateValue = task.dueDate || task.due_date;
+        const dueDateValue = task.dueDate || task.dueDate;
         if (!dueDateValue) return false;
         
         const dueDate = new Date(dueDateValue);
@@ -304,14 +293,6 @@ const AnalyzePage: React.FC = () => {
     return result;
   };
 
-  // 初回読み込み中のみローディング画面を表示
-  if (loading && !initialLoadCompleted.current) {
-    return (
-      <div className="analyze-page">
-        <div className="loading">読み込み中...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="analytics-grid">
@@ -322,6 +303,15 @@ const AnalyzePage: React.FC = () => {
           </div>
           <div className="chart-content">
             <CompletedTasksChart data={chartData} />
+          </div>
+        </div>
+        
+        <div className="grid-item task-trend-chart">
+          <div className="chart-header">
+            <h2>30日間のタスクトレンド</h2>
+          </div>
+          <div className="chart-content">
+            <TaskTrendChart tasks={contextTasks} />
           </div>
         </div>
         
@@ -347,10 +337,19 @@ const AnalyzePage: React.FC = () => {
         
         <div className="grid-item task-status-chart">
           <div className="chart-header">
-            <h2>タスク別進行数</h2>
+            <h2>タスクステータス分布</h2>
           </div>
           <div className="chart-content">
             <TaskStatusPieChart tasks={contextTasks} />
+          </div>
+        </div>
+        
+        <div className="grid-item weekly-completion-chart">
+          <div className="chart-header">
+            <h2>曜日別完了パターン</h2>
+          </div>
+          <div className="chart-content">
+            <WeeklyCompletionChart tasks={contextTasks} />
           </div>
         </div>
       </div>
@@ -372,7 +371,6 @@ const AnalyzePage: React.FC = () => {
           task={currentSelectedTask || stableSelectedTask}
           isOpen={isTaskModalOpen}
           onClose={handleCloseTaskModal}
-          allTasks={contextTasks}
           onStatusChange={() => setIsStatusChanging(true)}
         />
       )}

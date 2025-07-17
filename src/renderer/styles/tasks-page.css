@@ -1,9 +1,35 @@
-/* Tasks page styles */
+/* Tasks page styles - Responsive Layout */
 .tasks-page {
-    padding-top: 20px;
     width: 100%;
     overflow-x: hidden;
     max-width: 100vw;
+    padding: 20px 16px; /* Base padding */
+}
+
+/* Responsive padding adjustments */
+@media (min-width: 768px) {
+    .tasks-page {
+        padding: 20px 20px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .tasks-page {
+        padding: 20px 24px;
+    }
+}
+
+@media (min-width: 1440px) {
+    .tasks-page {
+        padding: 20px 32px;
+    }
+}
+
+/* For very large screens, limit padding growth */
+@media (min-width: 1800px) {
+    .tasks-page {
+        padding: 20px 48px;
+    }
 }
 
 .page-header {
@@ -23,14 +49,29 @@
 
 .tasks-container {
     display: grid;
-    grid-template-columns: 300px 1fr;
-    gap: 24px;
+    gap: 16px;
+    grid-template-columns: 1fr;
 }
 
-@media (max-width: 768px) {
+/* Responsive grid layout */
+@media (min-width: 768px) {
     .tasks-container {
-        grid-template-columns: 1fr;
-        gap: 16px;
+        grid-template-columns: 280px 1fr;
+        gap: 20px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .tasks-container {
+        grid-template-columns: 300px 1fr;
+        gap: 24px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .tasks-container {
+        grid-template-columns: 320px 1fr;
+        gap: 28px;
     }
 }
 
@@ -92,4 +133,69 @@
 
 .empty-state .btn + .btn {
     margin-left: 8px;
+}
+
+/* Breadcrumb navigation */
+.breadcrumb {
+    margin-bottom: 20px;
+}
+
+.breadcrumb ol {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.breadcrumb li {
+    display: flex;
+    align-items: center;
+}
+
+.breadcrumb-link {
+    background: none;
+    border: none;
+    color: #8b5cf6;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.breadcrumb-link:hover {
+    background-color: #f3f4f6;
+    color: #7c3aed;
+}
+
+.breadcrumb-separator {
+    color: #9ca3af;
+    margin: 0 8px;
+    font-size: 14px;
+}
+
+.breadcrumb-current {
+    color: #374151;
+    font-weight: 500;
+    font-size: 14px;
+    padding: 4px 8px;
+}
+
+/* Task detail view */
+.task-detail-view {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+/* Loading placeholder */
+.loading-placeholder {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    color: #9ca3af;
 }

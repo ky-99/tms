@@ -1,27 +1,29 @@
-/* Form styles */
+/* Form styles using design tokens */
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: var(--space-8);
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 5px;
-    color: #374151;
-    font-size: 14px;
-    font-weight: 500;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    margin-bottom: var(--space-2);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    font-family: var(--font-family-base);
 }
 
 .form-group input,
 .form-group textarea,
 .form-group select {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #e5e7eb;
-    border-radius: 4px;
-    font-size: 14px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    transition: border-color 0.2s;
+    padding: var(--space-4) var(--space-6);
+    border: var(--border-width) solid var(--color-border-light);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-base);
+    font-family: var(--font-family-base);
+    color: var(--color-text-primary);
+    background-color: var(--color-background-card);
+    transition: var(--transition-base);
 }
 
 .form-group input[type="date"] {
@@ -32,7 +34,8 @@
 .form-group textarea:focus,
 .form-group select:focus {
     outline: none;
-    border-color: #8b5cf6;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-primary-light);
 }
 
 .form-group textarea {
@@ -44,25 +47,27 @@
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
+    gap: var(--space-6);
 }
 
 .form-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
-    margin-top: 25px;
+    gap: var(--space-4);
+    margin-top: var(--space-12);
+    padding-top: var(--space-8);
+    border-top: var(--border-width) solid var(--color-border-light);
 }
 
 .form-group input.error,
 .form-group textarea.error,
 .form-group select.error {
-    border-color: #ef4444;
+    border-color: var(--color-error);
 }
 
 .form-group .error-message {
     display: block;
-    margin-top: 5px;
-    color: #ef4444;
-    font-size: 12px;
+    margin-top: var(--space-2);
+    color: var(--color-error);
+    font-size: var(--font-size-xs);
 }

@@ -1,9 +1,9 @@
 /**
- * Reusable Modal component
- * Standardizes modal behavior across the app
+ * Reusable Modal component with custom implementation
+ * Lightweight alternative to Headless UI with focus management
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -27,7 +27,26 @@ export const Modal: React.FC<ModalProps> = ({
   className = '',
   contentStyle = {}
 }) => {
-  // Handle escape key
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocus = useRef<HTMLElement | null>(null);
+  
+  // Focus management
+  useEffect(() => {
+    if (isOpen) {
+      previousFocus.current = document.activeElement as HTMLElement;
+      // Focus the dialog container
+      if (dialogRef.current) {
+        dialogRef.current.focus();
+      }
+    } else {
+      // Return focus to previous element
+      if (previousFocus.current) {
+        previousFocus.current.focus();
+      }
+    }
+  }, [isOpen]);
+  
+  // Escape key handler
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -35,31 +54,24 @@ export const Modal: React.FC<ModalProps> = ({
       }
     };
     
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
+  
+  // Prevent body scroll when modal is open
+  useEffect(() => {
     if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
     }
     
     return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = '';
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
   
   if (!isOpen) return null;
-  
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    // For filter modals, we need to check if the click is outside the modal content
-    if (className?.includes('filter-modal')) {
-      const target = e.target as HTMLElement;
-      const modalContent = document.querySelector('.modal-content.filter-modal');
-      if (modalContent && !modalContent.contains(target) && closeOnOverlayClick) {
-        onClose();
-      }
-    } else if (e.target === e.currentTarget && closeOnOverlayClick) {
-      onClose();
-    }
-  };
   
   // For filter modal, we need to set CSS variables for positioning
   const modalStyle = className?.includes('filter-modal') ? {
@@ -69,29 +81,44 @@ export const Modal: React.FC<ModalProps> = ({
   } as React.CSSProperties : {};
   
   return (
-    <div className={`modal ${className}`} onClick={handleOverlayClick} style={modalStyle}>
-      <div className={`modal-content ${className}`} style={className?.includes('filter-modal') ? {} : contentStyle}>
-        {/* Header */}
-        {(title || showCloseButton) && (
-          <div className="modal-header">
-            {title && (
-              <h2>{title}</h2>
-            )}
-            {showCloseButton && (
-              <button
-                className="close-btn"
-                onClick={onClose}
-                type="button"
-              >
-                ×
-              </button>
-            )}
+    <div 
+      ref={dialogRef}
+      className={`modal-dialog ${className}`}
+      style={modalStyle}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={title ? "modal-title" : undefined}
+      tabIndex={-1}
+    >
+      <div 
+        className={`modal-backdrop ${className}`}
+        onClick={closeOnOverlayClick ? onClose : undefined}
+      />
+      <div className="modal-container">
+        <div className={`modal-content ${className}`} style={className?.includes('filter-modal') ? {} : contentStyle}>
+          {/* Header */}
+          {(title || showCloseButton) && (
+            <div className="modal-header">
+              {title && (
+                <h2 id="modal-title">{title}</h2>
+              )}
+              {showCloseButton && (
+                <button
+                  className="close-btn"
+                  onClick={onClose}
+                  type="button"
+                  aria-label="閉じる"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          )}
+          
+          {/* Body */}
+          <div className="modal-body">
+            {children}
           </div>
-        )}
-        
-        {/* Body */}
-        <div className="modal-body">
-          {children}
         </div>
       </div>
     </div>

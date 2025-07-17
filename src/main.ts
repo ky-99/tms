@@ -49,7 +49,6 @@ app.whenReady().then(async () => {
     // Register workspace handlers
     registerWorkspaceHandlers();
   } catch (error) {
-    console.error('Failed to initialize workspace manager:', error);
     // Show error dialog to user
     const { dialog } = require('electron');
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -76,7 +75,6 @@ ipcMain.handle('get-all-tasks', async () => {
     const taskRepo = getTaskRepository();
     return taskRepo.getAllTasksAsTree();
   } catch (error) {
-    console.error('Error getting tasks:', error);
     return [];
   }
 });
@@ -86,7 +84,6 @@ ipcMain.handle('create-task', async (_, taskData) => {
     const taskRepo = getTaskRepository();
     return taskRepo.createTask(taskData);
   } catch (error) {
-    console.error('Error creating task:', error);
     throw error;
   }
 });
@@ -96,7 +93,6 @@ ipcMain.handle('create-task-after', async (_, taskData, afterTaskId) => {
     const taskRepo = getTaskRepository();
     return taskRepo.createTaskAfter(taskData, afterTaskId);
   } catch (error) {
-    console.error('Error creating task after:', error);
     throw error;
   }
 });
@@ -106,7 +102,6 @@ ipcMain.handle('update-task', async (_, { id, updates }) => {
     const taskRepo = getTaskRepository();
     return taskRepo.updateTask(id, updates);
   } catch (error) {
-    console.error('Error updating task:', error);
     throw error;
   }
 });
@@ -116,7 +111,6 @@ ipcMain.handle('delete-task', async (_, id) => {
     const taskRepo = getTaskRepository();
     return taskRepo.deleteTask(id);
   } catch (error) {
-    console.error('Error deleting task:', error);
     throw error;
   }
 });
@@ -126,7 +120,6 @@ ipcMain.handle('create-tag', async (_, name, color, textColor) => {
     const taskRepo = getTaskRepository();
     return taskRepo.createTag(name, color, textColor);
   } catch (error) {
-    console.error('Error creating tag:', error);
     throw error;
   }
 });
@@ -136,7 +129,6 @@ ipcMain.handle('get-all-tags', async () => {
     const taskRepo = getTaskRepository();
     return taskRepo.getAllTags();
   } catch (error) {
-    console.error('Error getting tags:', error);
     return [];
   }
 });
@@ -146,7 +138,6 @@ ipcMain.handle('add-tag-to-task', async (_, taskId, tagId) => {
     const taskRepo = getTaskRepository();
     return taskRepo.addTagToTask(taskId, tagId);
   } catch (error) {
-    console.error('Error adding tag to task:', error);
     throw error;
   }
 });
@@ -156,7 +147,6 @@ ipcMain.handle('remove-tag-from-task', async (_, taskId, tagId) => {
     const taskRepo = getTaskRepository();
     return taskRepo.removeTagFromTask(taskId, tagId);
   } catch (error) {
-    console.error('Error removing tag from task:', error);
     throw error;
   }
 });
@@ -166,7 +156,6 @@ ipcMain.handle('update-tag', async (_, id, name, color, textColor) => {
     const taskRepo = getTaskRepository();
     return taskRepo.updateTag(id, name, color, textColor);
   } catch (error) {
-    console.error('Error updating tag:', error);
     throw error;
   }
 });
@@ -176,7 +165,6 @@ ipcMain.handle('delete-tag', async (_, id) => {
     const taskRepo = getTaskRepository();
     return taskRepo.deleteTag(id);
   } catch (error) {
-    console.error('Error deleting tag:', error);
     throw error;
   }
 });
@@ -186,7 +174,6 @@ ipcMain.handle('get-tags-by-task-id', async (_, taskId) => {
     const taskRepo = getTaskRepository();
     return taskRepo.getTagsByTaskId(taskId);
   } catch (error) {
-    console.error('Error getting tags by task ID:', error);
     throw error;
   }
 });
@@ -196,7 +183,16 @@ ipcMain.handle('get-routine-tasks', async () => {
     const taskRepo = getTaskRepository();
     return taskRepo.getRoutineTasks();
   } catch (error) {
-    console.error('Error getting routine tasks:', error);
     return [];
+  }
+});
+
+ipcMain.handle('generate-daily-routine-tasks', async () => {
+  try {
+    const taskRepo = getTaskRepository();
+    return taskRepo.generateDailyRoutineTasks();
+  } catch (error) {
+    console.error('Error generating daily routine tasks:', error);
+    return false;
   }
 });

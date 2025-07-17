@@ -1,0 +1,66 @@
+/* Utility classes for consistent styling */
+
+/* Display utilities */
+.inline-flex {
+  display: inline-flex;
+}
+
+.items-center {
+  align-items: center;
+}
+
+/* Typography utilities */
+.font-medium {
+  font-weight: 500;
+}
+
+.text-xs {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.text-sm {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Border radius utilities */
+.rounded-full {
+  border-radius: 9999px;
+}
+
+/* Padding utilities */
+.px-2 {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.py-0\.5 {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.px-3 {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.py-1 {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+/* Background utilities */
+.bg-gray-100 {
+  background-color: #f3f4f6;
+}
+
+/* Text color utilities */
+.text-gray-800 {
+  color: #1f2937;
+}
+
+/* Border utilities */
+.border {
+  border: 1px solid #e5e7eb;
+}

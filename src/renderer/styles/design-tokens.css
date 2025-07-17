@@ -1,0 +1,296 @@
+/**
+ * Design Tokens - Task Management System
+ * Unified design system for colors, spacing, typography, and components
+ */
+
+:root {
+  /* ================================
+   * COLOR SYSTEM
+   * ================================ */
+
+  /* Primary Brand Colors */
+  --color-primary: #8b5cf6;
+  --color-primary-hover: #7c3aed;
+  --color-primary-active: #6d28d9;
+  --color-primary-light: rgba(139, 92, 246, 0.1);
+  --color-primary-focus: rgba(139, 92, 246, 0.5);
+
+  /* Background Colors */
+  --color-background: #fafafa;
+  --color-background-alt: #f8fafc;
+  --color-background-subtle: #f9fafb;
+  --color-background-card: #ffffff;
+  --color-background-overlay: rgba(0, 0, 0, 0.3);
+  --color-background-modal: rgba(0, 0, 0, 0.5);
+
+  /* Text Colors */
+  --color-text-primary: #111827;
+  --color-text-secondary: #374151;
+  --color-text-muted: #6b7280;
+  --color-text-light: #9ca3af;
+  --color-text-inverse: #ffffff;
+
+  /* Border Colors */
+  --color-border-light: #e5e7eb;
+  --color-border-medium: #d1d5db;
+  --color-border-dark: #9ca3af;
+
+  /* Status Colors */
+  --color-success: #10b981;
+  --color-success-light: #d1fae5;
+  --color-success-dark: #059669;
+  
+  --color-warning: #f59e0b;
+  --color-warning-light: #fef3c7;
+  --color-warning-dark: #d97706;
+  
+  --color-error: #ef4444;
+  --color-error-light: #fee2e2;
+  --color-error-dark: #dc2626;
+  
+  --color-info: #3b82f6;
+  --color-info-light: #dbeafe;
+  --color-info-dark: #2563eb;
+
+  /* Task Status Colors */
+  --color-status-pending: #6b7280;
+  --color-status-pending-bg: #f3f4f6;
+  --color-status-progress: #3b82f6;
+  --color-status-progress-bg: #dbeafe;
+  --color-status-completed: #10b981;
+  --color-status-completed-bg: #d1fae5;
+  --color-status-overdue: #dc2626;
+  --color-status-overdue-bg: #fee2e2;
+
+  /* Priority Colors */
+  --color-priority-low: #64748b;
+  --color-priority-low-bg: #f8fafc;
+  --color-priority-medium: #3b82f6;
+  --color-priority-medium-bg: #dbeafe;
+  --color-priority-high: #f59e0b;
+  --color-priority-high-bg: #fef3c7;
+  --color-priority-urgent: #ef4444;
+  --color-priority-urgent-bg: #fee2e2;
+
+  /* Shadow Colors */
+  --color-shadow-light: rgba(0, 0, 0, 0.05);
+  --color-shadow-medium: rgba(0, 0, 0, 0.1);
+  --color-shadow-dark: rgba(0, 0, 0, 0.15);
+
+  /* ================================
+   * SPACING SYSTEM (8pt grid)
+   * ================================ */
+
+  --space-0: 0px;
+  --space-1: 2px;     /* Micro spacing */
+  --space-2: 4px;     /* Tiny spacing */
+  --space-3: 6px;     /* Minimal spacing */
+  --space-4: 8px;     /* Small spacing */
+  --space-5: 10px;    /* Button spacing */
+  --space-6: 12px;    /* Medium spacing */
+  --space-8: 16px;    /* Default spacing */
+  --space-10: 20px;   /* Container spacing */
+  --space-12: 24px;   /* Large spacing */
+  --space-16: 32px;   /* Extra large spacing */
+  --space-20: 40px;   /* Section spacing */
+  --space-24: 48px;   /* Page spacing */
+  --space-32: 64px;   /* Layout spacing */
+
+  /* ================================
+   * TYPOGRAPHY SYSTEM
+   * ================================ */
+
+  /* Font Family */
+  --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-family-mono: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+
+  /* Font Sizes */
+  --font-size-xs: 10px;   /* Micro text */
+  --font-size-sm: 12px;   /* Small text */
+  --font-size-base: 14px; /* Body text */
+  --font-size-md: 16px;   /* Large body */
+  --font-size-lg: 18px;   /* Subtitle */
+  --font-size-xl: 20px;   /* Section heading */
+  --font-size-2xl: 24px;  /* Large heading */
+  --font-size-3xl: 28px;  /* Page heading */
+  --font-size-4xl: 32px;  /* Hero heading */
+
+  /* Font Weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Line Heights */
+  --line-height-tight: 1;
+  --line-height-snug: 1.2;
+  --line-height-normal: 1.4;
+  --line-height-relaxed: 1.5;
+  --line-height-loose: 1.6;
+
+  /* ================================
+   * COMPONENT TOKENS
+   * ================================ */
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 50%;
+
+  /* Border Width */
+  --border-width: 1px;
+  --border-width-thick: 2px;
+
+  /* Component Heights */
+  --height-button-sm: 32px;
+  --height-button-md: 36px;
+  --height-button-lg: 40px;
+  --height-input: 36px;
+  --height-header: 60px;
+  --height-task-card: 60px;
+
+  /* Component Widths */
+  --width-sidebar: 250px;
+  --width-container-sm: 640px;
+  --width-container-md: 768px;
+  --width-container-lg: 1024px;
+  --width-container-xl: 1200px;
+  --width-container-2xl: 1400px;
+
+  /* Z-Index Scale */
+  --z-index-dropdown: 1000;
+  --z-index-modal: 1001;
+  --z-index-toast: 1002;
+  --z-index-tooltip: 1003;
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+  --transition-slow: 0.3s ease;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px var(--color-shadow-light);
+  --shadow-md: 0 4px 6px var(--color-shadow-medium);
+  --shadow-lg: 0 8px 16px var(--color-shadow-dark);
+  --shadow-xl: 0 16px 32px var(--color-shadow-dark);
+  --shadow-focus: 0 0 0 2px var(--color-primary-focus);
+  --shadow-focus-error: 0 0 0 2px rgba(239, 68, 68, 0.5);
+
+  /* ================================
+   * BREAKPOINTS
+   * ================================ */
+
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1200px;
+  --breakpoint-2xl: 1440px;
+  --breakpoint-3xl: 1800px;
+
+  /* ================================
+   * RESPONSIVE CONTAINER PADDING
+   * ================================ */
+
+  --container-padding-sm: var(--space-8);   /* 16px */
+  --container-padding-md: var(--space-10);  /* 20px */
+  --container-padding-lg: var(--space-12);  /* 24px */
+  --container-padding-xl: var(--space-16);  /* 32px */
+  --container-padding-2xl: var(--space-24); /* 48px */
+}
+
+/* ================================
+ * UTILITY CLASSES
+ * ================================ */
+
+/* Typography Utilities */
+.text-xs { font-size: var(--font-size-xs); }
+.text-sm { font-size: var(--font-size-sm); }
+.text-base { font-size: var(--font-size-base); }
+.text-md { font-size: var(--font-size-md); }
+.text-lg { font-size: var(--font-size-lg); }
+.text-xl { font-size: var(--font-size-xl); }
+.text-2xl { font-size: var(--font-size-2xl); }
+.text-3xl { font-size: var(--font-size-3xl); }
+
+.font-normal { font-weight: var(--font-weight-normal); }
+.font-medium { font-weight: var(--font-weight-medium); }
+.font-semibold { font-weight: var(--font-weight-semibold); }
+.font-bold { font-weight: var(--font-weight-bold); }
+
+.leading-tight { line-height: var(--line-height-tight); }
+.leading-snug { line-height: var(--line-height-snug); }
+.leading-normal { line-height: var(--line-height-normal); }
+.leading-relaxed { line-height: var(--line-height-relaxed); }
+.leading-loose { line-height: var(--line-height-loose); }
+
+/* Color Utilities */
+.text-primary { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-muted { color: var(--color-text-muted); }
+.text-light { color: var(--color-text-light); }
+
+.bg-primary { background-color: var(--color-primary); }
+.bg-card { background-color: var(--color-background-card); }
+.bg-subtle { background-color: var(--color-background-subtle); }
+
+.border-light { border-color: var(--color-border-light); }
+.border-medium { border-color: var(--color-border-medium); }
+
+/* Status Utilities */
+.text-success { color: var(--color-success); }
+.text-warning { color: var(--color-warning); }
+.text-error { color: var(--color-error); }
+.text-info { color: var(--color-info); }
+
+.bg-success { background-color: var(--color-success); }
+.bg-success-light { background-color: var(--color-success-light); }
+.bg-warning { background-color: var(--color-warning); }
+.bg-warning-light { background-color: var(--color-warning-light); }
+.bg-error { background-color: var(--color-error); }
+.bg-error-light { background-color: var(--color-error-light); }
+
+/* Spacing Utilities */
+.p-0 { padding: var(--space-0); }
+.p-1 { padding: var(--space-1); }
+.p-2 { padding: var(--space-2); }
+.p-3 { padding: var(--space-3); }
+.p-4 { padding: var(--space-4); }
+.p-6 { padding: var(--space-6); }
+.p-8 { padding: var(--space-8); }
+.p-10 { padding: var(--space-10); }
+.p-12 { padding: var(--space-12); }
+
+.m-0 { margin: var(--space-0); }
+.m-1 { margin: var(--space-1); }
+.m-2 { margin: var(--space-2); }
+.m-4 { margin: var(--space-4); }
+.m-6 { margin: var(--space-6); }
+.m-8 { margin: var(--space-8); }
+.m-10 { margin: var(--space-10); }
+
+.gap-2 { gap: var(--space-2); }
+.gap-4 { gap: var(--space-4); }
+.gap-6 { gap: var(--space-6); }
+.gap-8 { gap: var(--space-8); }
+.gap-12 { gap: var(--space-12); }
+
+/* Border Radius Utilities */
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+.rounded-full { border-radius: var(--radius-full); }
+
+/* Shadow Utilities */
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+.shadow-xl { box-shadow: var(--shadow-xl); }
+
+/* Transition Utilities */
+.transition-fast { transition: all var(--transition-fast); }
+.transition-base { transition: all var(--transition-base); }
+.transition-slow { transition: all var(--transition-slow); }

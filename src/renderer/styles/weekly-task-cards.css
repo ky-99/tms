@@ -87,8 +87,14 @@
     border-color: #e5e7eb;
 }
 
-.weekly-task-card:hover {
+.weekly-task-card.in_progress:hover,
+.weekly-task-card.pending:hover {
     background: #f9fafb !important;
+}
+
+.weekly-task-card.completed:hover {
+    /* 完了タスクはホバー時も背景色を変更しない */
+    background: #d1fae5 !important;
 }
 
 /* ルーティンタスクのスタイル */
@@ -123,32 +129,11 @@
     z-index: 1;
 }
 
-.in-progress-indicator {
-    color: #3b82f6;
-    font-weight: bold;
-    font-size: 16px;
-}
-
 .task-card-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     margin-bottom: 8px;
-}
-
-.task-priority-badge {
-    font-size: 10px;
-    font-weight: 600;
-    color: white;
-    padding: 2px 6px;
-    border-radius: 12px;
-    text-transform: uppercase;
-}
-
-.completed-check {
-    color: #10b981;
-    font-weight: bold;
-    font-size: 16px;
 }
 
 .task-card-title {

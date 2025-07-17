@@ -19,7 +19,9 @@
   border-radius: 4px;
   box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
   width: 600px;
-  height: 80vh;
+  max-height: 85vh;
+  min-height: 400px;
+  height: auto;
   overflow: hidden;
   animation: modalFadeIn 0.15s ease-out;
   display: flex;
@@ -269,6 +271,30 @@
   padding: 24px 24px 0 24px;
   border-bottom: 1px solid #e5e7eb;
   flex-shrink: 0;
+  position: relative;
+}
+
+.task-detail-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.task-detail-modal-close:hover {
+  background-color: #f3f4f6;
+  color: #374151;
 }
 
 .task-detail-header-content {
@@ -351,7 +377,7 @@
   padding: 24px;
   flex: 1;
   overflow-y: auto;
-  min-height: 0;
+  min-height: 300px;
 }
 
 .task-detail-badges {
@@ -588,6 +614,8 @@
   .task-detail-modal {
     width: 100%;
     height: 100vh;
+    max-height: 100vh;
+    min-height: 100vh;
     border-radius: 0;
   }
   

@@ -1,55 +1,19 @@
 /**
- * useDebounce hook
- * Delays updating a value until after a specified delay
+ * useDebounce hook - Now using optimized library implementation
+ * Better performance and memory management
  */
 
-import { useState, useEffect } from 'react';
+import { useDebounce as useDebounceLib, useDebouncedCallback } from 'use-debounce';
 
+// Re-export the library's useDebounce with same interface
 export function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
+  return useDebounceLib(value, delay)[0];
 }
 
-/**
- * useDebounceCallback hook
- * Debounces callback function calls
- */
-export function useDebounceCallback<T extends (...args: any[]) => void>(
+// Re-export the library's debounced callback with same interface
+export function useDebounceCallback<T extends (...args: any[]) => any>(
   callback: T,
   delay: number
-): T {
-  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout>();
-
-  const debouncedCallback = ((...args: any[]) => {
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
-    }
-
-    const newTimer = setTimeout(() => {
-      callback(...args);
-    }, delay);
-
-    setDebounceTimer(newTimer);
-  }) as T;
-
-  useEffect(() => {
-    return () => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-      }
-    };
-  }, [debounceTimer]);
-
-  return debouncedCallback;
+) {
+  return useDebouncedCallback(callback, delay) as unknown as T;
 }

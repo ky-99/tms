@@ -3,11 +3,10 @@
  * Eliminates duplication of task processing logic across components
  */
 
-import { Task, TaskStatus, TaskPriority, ApiTask } from '../types';
+import { Task, TaskStatus, ApiTask, transformApiTask } from '../types';
 
 /**
  * Flattens a hierarchical task tree into a flat array
- * Replaces 6+ duplicate implementations across components
  */
 export const flattenTasks = (tasks: Task[]): Task[] => {
   const result: Task[] = [];
@@ -23,64 +22,16 @@ export const flattenTasks = (tasks: Task[]): Task[] => {
   return result;
 };
 
-/**
- * Normalizes API task data to consistent format
- * Handles legacy snake_case to camelCase conversion
- */
-export const normalizeTask = (apiTask: ApiTask): Task => {
-  const normalized = {
-    ...apiTask,
-    dueDate: apiTask.dueDate || apiTask.due_date,
-    createdAt: apiTask.createdAt || apiTask.created_at,
-    completedAt: apiTask.completedAt || apiTask.completed_at,
-    // ルーティンタスクフィールドの正規化
-    isRoutine: apiTask.isRoutine || (apiTask as any).is_routine,
-    routineType: apiTask.routineType || (apiTask as any).routine_type,
-    lastGeneratedAt: apiTask.lastGeneratedAt || (apiTask as any).last_generated_at,
-    routineParentId: apiTask.routineParentId || (apiTask as any).routine_parent_id,
-  };
-  
-  // Recursively normalize children if they exist
-  if (apiTask.children && apiTask.children.length > 0) {
-    normalized.children = apiTask.children.map(normalizeTask);
-  }
-  
-  return normalized;
-};
+// Re-export transformation functions from types
+export { transformApiTask as normalizeTask, transformApiTask } from '../types/task';
 
 /**
  * Normalizes an array of API tasks
  */
 export const normalizeTasks = (apiTasks: ApiTask[]): Task[] => {
-  return apiTasks.map(normalizeTask);
+  return apiTasks.map(transformApiTask);
 };
 
-/**
- * Gets localized status text
- * Centralizes status mapping logic
- */
-export const getStatusText = (status: TaskStatus): string => {
-  const statusMap: Record<TaskStatus, string> = {
-    'pending': '未着手',
-    'in_progress': '進行中', 
-    'completed': '完了'
-  };
-  return statusMap[status];
-};
-
-/**
- * Gets localized priority text
- * Centralizes priority mapping logic
- */
-export const getPriorityText = (priority: TaskPriority): string => {
-  const priorityMap: Record<TaskPriority, string> = {
-    'low': '低',
-    'medium': '中',
-    'high': '高',
-    'urgent': '緊急'
-  };
-  return priorityMap[priority];
-};
 
 /**
  * Checks if a task is overdue
@@ -119,6 +70,28 @@ export const getDueDateText = (task: Task): string | null => {
 
 
 /**
+ * Finds a task by ID in a hierarchical task tree
+ */
+export const findTaskById = (tasks: Task[], taskId: number): Task | null => {
+  const findTask = (taskList: Task[]): Task | null => {
+    for (const task of taskList) {
+      if (task.id === taskId) {
+        return task;
+      }
+      if (task.children) {
+        const found = findTask(task.children);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return null;
+  };
+  
+  return findTask(tasks);
+};
+
+/**
  * Checks if a task is a parent task (has children)
  */
 export const isParentTask = (task: Task): boolean => {
@@ -129,7 +102,7 @@ export const isParentTask = (task: Task): boolean => {
  * Calculates the appropriate status for a parent task based on its children
  */
 export const calculateParentTaskStatus = (task: Task): TaskStatus => {
-  if (!isParentTask(task)) {
+  if (!(task.children && task.children.length > 0)) {
     return task.status; // 子タスクがない場合は現在のステータスを維持
   }
 
@@ -160,75 +133,164 @@ export const calculateParentTaskStatus = (task: Task): TaskStatus => {
   return 'in_progress';
 };
 
-export type SortField = 'title' | 'status' | 'priority' | 'dueDate' | 'createdAt';
-export type SortDirection = 'asc' | 'desc';
-
-export interface SortOption {
-  field: SortField;
-  direction: SortDirection;
-}
-
 /**
- * Sorts tasks by multiple criteria (Notion-like)
+ * ステータスに応じた色を取得
  */
-export const sortTasksMultiple = (
-  tasks: Task[],
-  sortOptions: SortOption[]
-): Task[] => {
-  if (sortOptions.length === 0) return tasks;
-
-  const sorted = [...tasks].sort((a, b) => {
-    for (const sortOption of sortOptions) {
-      const comparison = compareTasksByField(a, b, sortOption.field, sortOption.direction);
-      if (comparison !== 0) return comparison;
-    }
-    return 0;
-  });
-
-  return sorted;
+export const getStatusColor = (status: string): string => {
+  switch (status) {
+    case 'completed':
+      return '#10b981';
+    case 'in_progress':
+      return '#3b82f6';
+    case 'pending':
+      return '#6b7280';
+    default:
+      return '#6b7280';
+  }
 };
 
 /**
- * Compares two tasks by a specific field
+ * 優先度に応じた色を取得
  */
-const compareTasksByField = (
-  a: Task,
-  b: Task,
-  field: SortField,
-  direction: SortDirection
-): number => {
-  let aValue: any;
-  let bValue: any;
-
-  switch (field) {
-    case 'title':
-      aValue = a.title.toLowerCase();
-      bValue = b.title.toLowerCase();
-      break;
-    case 'dueDate':
-      aValue = a.dueDate ? new Date(a.dueDate).getTime() : 0;
-      bValue = b.dueDate ? new Date(b.dueDate).getTime() : 0;
-      break;
-    case 'priority':
-      const priorityOrder = { 'urgent': 4, 'high': 3, 'medium': 2, 'low': 1 };
-      aValue = priorityOrder[a.priority];
-      bValue = priorityOrder[b.priority];
-      break;
-    case 'status':
-      const statusOrder = { 'pending': 1, 'in_progress': 2, 'completed': 3 };
-      aValue = statusOrder[a.status];
-      bValue = statusOrder[b.status];
-      break;
-    case 'createdAt':
-      aValue = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      bValue = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      break;
+export const getPriorityColor = (priority: string): string => {
+  switch (priority) {
+    case 'urgent':
+      return '#ef4444';
+    case 'high':
+      return '#f59e0b';
+    case 'medium':
+      return '#3b82f6';
+    case 'low':
+      return '#6b7280';
     default:
-      return 0;
+      return '#6b7280';
   }
+};
 
-  if (aValue < bValue) return direction === 'asc' ? -1 : 1;
-  if (aValue > bValue) return direction === 'asc' ? 1 : -1;
-  return 0;
+/**
+ * ステータスの日本語表示名を取得
+ */
+export const getStatusLabel = (status: string): string => {
+  switch (status) {
+    case 'pending':
+      return '未着手';
+    case 'in_progress':
+      return '進行中';
+    case 'completed':
+      return '完了';
+    default:
+      return '未着手';
+  }
+};
+
+/**
+ * 優先度の日本語表示名を取得
+ */
+export const getPriorityLabel = (priority: string): string => {
+  switch (priority) {
+    case 'low':
+      return '低';
+    case 'medium':
+      return '中';
+    case 'high':
+      return '高';
+    case 'urgent':
+      return '緊急';
+    default:
+      return '中';
+  }
+};
+
+/**
+ * タスクが今日完了したかを判定
+ */
+export const isCompletedToday = (task: Task): boolean => {
+  if (task.status !== 'completed' || !task.completedAt) {
+    return false;
+  }
+  
+  const completedDate = new Date(task.completedAt);
+  const today = new Date();
+  
+  return completedDate.toDateString() === today.toDateString();
+};
+
+/**
+ * 特定のタスクの子孫タスクを取得
+ */
+export const getDescendantTasks = (task: Task): Task[] => {
+  const descendants: Task[] = [];
+  
+  const collect = (currentTask: Task) => {
+    if (currentTask.children) {
+      for (const child of currentTask.children) {
+        descendants.push(child);
+        collect(child);
+      }
+    }
+  };
+  
+  collect(task);
+  return descendants;
+};
+
+/**
+ * タスクの深度を計算
+ */
+export const getTaskDepth = (task: Task, allTasks: Task[]): number => {
+  let depth = 0;
+  let currentTask = task;
+  
+  while (currentTask.parentId) {
+    const parent = allTasks.find(t => t.id === currentTask.parentId);
+    if (parent) {
+      currentTask = parent;
+      depth++;
+    } else {
+      break;
+    }
+  }
+  
+  return depth;
+};
+
+/**
+ * タスクのルートを取得
+ */
+export const getRootTask = (task: Task, allTasks: Task[]): Task => {
+  let currentTask = task;
+  
+  while (currentTask.parentId) {
+    const parent = allTasks.find(t => t.id === currentTask.parentId);
+    if (parent) {
+      currentTask = parent;
+    } else {
+      break;
+    }
+  }
+  
+  return currentTask;
+};
+
+/**
+ * タスクの統計情報を計算
+ */
+export const calculateTaskStats = (tasks: Task[]) => {
+  const flatTasks = flattenTasks(tasks);
+  
+  const stats = {
+    total: flatTasks.length,
+    completed: flatTasks.filter(t => t.status === 'completed').length,
+    inProgress: flatTasks.filter(t => t.status === 'in_progress').length,
+    pending: flatTasks.filter(t => t.status === 'pending').length,
+    overdue: flatTasks.filter(t => {
+      if (!t.dueDate) return false;
+      const dueDate = new Date(t.dueDate);
+      const now = new Date();
+      return dueDate < now && t.status !== 'completed';
+    }).length
+  };
+  
+  return stats;
 };
 

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { flushSync } from 'react-dom';
+import { useGlobalAlert } from '../hooks';
 import '../styles/workspace-page.css';
 import { workspaceService, WorkSpace } from '../services/workspaceService';
 
 const WorkSpacePage: React.FC = () => {
+  const { showAlert } = useGlobalAlert();
   const [workspaces, setWorkspaces] = useState<WorkSpace[]>([]);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [newWorkspaceDescription, setNewWorkspaceDescription] = useState('');
@@ -11,7 +14,6 @@ const WorkSpacePage: React.FC = () => {
   const [importWorkspaceName, setImportWorkspaceName] = useState('');
   const [importWorkspaceDescription, setImportWorkspaceDescription] = useState('');
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
-  const [isFileDialogOpen, setIsFileDialogOpen] = useState(false);
 
   // Load workspaces from the API
   useEffect(() => {
@@ -24,7 +26,6 @@ const WorkSpacePage: React.FC = () => {
         const allWorkspaces = await workspaceService.getAllWorkspaces();
         setWorkspaces(allWorkspaces);
       } catch (error) {
-        console.error('Failed to load workspaces:', error);
       }
     };
     
@@ -38,77 +39,115 @@ const WorkSpacePage: React.FC = () => {
       const allWorkspaces = await workspaceService.getAllWorkspaces();
       setWorkspaces(allWorkspaces);
     } catch (error) {
-      console.error('Failed to load workspaces:', error);
     }
   };
 
-  const handleCreateWorkspace = async () => {
+  const handleCreateWorkspace = () => {
     if (!newWorkspaceName.trim()) return;
 
-    try {
-      await workspaceService.createWorkspace({
-        name: newWorkspaceName,
-        description: newWorkspaceDescription
-      });
-      
-      // Reload workspaces to get the updated list (サイレント更新)
-      const allWorkspaces = await workspaceService.getAllWorkspaces();
-      setWorkspaces(allWorkspaces);
-      
+    const createData = {
+      name: newWorkspaceName,
+      description: newWorkspaceDescription
+    };
+
+    // 即座にモーダルを閉じる
+    flushSync(() => {
       setNewWorkspaceName('');
       setNewWorkspaceDescription('');
       setIsCreateModalOpen(false);
-    } catch (error) {
-      console.error('Failed to create workspace:', error);
-      alert('ワークスペースの作成に失敗しました。再度お試しください。');
-    }
+    });
+
+    // 重い処理を次のイベントループで実行
+    setTimeout(async () => {
+      try {
+        await workspaceService.createWorkspace(createData);
+        
+        // ワークスペースリストを更新
+        const allWorkspaces = await workspaceService.getAllWorkspaces();
+        setWorkspaces(allWorkspaces);
+        
+        // 成功トーストを表示
+        showAlert(`ワークスペース「${createData.name}」を作成しました`, {
+          type: 'success',
+        });
+      } catch (error) {
+        showAlert('ワークスペースの作成に失敗しました。再度お試しください。', {
+          type: 'error',
+          title: 'エラー'
+        });
+      }
+    }, 0);
   };
 
   const handleActivateWorkspace = async (id: string) => {
     try {
       const success = await workspaceService.switchToWorkspace(id);
       if (!success) {
-        alert('ワークスペースの切り替えに失敗しました。再度お試しください。');
+        showAlert('ワークスペースの切り替えに失敗しました。再度お試しください。', {
+          type: 'error',
+          title: 'エラー',
+        });
       }
       // workspace:changedイベントで自動的にUIが更新されるため、手動でloadWorkspaces()を呼ぶ必要なし
     } catch (error) {
-      console.error('Failed to switch workspace:', error);
-      alert('ワークスペースの切り替えに失敗しました。再度お試しください。');
+      showAlert('ワークスペースの切り替えに失敗しました。再度お試しください。', {
+        type: 'error',
+        title: 'エラー'
+      });
     }
   };
 
   const handleDeleteWorkspace = async (id: string) => {
     const workspace = workspaces.find(ws => ws.id === id);
     if (workspace?.isActive) {
-      alert('アクティブなワークスペースは削除できません');
+      showAlert('アクティブなワークスペースは削除できません', {
+        type: 'prohibition',
+        title: '削除不可',
+      });
       return;
     }
     
-    if (confirm('このワークスペースを削除してもよろしいですか？この操作は元に戻せません。')) {
+    showAlert('このワークスペースを削除してもよろしいですか？この操作は元に戻せません。', {
+      type: 'danger',
+      title: '確認',
+      showCancel: true,
+      confirmText: '削除',
+      cancelText: 'キャンセル',
+      onConfirm: async () => {
       try {
+        const workspace = workspaces.find(ws => ws.id === id);
+        const workspaceName = workspace?.name || 'ワークスペース';
+        
         const success = await workspaceService.deleteWorkspace(id);
         if (success) {
-          // Reload workspaces to get updated list (サイレント更新)
+          // Show success message
+          showAlert(`ワークスペース「${workspaceName}」を削除しました`, {
+            type: 'success',
+          });
+          
+          // Reload workspaces to get updated list
           const allWorkspaces = await workspaceService.getAllWorkspaces();
           setWorkspaces(allWorkspaces);
         } else {
-          alert('ワークスペースの削除に失敗しました。再度お試しください。');
+          showAlert('ワークスペースの削除に失敗しました。再度お試しください。', {
+            type: 'error',
+            title: 'エラー'
+          });
         }
       } catch (error) {
-        console.error('Failed to delete workspace:', error);
-        alert('ワークスペースの削除に失敗しました。再度お試しください。');
+        showAlert('ワークスペースの削除に失敗しました。再度お試しください。', {
+          type: 'error',
+          title: 'エラー'
+        });
       }
-    }
+      },
+      onCancel: () => {
+        // キャンセル時は何もしない
+      }
+    });
   };
 
   const handleImportWorkspace = () => {
-    // Prevent multiple dialogs from opening
-    if (isFileDialogOpen) {
-      return;
-    }
-    
-    setIsFileDialogOpen(true);
-    
     // Create file input element
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
@@ -116,7 +155,6 @@ const WorkSpacePage: React.FC = () => {
     fileInput.style.display = 'none';
     
     const cleanup = () => {
-      setIsFileDialogOpen(false);
       try {
         document.body.removeChild(fileInput);
       } catch (e) {
@@ -135,30 +173,46 @@ const WorkSpacePage: React.FC = () => {
         return;
       }
       
-      try {
-        // Convert File to file path by saving to temp location
-        const arrayBuffer = await file.arrayBuffer();
-        const uint8Array = new Uint8Array(arrayBuffer);
-        
-        // Send file data to main process for validation and saving
-        const result = await workspaceService.importFromFileData(
-          uint8Array,
-          file.name
-        );
-        
-        if (result) {
-          // Extract filename without extension as default name
-          const fileName = file.name.replace(/\.db$/, '') || 'Imported Workspace';
-          setImportWorkspaceName(fileName);
-          setImportWorkspaceDescription('');
-          setSelectedFilePath(result.tempPath);
-          setIsImportModalOpen(true);
+      // 即座にモーダルを表示（ファイル検証は後で行う）
+      const fileName = file.name.replace(/\.db$/, '') || 'Imported Workspace';
+      
+      // flushSyncを使って同期的に状態を更新
+      flushSync(() => {
+        setImportWorkspaceName(fileName);
+        setImportWorkspaceDescription('');
+        setSelectedFilePath(file.path || file.name);
+        setIsImportModalOpen(true);
+      });
+      
+      // バックグラウンドでファイル検証を行う
+      setTimeout(async () => {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const uint8Array = new Uint8Array(arrayBuffer);
+          
+          const result = await workspaceService.importFromFileData(
+            uint8Array,
+            file.name
+          );
+          
+          if (result) {
+            setSelectedFilePath(result.tempPath);
+          } else {
+            setIsImportModalOpen(false);
+            showAlert('有効な.dbファイルではありません', {
+              type: 'error',
+              title: 'エラー'
+            });
+          }
+        } catch (error) {
+          setIsImportModalOpen(false);
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+          showAlert(`ファイルの処理に失敗しました: ${errorMessage}`, {
+            type: 'error',
+            title: 'エラー'
+          });
         }
-      } catch (error) {
-        console.error('Failed to process selected file:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-        alert(`ファイルの処理に失敗しました: ${errorMessage}`);
-      }
+      }, 0);
     };
     
     // Handle dialog cancellation
@@ -185,29 +239,44 @@ const WorkSpacePage: React.FC = () => {
   };
 
   const handleConfirmImport = async () => {
-    if (!selectedFilePath || !importWorkspaceName.trim()) return;
+    if (!selectedFilePath || !importWorkspaceName.trim()) {
+      return;
+    }
+
+    const importData = {
+      filePath: selectedFilePath,
+      name: importWorkspaceName,
+      description: importWorkspaceDescription
+    };
+
+    // モーダルを即座に閉じる
+    setIsImportModalOpen(false);
+    setImportWorkspaceName('');
+    setImportWorkspaceDescription('');
+    setSelectedFilePath(null);
 
     try {
-      const importedWorkspace = await workspaceService.importWorkspace(
-        selectedFilePath,
-        importWorkspaceName,
-        importWorkspaceDescription
+      await workspaceService.importWorkspace(
+        importData.filePath,
+        importData.name,
+        importData.description
       );
       
-      // Reload workspaces to get the updated list (サイレント更新)
+      // ワークスペースリストを更新
       const allWorkspaces = await workspaceService.getAllWorkspaces();
       setWorkspaces(allWorkspaces);
       
-      setImportWorkspaceName('');
-      setImportWorkspaceDescription('');
-      setSelectedFilePath(null);
-      setIsImportModalOpen(false);
-      
-      alert(`ワークスペース「${importedWorkspace.name}」を正常にインポートしました`);
+      // 成功トーストを表示
+      showAlert(`ワークスペース「${importData.name}」をインポートしました`, {
+        type: 'success',
+      });
     } catch (error) {
-      console.error('Failed to import workspace:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      alert(`ワークスペースのインポートに失敗しました: ${errorMessage}`);
+      
+      showAlert(`ワークスペースのインポートに失敗しました: ${errorMessage}`, {
+        type: 'error',
+        title: 'エラー'
+      });
     }
   };
 
@@ -216,7 +285,10 @@ const WorkSpacePage: React.FC = () => {
     const dbFile = files.find(file => file.name.endsWith('.db'));
     
     if (!dbFile) {
-      alert('有効な.dbファイルをドロップしてください');
+      showAlert('有効な.dbファイルをドロップしてください', {
+        type: 'warning',
+        title: '警告'
+      });
       return;
     }
     
@@ -240,9 +312,11 @@ const WorkSpacePage: React.FC = () => {
         setIsImportModalOpen(true);
       }
     } catch (error) {
-      console.error('Failed to process dropped file:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      alert(`ファイルの処理に失敗しました: ${errorMessage}`);
+      showAlert(`ファイルの処理に失敗しました: ${errorMessage}`, {
+        type: 'error',
+        title: 'エラー'
+      });
     }
   };
 
@@ -250,13 +324,17 @@ const WorkSpacePage: React.FC = () => {
     try {
       const filePath = await workspaceService.exportWorkspace(workspaceId);
       if (filePath) {
-        alert(`ワークスペースを正常にエクスポートしました: ${filePath}`);
-      } else {
-        alert('エクスポートがキャンセルされました');
+        showAlert(`ワークスペースを正常にエクスポートしました: ${filePath}`, {
+          type: 'success',
+          title: '成功'
+        });
       }
+      // キャンセル時は何も表示しない
     } catch (error) {
-      console.error('Failed to export workspace:', error);
-      alert('ワークスペースのエクスポートに失敗しました。再度お試しください。');
+      showAlert('ワークスペースのエクスポートに失敗しました。再度お試しください。', {
+        type: 'error',
+        title: 'エラー'
+      });
     }
   };
 

@@ -21,7 +21,6 @@ class TaskAPIService {
       const apiTasks = await this.api.getAllTasks();
       return normalizeTasks(apiTasks);
     } catch (error) {
-      console.error('Failed to load tasks:', error);
       throw new Error('タスクの読み込みに失敗しました');
     }
   }
@@ -33,9 +32,7 @@ class TaskAPIService {
     try {
       // Note: This is a simplified implementation
       // In a real app, you'd want to track what's new/updated/deleted
-      console.warn('saveTasks is a legacy method - use individual CRUD operations instead');
     } catch (error) {
-      console.error('Failed to save tasks:', error);
       throw new Error('タスクの保存に失敗しました');
     }
   }
@@ -62,7 +59,6 @@ class TaskAPIService {
       
       return normalizeTask(newTask);
     } catch (error) {
-      console.error('Failed to create task:', error);
       throw new Error('タスクの作成に失敗しました');
     }
   }
@@ -89,7 +85,6 @@ class TaskAPIService {
       
       return normalizeTask(newTask);
     } catch (error) {
-      console.error('Failed to create task after:', error);
       throw new Error('タスクの作成に失敗しました');
     }
   }
@@ -103,7 +98,6 @@ class TaskAPIService {
       const updatedTask = await this.api.updateTask(id, updates);
       return normalizeTask(updatedTask);
     } catch (error) {
-      console.error('Failed to update task:', error);
       throw new Error('タスクの更新に失敗しました');
     }
   }
@@ -116,7 +110,6 @@ class TaskAPIService {
       // Use the real IPC communication - the database handles cascade deletion
       await this.api.deleteTask(id);
     } catch (error) {
-      console.error('Failed to delete task:', error);
       throw new Error('タスクの削除に失敗しました');
     }
   }
@@ -129,7 +122,6 @@ class TaskAPIService {
       const tasks = await this.loadTasks();
       return tasks.find(task => task.id === id) || null;
     } catch (error) {
-      console.error('Failed to get task:', error);
       throw new Error('タスクの取得に失敗しました');
     }
   }
@@ -161,7 +153,6 @@ class TaskAPIService {
       await this.saveTasks(updatedTasks);
       return updatedTasks;
     } catch (error) {
-      console.error('Failed to bulk update tasks:', error);
       throw new Error('タスクの一括更新に失敗しました');
     }
   }
@@ -174,7 +165,6 @@ class TaskAPIService {
       const tasks = await this.loadTasks();
       return tasks.filter(task => task.status === status);
     } catch (error) {
-      console.error('Failed to get tasks by status:', error);
       throw new Error('ステータス別タスクの取得に失敗しました');
     }
   }
@@ -187,7 +177,6 @@ class TaskAPIService {
       const tasks = await this.loadTasks();
       return tasks.filter(task => task.priority === priority);
     } catch (error) {
-      console.error('Failed to get tasks by priority:', error);
       throw new Error('優先度別タスクの取得に失敗しました');
     }
   }
@@ -208,7 +197,6 @@ class TaskAPIService {
         return dueDate < today;
       });
     } catch (error) {
-      console.error('Failed to get overdue tasks:', error);
       throw new Error('期限切れタスクの取得に失敗しました');
     }
   }
@@ -230,7 +218,6 @@ class TaskAPIService {
         return dueDate >= today && dueDate < tomorrow;
       });
     } catch (error) {
-      console.error('Failed to get today tasks:', error);
       throw new Error('今日のタスクの取得に失敗しました');
     }
   }
@@ -248,7 +235,6 @@ class TaskAPIService {
         (task.description && task.description.toLowerCase().includes(lowerQuery))
       );
     } catch (error) {
-      console.error('Failed to search tasks:', error);
       throw new Error('タスクの検索に失敗しました');
     }
   }

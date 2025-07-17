@@ -131,7 +131,9 @@
 .calendar-day-header {
   display: flex;
   justify-content: flex-start;
+  align-items: center;
   margin-bottom: 6px;
+  position: relative;
 }
 
 .calendar-day-number {
@@ -159,7 +161,7 @@
 }
 
 .calendar-task:hover {
-  background-color: #e5e7eb !important;
+  background-color: #f3f4f6 !important;
 }
 
 .calendar-task-content {
@@ -186,7 +188,33 @@
 
 .calendar-task-title.completed {
   text-decoration: line-through;
-  color: #9ca3af;
+}
+
+/* カレンダー日付にタスク追加ボタン */
+.calendar-add-task-btn {
+  background: #e5e7eb;
+  color: #6b7280;
+  border: none;
+  border-radius: 4px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.8;
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+}
+
+.calendar-add-task-btn:hover {
+  background: #d1d5db;
+  color: #374151;
+  opacity: 1;
+  transform: scale(1.05);
 }
 
 .calendar-more-tasks {
@@ -197,11 +225,33 @@
   border-radius: 4px;
   text-align: center;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
 .calendar-more-tasks:hover {
   background-color: #e5e7eb;
+  color: #374151;
 }
+
+.calendar-less-tasks {
+  font-size: 11px;
+  color: #8b5cf6;
+  padding: 2px 6px;
+  background-color: #f3e8ff;
+  border-radius: 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.calendar-less-tasks:hover {
+  background-color: #e9d5ff;
+  color: #7c3aed;
+}
+
+
+
+
 
 /* レスポンシブ対応 */
 @media (max-width: 1200px) {

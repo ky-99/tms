@@ -1,11 +1,37 @@
-/* Export page styles */
+/* Export page styles - Responsive Layout */
 
 .export-page {
-    padding: 0;
     width: 100%;
     margin: 0;
     min-height: calc(100vh - 120px);
     background: transparent;
+    padding: 20px 16px; /* Base padding */
+}
+
+/* Responsive padding adjustments */
+@media (min-width: 768px) {
+    .export-page {
+        padding: 20px 20px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .export-page {
+        padding: 20px 24px;
+    }
+}
+
+@media (min-width: 1440px) {
+    .export-page {
+        padding: 20px 32px;
+    }
+}
+
+/* For very large screens, limit padding */
+@media (min-width: 1800px) {
+    .export-page {
+        padding: 20px 48px;
+    }
 }
 
 .export-page .empty-state {

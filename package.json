@@ -11,6 +11,8 @@
     "start": "electron .",
     "dev": "npm run build && electron .",
     "package": "electron-builder",
+    "package:mac": "npm run build && electron-builder --mac",
+    "package:all": "npm run build && electron-builder --mac --win --linux",
     "postinstall": "electron-builder install-app-deps"
   },
   "keywords": [
@@ -27,6 +29,7 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@types/react-router-dom": "^5.3.3",
+    "@types/recharts": "^1.8.29",
     "css-loader": "^7.1.2",
     "electron": "^28.2.0",
     "electron-builder": "^24.13.3",
@@ -41,8 +44,10 @@
     "better-sqlite3": "^11.7.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-router-dom": "^7.6.2",
-    "react-svg-draw": "^0.0.12"
+    "react-hot-toast": "^2.5.2",
+    "recharts": "^3.1.0",
+    "use-debounce": "^10.0.5",
+    "wouter": "^3.7.1"
   },
   "build": {
     "appId": "com.yourcompany.taskmanagement",
@@ -68,7 +73,10 @@
       "identity": null,
       "entitlements": false,
       "entitlementsInherit": false,
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "hardenedRuntime": false,
+      "darkModeSupport": true,
+      "type": "distribution"
     },
     "win": {
       "target": "nsis"

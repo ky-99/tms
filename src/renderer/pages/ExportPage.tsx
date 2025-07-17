@@ -1,27 +1,7 @@
 import React, { useState, useEffect } from 'react';
-
-interface Task {
-  id: number;
-  title: string;
-  description?: string;
-  status: string;
-  priority: string;
-  dueDate?: string;
-  due_date?: string;
-  createdAt?: string;
-  created_at?: string;
-  completedAt?: string;
-  completed_at?: string;
-  children?: Task[];
-}
-
-interface Tag {
-  id: number;
-  name: string;
-  color: string;
-  textColor?: string;
-  text_color?: string;
-}
+import { useTaskContext } from '../contexts/TaskContext';
+import { Task, Tag } from '../types';
+import { flattenTasks, findTaskById } from '../utils/taskUtils';
 
 interface ExportSettings {
   includeDescription: boolean;
@@ -40,9 +20,10 @@ interface ExportSettings {
 
 
 const ExportPage: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const { tasks } = useTaskContext();
   const [taskTags, setTaskTags] = useState<Map<number, Tag[]>>(new Map());
-  const [loading, setLoading] = useState(true);
+  const [tagsLoading, setTagsLoading] = useState(false);
+  const [initializing, setInitializing] = useState(true);
   const [exportedText, setExportedText] = useState<string>('');
   const [copiedAnimation, setCopiedAnimation] = useState(false);
   const [downloadedAnimation, setDownloadedAnimation] = useState(false);
@@ -64,8 +45,17 @@ const ExportPage: React.FC = () => {
   });
 
   useEffect(() => {
-    loadData();
-  }, []);
+    const initializePage = async () => {
+      // TaskContextから既にタスクが利用可能な場合は即座に初期化完了
+      setInitializing(false);
+      
+      if (tasks.length > 0) {
+        await loadTaskTags();
+      }
+    };
+    
+    initializePage();
+  }, [tasks]);
 
   // Toggle all include options
   const toggleAllIncludes = (enable: boolean) => {
@@ -99,16 +89,12 @@ const ExportPage: React.FC = () => {
     }));
   };
 
-  const loadData = async () => {
+  const loadTaskTags = async () => {
     try {
-      setLoading(true);
-      const allTasks = await window.taskAPI.getAllTasks();
-      setTasks(allTasks);
-
-      await window.taskAPI.getAllTags();
-
+      setTagsLoading(true);
+      
       // Load tags for all tasks
-      const flatTasks = flattenTasks(allTasks);
+      const flatTasks = flattenTasks(tasks);
       const taskTagsMap = new Map<number, Tag[]>();
       
       for (const task of flatTasks) {
@@ -116,44 +102,18 @@ const ExportPage: React.FC = () => {
           const taskTagList = await window.taskAPI.getTagsByTaskId(task.id);
           taskTagsMap.set(task.id, taskTagList);
         } catch (error) {
-          console.error(`Failed to load tags for task ${task.id}:`, error);
+          // Ignore individual task tag loading errors
         }
       }
       
       setTaskTags(taskTagsMap);
     } catch (error) {
-      console.error('Failed to load data:', error);
+      // Ignore tag loading errors as they're not critical
     } finally {
-      setLoading(false);
+      setTagsLoading(false);
     }
   };
 
-  const flattenTasks = (taskList: Task[]): Task[] => {
-    const result: Task[] = [];
-    
-    const addTask = (task: Task) => {
-      result.push(task);
-      if (task.children) {
-        task.children.forEach(addTask);
-      }
-    };
-    
-    taskList.forEach(addTask);
-    return result;
-  };
-
-  const findTaskById = (taskList: Task[], id: number): Task | null => {
-    for (const task of taskList) {
-      if (task.id === id) {
-        return task;
-      }
-      if (task.children) {
-        const found = findTaskById(task.children, id);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
 
   const getTaskSubtree = (parentId: number): Task[] => {
     const parentTask = findTaskById(tasks, parentId);
@@ -175,7 +135,7 @@ const ExportPage: React.FC = () => {
 
       // Date range filter
       if (settings.dateRangeStart || settings.dateRangeEnd) {
-        const dueDateValue = task.dueDate || task.due_date;
+        const dueDateValue = task.dueDate || task.dueDate;
         if (dueDateValue) {
           const dueDate = new Date(dueDateValue);
           if (settings.dateRangeStart) {
@@ -301,18 +261,18 @@ const ExportPage: React.FC = () => {
       details += `**重要度:** ${priorityMap[task.priority] || task.priority}\n\n`;
     }
     
-    if (settings.includeDueDate && (task.dueDate || task.due_date)) {
-      const dueDate = new Date(task.dueDate || task.due_date || '');
+    if (settings.includeDueDate && (task.dueDate || task.dueDate)) {
+      const dueDate = new Date(task.dueDate || task.dueDate || '');
       details += `**期限:** ${dueDate.toLocaleDateString('ja-JP')}\n\n`;
     }
     
-    if (settings.includeCreatedDate && (task.createdAt || task.created_at)) {
-      const createdDate = new Date(task.createdAt || task.created_at || '');
+    if (settings.includeCreatedDate && (task.createdAt || task.createdAt)) {
+      const createdDate = new Date(task.createdAt || task.createdAt || '');
       details += `**作成日:** ${createdDate.toLocaleDateString('ja-JP')}\n\n`;
     }
     
-    if (settings.includeCompletedDate && (task.completedAt || task.completed_at)) {
-      const completedDate = new Date(task.completedAt || task.completed_at || '');
+    if (settings.includeCompletedDate && (task.completedAt || task.completedAt)) {
+      const completedDate = new Date(task.completedAt || task.completedAt || '');
       details += `**完了日:** ${completedDate.toLocaleDateString('ja-JP')}\n\n`;
     }
     
@@ -385,8 +345,9 @@ const ExportPage: React.FC = () => {
     ));
   };
 
-  if (loading) {
-    return <div className="loading">データを読み込んでいます...</div>;
+  // TaskContextのタスクが利用可能でない場合のみローディング表示
+  if (initializing && tasks.length === 0) {
+    return <div className="loading">エクスポートページを初期化しています...</div>;
   }
 
   if (tasks.length === 0) {

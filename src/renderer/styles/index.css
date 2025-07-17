@@ -1,10 +1,12 @@
 /* Main styles index - imports all component styles */
 
+/* Design tokens - must be loaded first */
+@import './design-tokens.css';
+
 /* Base styles */
 @import './base.css';
 
 /* Layout components */
-@import './sidebar.css';
 @import './header.css';
 @import './breadcrumb.css';
 
@@ -38,6 +40,8 @@
 @import './task-merge-modal.css';
 
 /* Filter modal - loaded last to ensure highest priority */
+@import './filter-modal.css';
+@import './filter-modal-forms.css';
 @import './notion-filter-modal.css';
 @import './notion-sort-modal.css';
 
@@ -45,11 +49,10 @@
 @import './tag-management.css';
 
 /* Utility components */
+@import './utilities.css';
 @import './states.css';
 @import './overlays.css';
 
-/* Toast notifications */
-@import './toast.css';
 
 /* Page specific styles */
 @import './workspace-page.css';

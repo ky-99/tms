@@ -121,9 +121,7 @@ export class WorkspaceManager {
     if (fs.existsSync(oldDbPath) && !fs.existsSync(targetPath)) {
       try {
         fs.copyFileSync(oldDbPath, targetPath);
-        console.log('Migrated existing database to default workspace');
       } catch (error) {
-        console.error('Failed to migrate existing database:', error);
         // Create new database if migration fails
         this.initializeWorkspaceDatabase();
       }
@@ -175,14 +173,11 @@ export class WorkspaceManager {
       schemaPath = path.join(__dirname, '../../schema.sql');
     }
     
-    console.log('Looking for schema at:', schemaPath);
     
     if (fs.existsSync(schemaPath)) {
       const schema = fs.readFileSync(schemaPath, 'utf-8');
       this.executeSchema(tempDb, schema);
-      console.log('Schema executed successfully for workspace database');
     } else {
-      console.warn('Schema file not found, creating minimal schema');
       // Create minimal schema if schema.sql is not found
       this.createMinimalSchema(tempDb);
     }
@@ -268,9 +263,7 @@ export class WorkspaceManager {
 
     try {
       db.exec(minimalSchema);
-      console.log('Minimal schema created successfully');
     } catch (error) {
-      console.error('Error creating minimal schema:', error);
       throw error;
     }
   }
@@ -311,7 +304,6 @@ export class WorkspaceManager {
           db.exec(statement);
         } catch (err: any) {
           if (!err.message.includes('already exists')) {
-            console.error('Schema execution error:', err.message);
           }
         }
       }
@@ -427,7 +419,6 @@ export class WorkspaceManager {
     
     // Check if database file exists
     if (!fs.existsSync(workspace.dbPath)) {
-      console.warn(`Database file not found for workspace ${workspaceId}: ${workspace.dbPath}`);
       return { taskCount: 0, completedTaskCount: 0, tagCount: 0 };
     }
     
@@ -457,7 +448,6 @@ export class WorkspaceManager {
         tagCount
       };
     } catch (error) {
-      console.error('Error getting workspace stats:', error);
       return { taskCount: 0, completedTaskCount: 0, tagCount: 0 };
     } finally {
       db.close();
@@ -487,27 +477,19 @@ export class WorkspaceManager {
       const columnNames = (taskTableInfo as any[]).map(col => col.name);
       
       if (!columnNames.includes('is_routine')) {
-        console.log('Adding is_routine column to tasks table...');
         db.exec("ALTER TABLE tasks ADD COLUMN is_routine BOOLEAN DEFAULT 0");
-        console.log('is_routine column added successfully');
       }
 
       if (!columnNames.includes('routine_type')) {
-        console.log('Adding routine_type column to tasks table...');
         db.exec("ALTER TABLE tasks ADD COLUMN routine_type TEXT DEFAULT NULL");
-        console.log('routine_type column added successfully');
       }
 
       if (!columnNames.includes('last_generated_at')) {
-        console.log('Adding last_generated_at column to tasks table...');
         db.exec("ALTER TABLE tasks ADD COLUMN last_generated_at TIMESTAMP DEFAULT NULL");
-        console.log('last_generated_at column added successfully');
       }
 
       if (!columnNames.includes('routine_parent_id')) {
-        console.log('Adding routine_parent_id column to tasks table...');
         db.exec("ALTER TABLE tasks ADD COLUMN routine_parent_id INTEGER DEFAULT NULL");
-        console.log('routine_parent_id column added successfully');
       }
 
       // Check if text_color column exists in tags table
@@ -515,12 +497,9 @@ export class WorkspaceManager {
       const tagColumnNames = (tagTableInfo as any[]).map(col => col.name);
 
       if (!tagColumnNames.includes('text_color')) {
-        console.log('Adding text_color column to tags table...');
         db.exec("ALTER TABLE tags ADD COLUMN text_color TEXT DEFAULT '#000000'");
-        console.log('text_color column added successfully');
       }
     } catch (err) {
-      console.error('Migration error:', err);
     }
   }
 
@@ -573,7 +552,6 @@ export class WorkspaceManager {
 
       return result.filePaths[0];
     } catch (error) {
-      console.error('Error in selectFileForImport:', error);
       throw error;
     }
   }
@@ -638,7 +616,6 @@ export class WorkspaceManager {
       
       return { tempPath };
     } catch (error) {
-      console.error('Error in importFromFileData:', error);
       throw error;
     }
   }
@@ -694,7 +671,6 @@ export class WorkspaceManager {
         try {
           fs.unlinkSync(sourceDbPath);
         } catch (cleanupError) {
-          console.warn('Failed to cleanup temp file:', cleanupError);
         }
       }
 

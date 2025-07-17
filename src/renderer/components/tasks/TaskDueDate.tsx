@@ -6,7 +6,7 @@
 import React from 'react';
 import { Task } from '../../types';
 import { getDueDateText, isTaskOverdue } from '../../utils/taskUtils';
-import { formatDate } from '../../utils/dateUtils';
+import { formatDate } from '../../utils';
 
 interface TaskDueDateProps {
   task: Task;

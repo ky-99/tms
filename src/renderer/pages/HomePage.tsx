@@ -1,64 +1,126 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import TaskCard from '../components/TaskCard';
-import CalendarView from '../components/CalendarView';
-import TaskTreeOverview from '../components/TaskTreeOverview';
-import TaskDetailModal from '../components/TaskDetailModal';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import TaskDetailModal from '../components/modals/TaskDetailModal';
+import TodayTasksSection from '../components/dashboard/TodayTasksSection';
+import OverdueTasksSection from '../components/dashboard/OverdueTasksSection';
+import CalendarSection from '../components/dashboard/CalendarSection';
 import { useTaskContext } from '../contexts/TaskContext';
 import { useShortcut } from '../contexts/ShortcutContext';
+import { useScrollManager, useDateManager } from '../hooks';
 import { Task } from '../types';
 
 
 const HomePage: React.FC = () => {
-  const { tasks, loading, error, loadTasks } = useTaskContext();
+  const { tasks, loading, initialized, error, loadTasks } = useTaskContext();
   const { setCurrentContext } = useShortcut();
+  const { 
+    mainContentRef, 
+    calendarSectionRef, 
+    saveScrollPosition, 
+    restoreScrollPosition 
+  } = useScrollManager();
+  const { flatTasks, todayTasks, overdueTasks } = useDateManager(tasks);
+  
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [stableSelectedTask, setStableSelectedTask] = useState<Task | null>(null);
   const [isStatusChanging, setIsStatusChanging] = useState(false);
   
-  // 初回読み込み完了を追跡するためのRef
-  const initialLoadCompleted = useRef(false);
 
-  const handleTaskClick = (task: Task) => {
+  const handleTaskClick = useCallback((task: Task) => {
     setSelectedTask(task);
     setStableSelectedTask(task);
     setIsTaskModalOpen(true);
-  };
+  }, []);
 
-  const handleCloseTaskModal = () => {
-    setIsTaskModalOpen(false);
-    setSelectedTask(null);
-    setIsCreatingTask(false);
-    // モーダルが完全に閉じるまで少し待ってからstableSelectedTaskをクリア
-    setTimeout(() => {
-      setStableSelectedTask(null);
-    }, 300);
-  };
-
-  const openCreateModal = () => {
+  const handleCreateTaskWithDate = useCallback((dueDate: string) => {
+    // タスク作成前にスクロール位置を保存
+    saveScrollPosition();
+    
     setSelectedTask(null);
     setStableSelectedTask(null);
     setIsCreatingTask(true);
     setIsTaskModalOpen(true);
-  };
+    // 日付をstateで管理
+    setCreateTaskDate(dueDate);
+  }, [saveScrollPosition]);
+  
+  const [createTaskDate, setCreateTaskDate] = useState<string | undefined>(undefined);
+  const [showTodayTasks, setShowTodayTasks] = useState(() => {
+    const saved = localStorage.getItem('showTodayTasks');
+    return saved !== null ? JSON.parse(saved) : false;
+  });
+  const [showOverdueTasks, setShowOverdueTasks] = useState(() => {
+    const saved = localStorage.getItem('showOverdueTasks');
+    return saved !== null ? JSON.parse(saved) : false;
+  });
 
-  // ダッシュボードのコンテキストを設定
+  const handleCloseTaskModal = useCallback(() => {
+    setIsTaskModalOpen(false);
+    setSelectedTask(null);
+    setIsCreatingTask(false);
+    setCreateTaskDate(undefined);
+    // モーダルが完全に閉じるまで少し待ってからstableSelectedTaskをクリア
+    setTimeout(() => {
+      setStableSelectedTask(null);
+    }, 300);
+  }, []);
+
+  const openCreateModal = useCallback(() => {
+    // タスク作成前にスクロール位置を保存
+    saveScrollPosition();
+    
+    setSelectedTask(null);
+    setStableSelectedTask(null);
+    setIsCreatingTask(true);
+    setIsTaskModalOpen(true);
+  }, [saveScrollPosition]);
+
+  // トグル状態の変更関数
+  const toggleTodayTasks = useCallback(() => {
+    const newState = !showTodayTasks;
+    setShowTodayTasks(newState);
+    localStorage.setItem('showTodayTasks', JSON.stringify(newState));
+  }, [showTodayTasks]);
+
+  const toggleOverdueTasks = useCallback(() => {
+    const newState = !showOverdueTasks;
+    setShowOverdueTasks(newState);
+    localStorage.setItem('showOverdueTasks', JSON.stringify(newState));
+  }, [showOverdueTasks]);
+
+  // ダッシュボードのコンテキストを設定（CalendarViewのコンテキストを尊重）
   useEffect(() => {
+    // 初期化時のみダッシュボードコンテキストを設定
     setCurrentContext('dashboard');
     
     // クリーンアップ時にグローバルに戻す
     return () => {
       setCurrentContext('global');
     };
-  }, [setCurrentContext]);
+  }, []); // setCurrentContextの依存関係を削除してコンテキスト競合を防ぐ
 
-  // タスクが読み込まれた際に初回読み込み完了フラグを設定
+  // ショートカットイベントリスナー
   useEffect(() => {
-    if (tasks.length > 0 && !initialLoadCompleted.current) {
-      initialLoadCompleted.current = true;
-    }
-  }, [tasks]);
+    const handleShortcutEvents = (event: CustomEvent) => {
+      switch (event.type) {
+        case 'openTaskEditModal':
+          if (event.detail?.task) {
+            handleTaskClick(event.detail.task);
+          }
+          break;
+      }
+    };
+
+    // イベントリスナーを追加
+    window.addEventListener('openTaskEditModal', handleShortcutEvents as EventListener);
+    
+    // クリーンアップ
+    return () => {
+      window.removeEventListener('openTaskEditModal', handleShortcutEvents as EventListener);
+    };
+  }, [handleTaskClick]);
+
 
   useEffect(() => {
     // 日付変更を検知して自動更新
@@ -144,69 +206,22 @@ const HomePage: React.FC = () => {
     return foundTask || stableSelectedTask;
   }, [stableSelectedTask, isTaskModalOpen, tasks, isStatusChanging]);
 
-  // メモ化された日付計算
-  const todayTimestamp = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return today.getTime();
-  }, []);
 
-
-  // メモ化された平坦化タスクリスト
-  const flatTasks = useMemo(() => {
-    const result: Task[] = [];
-    
-    const addTask = (task: Task) => {
-      result.push(task);
-      if (task.children) {
-        task.children.forEach(addTask);
-      }
+  // タスク更新前にスクロール位置を保存
+  useEffect(() => {
+    const handleBeforeUpdate = () => {
+      saveScrollPosition();
     };
-    
-    tasks.forEach(addTask);
-    return result;
-  }, [tasks]);
 
-  // メモ化されたタスクフィルタリング
-  const { todayTasks, overdueTasks } = useMemo(() => {
-    const today = todayTimestamp;
+    // カスタムイベントを監視
+    window.addEventListener('taskUpdateStart', handleBeforeUpdate);
+    return () => window.removeEventListener('taskUpdateStart', handleBeforeUpdate);
+  }, [saveScrollPosition]);
 
-    // 今日のタスク
-    const todayFiltered = flatTasks.filter(task => {
-      // ルーティンタスクは常に今日のタスクとして表示
-      if (task.isRoutine || task.is_routine) {
-        return true;
-      }
-      
-      const dueDateValue = task.dueDate || task.due_date;
-      if (!dueDateValue) return false;
-      const dueDate = new Date(dueDateValue);
-      dueDate.setHours(0, 0, 0, 0);
-      return dueDate.getTime() === today;
-    });
-
-    // 期限切れタスク
-    const overdueFiltered = flatTasks.filter(task => {
-      // ルーティンタスクは期限切れとして表示しない
-      if (task.isRoutine || task.is_routine) return false;
-      
-      const dueDateValue = task.dueDate || task.due_date;
-      if (!dueDateValue || task.status === 'completed') return false;
-      const dueDate = new Date(dueDateValue);
-      dueDate.setHours(0, 0, 0, 0);
-      return dueDate.getTime() < today;
-    });
-
-    return {
-      todayTasks: todayFiltered,
-      overdueTasks: overdueFiltered
-    };
-  }, [flatTasks, todayTimestamp]);
-
-  // 初回読み込み中のみローディング画面を表示
-  if (loading && !initialLoadCompleted.current) {
-    return <div className="loading">ダッシュボードを読み込んでいます...</div>;
-  }
+  // タスク更新後にスクロール位置を復元
+  useEffect(() => {
+    restoreScrollPosition();
+  }, [tasks, restoreScrollPosition]);
 
   return (
     <div className="dashboard">
@@ -214,39 +229,37 @@ const HomePage: React.FC = () => {
         <div className="error">{error}</div>
       )}
 
-      <div className="dashboard-content">
-        {tasks.length === 0 ? (
+      <div ref={mainContentRef} className="dashboard-content">
+        {!initialized ? (
+          <div className="loading-placeholder">
+            {/* 初期化中は何も表示しない */}
+          </div>
+        ) : tasks.length === 0 ? (
           <div className="empty-state">
             <h2>タスクが登録されていません</h2>
           </div>
         ) : (
           <>
-            {overdueTasks.length > 0 && (
-              <div className="dashboard-section">
-                <h2 className="section-title overdue">期限切れ ({overdueTasks.length})</h2>
-                <div className="task-cards">
-                  {overdueTasks.map(task => (
-                    <TaskCard key={task.id} task={task} onTaskClick={() => handleTaskClick(task)} disableSelection={true} />
-                  ))}
-                </div>
-              </div>
-            )}
+            <OverdueTasksSection
+              tasks={overdueTasks}
+              isExpanded={showOverdueTasks}
+              onToggle={toggleOverdueTasks}
+              onTaskClick={handleTaskClick}
+            />
 
-            <div className="dashboard-section">
-              <h2 className="section-title">今日のタスク ({todayTasks.length})</h2>
-              <div className="task-cards">
-                {todayTasks.length > 0 ? (
-                  todayTasks.map(task => (
-                    <TaskCard key={task.id} task={task} onTaskClick={() => handleTaskClick(task)} disableSelection={true} />
-                  ))
-                ) : (
-                  <p className="no-tasks">今日のタスクはありません</p>
-                )}
-              </div>
-            </div>
+            <TodayTasksSection
+              tasks={todayTasks}
+              isExpanded={showTodayTasks}
+              onToggle={toggleTodayTasks}
+              onTaskClick={handleTaskClick}
+            />
 
-            <div className="dashboard-section calendar-section">
-              <CalendarView tasks={flatTasks} onTaskClick={handleTaskClick} />
+            <div ref={calendarSectionRef}>
+              <CalendarSection
+                tasks={flatTasks}
+                onTaskClick={handleTaskClick}
+                onCreateTask={handleCreateTaskWithDate}
+              />
             </div>
 
             {/* タスクツリー概要 - 今後の開発用に一時的に非表示
@@ -264,9 +277,9 @@ const HomePage: React.FC = () => {
           task={currentSelectedTask || stableSelectedTask || undefined}
           isOpen={isTaskModalOpen}
           onClose={handleCloseTaskModal}
-          allTasks={tasks}
           isCreating={isCreatingTask}
           onStatusChange={() => setIsStatusChanging(true)}
+          defaultDueDate={createTaskDate}
         />
       )}
     </div>

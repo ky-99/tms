@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import { getDatabase } from './init';
+// Removed unused import: getDatabase
 import { Task, CreateTaskInput, UpdateTaskInput, Tag, Attachment, Comment } from '../types/task';
 import { WorkspaceManager } from './workspaceManager';
 
@@ -64,7 +64,7 @@ export class TaskRepository {
       // 各親グループでposition値を設定
       const updateStmt = db.prepare('UPDATE tasks SET position = ? WHERE id = ?');
       
-      for (const [parentId, tasks] of tasksByParent) {
+      for (const [_parentId, tasks] of tasksByParent) {
         // 作成日時順にソート
         tasks.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
         
@@ -328,7 +328,7 @@ export class TaskRepository {
       siblingParams = [afterTask.parentId];
     }
 
-    const siblingTasks = siblingTasksQuery.all(...siblingParams);
+    const _siblingTasks = siblingTasksQuery.all(...siblingParams);
 
     // 同じ親を持つタスクの中で、参照タスクより後にあるタスクの位置を+1する
     // まず、すべてのタスクのpositionが0かどうかチェック
@@ -395,6 +395,9 @@ export class TaskRepository {
 
   // タスクを更新
   updateTask(id: number, input: UpdateTaskInput): Task | null {
+    // 親タスク変更時のステータス更新のため、更新前のタスク情報を取得
+    const originalTask = this.getTaskById(id);
+    
     const updates: string[] = [];
     const params: any = { id };
 
@@ -459,6 +462,34 @@ export class TaskRepository {
     // ステータスが更新された場合、親タスクのステータスを自動更新
     if (input.status !== undefined) {
       this.updateParentTaskStatuses(id);
+    }
+    
+    // 親タスクが変更された場合、旧親と新親の両方のステータスを更新
+    if (input.parentId !== undefined && originalTask) {
+      const db = this.getDb();
+      
+      // 旧親タスクのステータスを更新（移動前の親）
+      if (originalTask.parentId && originalTask.parentId !== input.parentId) {
+        // 元の親タスクの子タスクを取得し、他に子がいるか確認
+        const siblingTasks = db.prepare(`
+          SELECT id FROM tasks WHERE parent_id = ? AND id != ?
+        `).all(originalTask.parentId, id) as { id: number }[];
+        
+        if (siblingTasks.length > 0) {
+          // 他に子タスクがある場合は兄弟タスクのIDで更新
+          if (siblingTasks[0]) {
+            this.updateParentTaskStatuses(siblingTasks[0].id);
+          }
+        } else {
+          // 子タスクがいなくなった場合は親タスクをpendingにリセット
+          this.resetParentTaskStatus(originalTask.parentId);
+        }
+      }
+      
+      // 新親タスクのステータスを更新（移動後の親）
+      if (input.parentId) {
+        this.updateParentTaskStatuses(id);
+      }
     }
 
     return this.getTaskWithChildren(id);
@@ -566,7 +597,9 @@ export class TaskRepository {
         const childTasks = this.getChildrenByParentId(parentId);
         if (childTasks.length > 0) {
           // 子タスクがある場合は、最初の子タスクのIDを使用
-          this.updateParentTaskStatuses(childTasks[0].id);
+          if (childTasks[0]) {
+            this.updateParentTaskStatuses(childTasks[0].id);
+          }
         } else {
           // 子タスクがない場合は、親タスクの状態を直接更新
           this.resetParentTaskStatus(parentId);
@@ -759,6 +792,85 @@ export class TaskRepository {
       ...task,
       description: task.description || ''
     }));
+  }
+
+  // デイリールーティンタスクを生成
+  generateDailyRoutineTasks(): boolean {
+    const db = this.getDb();
+    
+    try {
+      // 今日の日付を取得（時間は00:00:00）
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayTimestamp = today.getTime();
+      
+      // 昨日の日付を取得
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayTimestamp = yesterday.getTime();
+      
+      // デイリールーティンタスクを取得（今日まだ生成されていないもの）
+      const routineTasks = db.prepare(`
+        SELECT id, title, description, priority, due_date as dueDate,
+               is_routine as isRoutine, routine_type as routineType,
+               last_generated_at as lastGeneratedAt
+        FROM tasks 
+        WHERE is_routine = 1 
+          AND routine_type = 'daily'
+          AND (last_generated_at IS NULL OR last_generated_at < ?)
+      `).all(todayTimestamp) as any[];
+      
+      if (routineTasks.length === 0) {
+        return true; // 生成するタスクがない場合も成功とする
+      }
+      
+      // 各ルーティンタスクから今日のタスクを生成
+      const insertTask = db.prepare(`
+        INSERT INTO tasks (
+          parent_id, title, description, status, priority, due_date,
+          created_at, updated_at, position,
+          is_routine, routine_type, routine_parent_id
+        ) VALUES (?, ?, ?, 'pending', ?, ?, ?, ?, ?, 0, NULL, ?)
+      `);
+      
+      const updateLastGenerated = db.prepare(`
+        UPDATE tasks 
+        SET last_generated_at = ?
+        WHERE id = ?
+      `);
+      
+      const transaction = db.transaction(() => {
+        for (const routineTask of routineTasks) {
+          // 新しいタスクの期限日を今日に設定
+          const newDueDate = routineTask.dueDate ? todayTimestamp : null;
+          
+          // 新しいタスクを作成
+          insertTask.run(
+            null, // parent_id - ルーティンから生成されたタスクはルートレベル
+            routineTask.title,
+            routineTask.description || '',
+            routineTask.priority,
+            newDueDate,
+            todayTimestamp, // created_at
+            todayTimestamp, // updated_at
+            0, // position
+            routineTask.id // routine_parent_id
+          );
+          
+          // ルーティンタスクの最終生成日時を更新
+          updateLastGenerated.run(todayTimestamp, routineTask.id);
+        }
+      });
+      
+      transaction();
+      
+      console.log(`Generated ${routineTasks.length} daily routine tasks for today`);
+      return true;
+      
+    } catch (error) {
+      console.error('Error generating daily routine tasks:', error);
+      return false;
+    }
   }
 
   // 既存のタスクの位置を修正する（全てのタスクが位置0になっている場合に使用）

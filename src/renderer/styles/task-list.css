@@ -1,43 +1,47 @@
-/* Task list and task item styles */
+/* Task list component - BEM notation */
 .task-list {
-    padding: 12px;
+    padding: var(--space-6);
+    /* 操作モードボタン用の余白を追加 */
+    padding-right: var(--space-10);
 }
 
-.task-divider {
-    height: 1px;
-    background-color: #e5e7eb;
-    margin: 8px 0;
+.task-list__divider {
+    height: var(--border-width);
+    background-color: var(--color-border-light);
+    margin: var(--space-4) 0;
     margin-left: 30px; /* タスクアイテムの左マージンに合わせる */
 }
 
-.task-item {
-    padding: 8px 0;
+.task-list__item {
+    padding: var(--space-4) 0;
     padding-left: 30px; /* ボタン用のスペースを確保 */
     display: flex;
     align-items: flex-start;
-    gap: 5px; /* ギャップを狭めてボタンとコンテンツを近づける */
+    gap: var(--space-2); /* ギャップを狭めてボタンとコンテンツを近づける */
     position: relative;
-    transition: all 0.2s ease;
-    border-radius: 4px;
-    margin: 2px 0;
+    transition: var(--transition-base);
+    border-radius: var(--radius-sm);
+    margin: var(--space-1) 0;
+    min-width: 0;
+    overflow: visible; /* 操作モードボタンが切れないように */
 }
 
 
 
-.task-item:last-child {
+.task-list__item:last-child {
     border-bottom: none;
 }
 
-.task-item.child {
+.task-list__item--child {
     margin-left: 30px;
 }
 
-.task-expand {
+.task-list__expand {
     cursor: pointer;
     user-select: none;
     width: 20px;
     text-align: center;
-    color: #666;
+    color: var(--color-text-muted);
     position: relative;
     display: flex;
     align-items: center;
@@ -45,93 +49,96 @@
     height: 20px;
 }
 
-.task-expand.has-children {
-    color: #8b5cf6;
-    font-weight: bold;
+.task-list__expand--has-children {
+    color: var(--color-primary);
+    font-weight: var(--font-weight-semibold);
 }
 
 
-.task-expand-container {
+.task-list__expand-container {
     position: relative;
     display: inline-flex;
     align-items: center;
     min-width: 45px; /* 最小幅を設定してホバー範囲を確保 */
 }
 
-.task-actions {
+.task-list__item-actions {
     position: absolute;
     top: -4px;
     right: 100%;
-    margin-right: 8px;
+    margin-right: var(--space-4);
     display: none;
     flex-direction: column;
-    gap: 2px;
-    z-index: 10;
+    gap: var(--space-1);
+    z-index: var(--z-index-dropdown);
 }
 
-.task-item:hover .task-actions {
+.task-list__item:hover .task-list__item-actions {
     display: flex;
 }
 
-.task-action-btn {
-    background-color: #8b5cf6;
-    color: white;
+.task-list__action-btn {
+    background-color: var(--color-primary);
+    color: var(--color-text-inverse);
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     width: 20px;
     height: 20px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
+    transition: var(--transition-base);
 }
 
-.task-add-btn {
-    background-color: #8b5cf6;
+.task-list__action-btn--add {
+    background-color: var(--color-primary);
 }
 
-.task-edit-btn {
-    background-color: #3b82f6;
+.task-list__action-btn--edit {
+    background-color: var(--color-info);
 }
 
-.task-tag-btn {
-    background-color: #10b981;
+.task-list__action-btn--tag {
+    background-color: var(--color-success);
 }
 
-.task-delete-btn {
-    background-color: #ef4444;
-    font-size: 16px;
+.task-list__action-btn--delete {
+    background-color: var(--color-error);
+    font-size: var(--font-size-base);
 }
 
 
 
 /* 子タスク（葉ノード）用のスタイル */
-.task-expand-container.leaf-node .task-add-btn {
-    background-color: #10b981; /* エメラルドグリーン */
-    border-radius: 4px;
+.task-list__expand-container--leaf-node .task-list__action-btn--add {
+    background-color: var(--color-success); /* エメラルドグリーン */
+    border-radius: var(--radius-sm);
 }
 
 
-.task-expand.leaf-node {
-    color: #10b981;
-    font-size: 14px;
-    font-weight: normal;
+.task-list__expand--leaf-node {
+    color: var(--color-success);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-normal);
 }
 
-.task-expand.parent-in-filter {
-    color: #8b5cf6;
-    font-weight: bold;
+.task-list__expand--parent-in-filter {
+    color: var(--color-primary);
+    font-weight: var(--font-weight-semibold);
 }
 
 
 
-.task-content {
+.task-list__item-content {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--space-2);
+    min-width: 0;
+    overflow: hidden;
 }
 
 /* ページ全体のトランジション */
@@ -150,7 +157,9 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    min-width: 0;
+    flex: 1;
 }
 
 .task-tags {
@@ -174,6 +183,12 @@
     font-size: 16px;
     color: #1f2937;
     margin-right: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1;
+    max-width: 300px;
 }
 
 .task-description {
@@ -257,7 +272,7 @@
     padding: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     border: 1px solid #d1d5db;
-    z-index: 1000;
+    z-index: 1001; /* より高いz-indexで確実に表示 */
 }
 
 .operation-btn {
@@ -297,4 +312,280 @@
 .operation-btn.routine-active:hover {
     background: #f59e0b;
     color: #78350f;
+}
+
+.operation-btn.edit-btn {
+    color: #3b82f6;
+    background: white;
+    border-color: #dbeafe;
+}
+
+.operation-btn.edit-btn:hover {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.operation-btn.add-btn {
+    color: #10b981;
+    background: white;
+    border-color: #d1fae5;
+}
+
+.operation-btn.add-btn:hover {
+    background: #d1fae5;
+    color: #047857;
+}
+
+.operation-btn.delete-btn {
+    color: #ef4444;
+    background: white;
+    border-color: #fecaca;
+}
+
+.operation-btn.delete-btn:hover {
+    background: #fecaca;
+    color: #dc2626;
+}
+
+.operation-btn.close-btn {
+    color: #6b7280;
+    background: white;
+    border-color: #e5e7eb;
+}
+
+.operation-btn.close-btn:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.operation-btn.duplicate-btn {
+    color: #8b5cf6;
+    background: white;
+    border-color: #e9d5ff;
+}
+
+.operation-btn.duplicate-btn:hover {
+    background: #e9d5ff;
+    color: #7c3aed;
+}
+
+.operation-btn.duplicate-btn.duplicating {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Tag deletion animations */
+@keyframes tagFadeOut {
+    from {
+        opacity: 1;
+        transform: scale(1) translateX(0);
+        max-width: 200px;
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.8) translateX(10px);
+        max-width: 0;
+    }
+}
+
+@keyframes tagSlideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+        max-width: 200px;
+        margin-right: 8px;
+    }
+    to {
+        opacity: 0;
+        transform: translateX(20px);
+        max-width: 0;
+        margin-right: 0;
+    }
+}
+
+.task-list__tag.removing {
+    animation: tagFadeOut 0.3s ease-out forwards;
+    pointer-events: none;
+}
+
+.task-list__tag.slide-removing {
+    animation: tagSlideOut 0.3s ease-out forwards;
+    pointer-events: none;
+}
+
+/* Responsive adjustments for task items */
+@media (max-width: 768px) {
+    .task-title {
+        max-width: 200px;
+        font-size: 15px;
+    }
+    
+    .task-item {
+        padding-left: 25px;
+    }
+    
+    .task-header {
+        gap: 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .task-title {
+        max-width: 150px;
+        font-size: 14px;
+    }
+    
+    .task-item {
+        padding: 6px 0;
+        padding-left: 20px;
+    }
+    
+    .task-header {
+        gap: 4px;
+    }
+    
+    .task-expand-container {
+        min-width: 35px;
+    }
+}
+
+/* Additional BEM classes for task items */
+.task-list__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  min-width: 0;
+  flex: 1;
+}
+
+.task-list__title {
+  font-weight: 500;
+  font-size: 16px;
+  color: #1f2937;
+  margin-right: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+  max-width: 300px;
+}
+
+.task-list__title-text {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  transition: background-color 0.2s;
+}
+
+.task-list__title-text:hover {
+  background-color: #f3f4f6;
+}
+
+.task-list__description {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.5;
+  padding: 4px 0;
+  white-space: pre-wrap;
+}
+
+.task-list__timeline {
+  font-size: 13px;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.task-list__tags-container {
+  position: relative;
+}
+
+.task-list__tags {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin: 6px 0;
+}
+
+.task-list__tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.task-list__tag-remove {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  margin-left: 4px;
+  padding: 0;
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+.task-list__tag-remove:hover {
+  opacity: 1;
+}
+
+.task-list__tag-add {
+  background: none;
+  border: 1px dashed #d1d5db;
+  color: #6b7280;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.task-list__tag-add:hover {
+  border-color: #9ca3af;
+  color: #374151;
+}
+
+/* Task item modifiers */
+.task-list__item--clicked {
+  background-color: #f3f4f6;
+}
+
+.task-list__item--operation-mode {
+  background: #eff6ff !important;
+  border-color: #3b82f6 !important;
+  border-width: 2px !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+.task-list__item--routine {
+  background: #fff3e0 !important;
+}
+
+/* Timeline specific classes */
+.timeline-separator {
+  color: #d1d5db;
+}
+
+.timeline-start,
+.timeline-end,
+.timeline-completed,
+.timeline-ongoing {
+  white-space: nowrap;
+}
+
+.timeline-completed {
+  color: #10b981;
+  font-weight: 500;
+}
+
+.timeline-ongoing {
+  color: #3b82f6;
+  font-weight: 500;
 }

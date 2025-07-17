@@ -28,7 +28,6 @@ class WorkspaceService {
       const workspaces = await window.electronAPI.workspace.getAll();
       return workspaces;
     } catch (error) {
-      console.error('Failed to get workspaces:', error);
       throw error;
     }
   }
@@ -38,7 +37,6 @@ class WorkspaceService {
     try {
       return await window.electronAPI.workspace.getActive();
     } catch (error) {
-      console.error('Failed to get active workspace:', error);
       throw error;
     }
   }
@@ -49,7 +47,6 @@ class WorkspaceService {
       const workspace = await window.electronAPI.workspace.create(workspaceData);
       return workspace;
     } catch (error) {
-      console.error('Failed to create workspace:', error);
       throw error;
     }
   }
@@ -61,11 +58,9 @@ class WorkspaceService {
       if (success) {
         // Note: Page reload is handled by the calling component
         // to avoid infinite reload loops
-        console.log('Workspace switched successfully');
       }
       return success;
     } catch (error) {
-      console.error('Failed to switch workspace:', error);
       throw error;
     }
   }
@@ -75,7 +70,6 @@ class WorkspaceService {
     try {
       return await window.electronAPI.workspace.delete(workspaceId);
     } catch (error) {
-      console.error('Failed to delete workspace:', error);
       throw error;
     }
   }
@@ -85,7 +79,6 @@ class WorkspaceService {
     try {
       return await window.electronAPI.workspace.getById(workspaceId);
     } catch (error) {
-      console.error('Failed to get workspace by ID:', error);
       throw error;
     }
   }
@@ -95,7 +88,6 @@ class WorkspaceService {
     try {
       return await window.electronAPI.workspace.getStats(workspaceId);
     } catch (error) {
-      console.error('Failed to get workspace stats:', error);
       throw error;
     }
   }
@@ -105,7 +97,6 @@ class WorkspaceService {
     try {
       return await window.electronAPI.workspace.export(workspaceId);
     } catch (error) {
-      console.error('Failed to export workspace:', error);
       throw error;
     }
   }
@@ -115,7 +106,6 @@ class WorkspaceService {
     try {
       return await window.electronAPI.workspace.selectFileForImport();
     } catch (error) {
-      console.error('Failed to select file for import:', error);
       throw error;
     }
   }
@@ -125,7 +115,6 @@ class WorkspaceService {
     try {
       return await window.electronAPI.workspace.validateImportFile(filePath);
     } catch (error) {
-      console.error('Failed to validate import file:', error);
       throw error;
     }
   }
@@ -135,7 +124,6 @@ class WorkspaceService {
     try {
       return await window.electronAPI.workspace.importFromFileData(fileData, fileName);
     } catch (error) {
-      console.error('Failed to import from file data:', error);
       throw error;
     }
   }
@@ -145,7 +133,6 @@ class WorkspaceService {
     try {
       return await window.electronAPI.workspace.import(sourceDbPath, name, description);
     } catch (error) {
-      console.error('Failed to import workspace:', error);
       throw error;
     }
   }

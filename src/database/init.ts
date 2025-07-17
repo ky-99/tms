@@ -8,12 +8,10 @@ const DB_NAME = 'tasks.db';
 export function getDatabasePath(): string {
   const userData = app ? app.getPath('userData') : './';
   const dbPath = path.join(userData, DB_NAME);
-  console.log('Database path:', dbPath);
   
   // Ensure the directory exists
   const dbDir = path.dirname(dbPath);
   if (!fs.existsSync(dbDir)) {
-    console.log('Creating database directory:', dbDir);
     fs.mkdirSync(dbDir, { recursive: true });
   }
   
@@ -22,14 +20,12 @@ export function getDatabasePath(): string {
 
 export function initializeDatabase(): Database.Database {
   const dbPath = getDatabasePath();
-  console.log('Initializing database at:', dbPath);
   
   try {
     const db = new Database(dbPath);
     
     // Enable foreign keys
     db.pragma('foreign_keys = ON');
-    console.log('Database connection established successfully');
     
     // Read and execute schema
     let schemaPath: string;
@@ -41,16 +37,11 @@ export function initializeDatabase(): Database.Database {
       schemaPath = path.join(__dirname, '../../schema.sql');
     }
     
-    console.log('App packaged:', app.isPackaged);
-    console.log('App path:', app.getAppPath());
-    console.log('Looking for schema at:', schemaPath);
     
     if (fs.existsSync(schemaPath)) {
       const schema = fs.readFileSync(schemaPath, 'utf-8');
       executeSchema(db, schema);
-      console.log('Database schema initialized successfully');
     } else {
-      console.warn('Schema file not found at:', schemaPath);
       
       // Try alternative paths for packaged app
       if (app.isPackaged) {
@@ -60,11 +51,8 @@ export function initializeDatabase(): Database.Database {
           path.join(app.getPath('exe'), '..', '..', 'Resources', 'schema.sql')
         ];
         
-        console.log('Trying alternative paths...');
         for (const altPath of altPaths) {
-          console.log('Checking:', altPath);
           if (fs.existsSync(altPath)) {
-            console.log('Found schema at alternative path:', altPath);
             const schema = fs.readFileSync(altPath, 'utf-8');
             executeSchema(db, schema);
             break;
@@ -78,7 +66,6 @@ export function initializeDatabase(): Database.Database {
     
     return db;
   } catch (err) {
-    console.error('Failed to initialize database:', err);
     throw err;
   }
 }
@@ -127,7 +114,6 @@ function executeSchema(db: Database.Database, schema: string): void {
       } catch (err: any) {
         // Ignore errors if table/index already exists
         if (!err.message.includes('already exists')) {
-          console.error('Schema execution error:', err.message, 'Statement:', statement);
         }
       }
     }
@@ -141,9 +127,7 @@ function applyMigrations(db: Database.Database): void {
     const hasTextColor = tableInfo.some((col: any) => col.name === 'text_color');
     
     if (!hasTextColor) {
-      console.log('Adding text_color column to tags table...');
       db.exec("ALTER TABLE tags ADD COLUMN text_color TEXT DEFAULT '#000000'");
-      console.log('text_color column added successfully');
     }
 
     // Check if routine columns exist in tasks table
@@ -154,30 +138,21 @@ function applyMigrations(db: Database.Database): void {
     const hasRoutineParentId = taskTableInfo.some((col: any) => col.name === 'routine_parent_id');
 
     if (!hasIsRoutine) {
-      console.log('Adding is_routine column to tasks table...');
       db.exec("ALTER TABLE tasks ADD COLUMN is_routine BOOLEAN DEFAULT 0");
-      console.log('is_routine column added successfully');
     }
 
     if (!hasRoutineType) {
-      console.log('Adding routine_type column to tasks table...');
       db.exec("ALTER TABLE tasks ADD COLUMN routine_type TEXT DEFAULT NULL"); // 'daily', 'weekly', 'monthly', etc.
-      console.log('routine_type column added successfully');
     }
 
     if (!hasLastGeneratedAt) {
-      console.log('Adding last_generated_at column to tasks table...');
       db.exec("ALTER TABLE tasks ADD COLUMN last_generated_at TIMESTAMP DEFAULT NULL");
-      console.log('last_generated_at column added successfully');
     }
 
     if (!hasRoutineParentId) {
-      console.log('Adding routine_parent_id column to tasks table...');
       db.exec("ALTER TABLE tasks ADD COLUMN routine_parent_id INTEGER DEFAULT NULL");
-      console.log('routine_parent_id column added successfully');
     }
   } catch (err) {
-    console.error('Migration error:', err);
   }
 }
 

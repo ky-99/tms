@@ -8,6 +8,4 @@ export { Badge } from './Badge';
 export { TextInput, TextArea, Select } from './Input';
 export { Modal } from './Modal';
 export { ErrorBoundary } from './ErrorBoundary';
-export { Toast } from './Toast';
-export { ToastContainer } from './ToastContainer';
 export { LoadingSpinner, LoadingOverlay } from './LoadingSpinner';
