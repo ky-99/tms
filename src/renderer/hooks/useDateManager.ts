@@ -38,15 +38,15 @@ export const useDateManager = (tasks: Task[]): DateManagerHook => {
     // 今日のタスク
     const todayFiltered = flatTasks.filter(task => {
       // ルーティンタスクは常に今日のタスクとして表示
-      if (task.isRoutine || task.isRoutine) {
+      if (task.isRoutine) {
         return true;
       }
       
-      const dueDateValue = task.dueDate || task.dueDate;
-      if (!dueDateValue) return false;
-      const dueDate = new Date(dueDateValue);
-      dueDate.setHours(0, 0, 0, 0);
-      return dueDate.getTime() === today;
+      const endDateValue = task.endDate;
+      if (!endDateValue) return false;
+      const endDate = new Date(endDateValue);
+      endDate.setHours(0, 0, 0, 0);
+      return endDate.getTime() === today;
     });
 
     // 期限切れタスク
@@ -54,11 +54,11 @@ export const useDateManager = (tasks: Task[]): DateManagerHook => {
       // ルーティンタスクは期限切れとして表示しない
       if (task.isRoutine || task.isRoutine) return false;
       
-      const dueDateValue = task.dueDate || task.dueDate;
-      if (!dueDateValue || task.status === 'completed') return false;
-      const dueDate = new Date(dueDateValue);
-      dueDate.setHours(0, 0, 0, 0);
-      return dueDate.getTime() < today;
+      const endDateValue = task.endDate;
+      if (!endDateValue || task.status === 'completed') return false;
+      const endDate = new Date(endDateValue);
+      endDate.setHours(0, 0, 0, 0);
+      return endDate.getTime() < today;
     });
 
     return {

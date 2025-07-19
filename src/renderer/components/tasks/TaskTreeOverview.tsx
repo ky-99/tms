@@ -360,9 +360,9 @@ const TaskTreeOverview: React.FC<TaskTreeOverviewProps> = React.memo(({ tasks, o
                 <span className="tree-task-title">
                   {node.task.title}
                 </span>
-                {node.task.dueDate && (
+                {node.task.endDate && (
                   <span className="tree-due-date">
-                    {new Date(node.task.dueDate).toLocaleDateString('ja-JP', {
+                    {new Date(node.task.endDate).toLocaleDateString('ja-JP', {
                       month: 'short',
                       day: 'numeric'
                     })}

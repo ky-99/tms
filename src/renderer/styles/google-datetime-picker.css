@@ -1,0 +1,297 @@
+/* Google Calendar風 DateTimePicker スタイル */
+
+.google-datetime-picker {
+  position: relative;
+  width: 100%;
+}
+
+.google-datetime-input {
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #3c4043;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 36px;
+  box-sizing: border-box;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+  width: 100%;
+}
+
+.google-datetime-input:hover:not(.disabled) {
+  border-color: #bdc1c6;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.15);
+}
+
+.google-datetime-input:focus-within:not(.disabled) {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 1px #1a73e8;
+}
+
+.google-datetime-input.disabled {
+  background-color: #f8f9fa;
+  color: #80868b;
+  cursor: not-allowed;
+  border-color: #e8eaed;
+}
+
+.google-datetime-value {
+  width: 100%;
+  text-align: left;
+  line-height: 1.4;
+}
+
+/* React DatePicker カスタマイズ */
+.google-datetime-popper {
+  z-index: 10000 !important;
+  position: fixed !important;
+}
+
+.google-datetime-calendar {
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif !important;
+  border: none !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  background: white !important;
+  max-width: 90vw !important;
+  max-height: 90vh !important;
+}
+
+/* ヘッダー */
+.react-datepicker__header {
+  background: white !important;
+  border-bottom: 1px solid #e8eaed !important;
+  padding: 16px 20px 12px !important;
+}
+
+.react-datepicker__current-month {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  color: #202124 !important;
+  margin-bottom: 12px !important;
+}
+
+/* ナビゲーションボタン */
+.react-datepicker__navigation {
+  top: 16px !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  background: none !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.react-datepicker__navigation:hover {
+  background-color: rgba(95, 99, 104, 0.08) !important;
+}
+
+.react-datepicker__navigation--previous {
+  left: 20px !important;
+}
+
+.react-datepicker__navigation--next {
+  right: 20px !important;
+}
+
+.react-datepicker__navigation-icon::before {
+  border-color: #5f6368 !important;
+  border-width: 2px 2px 0 0 !important;
+  width: 8px !important;
+  height: 8px !important;
+}
+
+/* 曜日ヘッダー */
+.react-datepicker__day-names {
+  margin-bottom: 8px !important;
+}
+
+.react-datepicker__day-name {
+  color: #5f6368 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  width: 40px !important;
+  line-height: 32px !important;
+  margin: 0 !important;
+}
+
+/* 日付セル */
+.react-datepicker__month {
+  padding: 0 20px 16px !important;
+  margin: 0 !important;
+}
+
+.react-datepicker__week {
+  display: flex !important;
+  gap: 0 !important;
+}
+
+.react-datepicker__day {
+  width: 40px !important;
+  height: 40px !important;
+  line-height: 40px !important;
+  margin: 0 !important;
+  border-radius: 50% !important;
+  color: #3c4043 !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.15s ease !important;
+  cursor: pointer !important;
+}
+
+.react-datepicker__day:hover {
+  background-color: rgba(26, 115, 232, 0.08) !important;
+  color: #1a73e8 !important;
+}
+
+.react-datepicker__day--selected {
+  background-color: #1a73e8 !important;
+  color: white !important;
+}
+
+.react-datepicker__day--selected:hover {
+  background-color: #1557b0 !important;
+}
+
+.react-datepicker__day--today {
+  background-color: transparent !important;
+  color: #1a73e8 !important;
+  font-weight: 500 !important;
+}
+
+.react-datepicker__day--outside-month {
+  color: #dadce0 !important;
+}
+
+.react-datepicker__day--disabled {
+  color: #dadce0 !important;
+  cursor: not-allowed !important;
+}
+
+.react-datepicker__day--disabled:hover {
+  background-color: transparent !important;
+}
+
+/* 時間選択 */
+.react-datepicker__time-container {
+  border-left: 1px solid #e8eaed !important;
+  width: 120px !important;
+}
+
+.react-datepicker__header--time {
+  background: white !important;
+  border-bottom: 1px solid #e8eaed !important;
+  padding: 12px !important;
+}
+
+.react-datepicker__time-list {
+  height: 200px !important;
+  overflow-y: auto !important;
+}
+
+.react-datepicker__time-list-item {
+  padding: 8px 16px !important;
+  font-size: 14px !important;
+  color: #3c4043 !important;
+  cursor: pointer !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.react-datepicker__time-list-item:hover {
+  background-color: rgba(26, 115, 232, 0.08) !important;
+  color: #1a73e8 !important;
+}
+
+.react-datepicker__time-list-item--selected {
+  background-color: #1a73e8 !important;
+  color: white !important;
+}
+
+/* 今日ボタン */
+.react-datepicker__today-button {
+  background: white !important;
+  border: none !important;
+  border-top: 1px solid #e8eaed !important;
+  color: #1a73e8 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  padding: 12px !important;
+  cursor: pointer !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.react-datepicker__today-button:hover {
+  background-color: rgba(26, 115, 232, 0.08) !important;
+}
+
+/* スクロールバーのスタイリング */
+.react-datepicker__time-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.react-datepicker__time-list::-webkit-scrollbar-track {
+  background: #f1f3f4;
+  border-radius: 4px;
+}
+
+.react-datepicker__time-list::-webkit-scrollbar-thumb {
+  background: #bdc1c6;
+  border-radius: 4px;
+}
+
+.react-datepicker__time-list::-webkit-scrollbar-thumb:hover {
+  background: #80868b;
+}
+
+/* モバイル対応 */
+@media (max-width: 768px) {
+  .google-datetime-calendar {
+    transform: scale(0.9) !important;
+    transform-origin: center !important;
+    max-width: 95vw !important;
+    max-height: 80vh !important;
+  }
+  
+  .react-datepicker__time-container {
+    width: 90px !important;
+  }
+  
+  .react-datepicker__time-list {
+    height: 120px !important;
+  }
+  
+  .react-datepicker__header {
+    padding: 12px 16px 8px !important;
+  }
+  
+  .react-datepicker__month {
+    padding: 0 16px 12px !important;
+  }
+}
+
+/* アニメーション */
+.google-datetime-calendar {
+  animation: fadeInScale 0.15s ease-out;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

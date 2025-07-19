@@ -190,6 +190,12 @@
     padding: 20px;
 }
 
+.task-detail-view-simple {
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
 /* Loading placeholder */
 .loading-placeholder {
     background: white;

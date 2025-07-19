@@ -27,7 +27,10 @@
       "Bash(npm ls:*)",
       "Bash(npm uninstall:*)",
       "Bash(mkdir:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(git checkout:*)",
+      "mcp__ide__executeCode"
     ],
     "deny": []
   }

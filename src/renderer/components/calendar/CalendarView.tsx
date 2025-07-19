@@ -9,11 +9,26 @@ import '../../styles/calendar-view.css';
 interface CalendarViewProps {
   tasks: Task[];
   onTaskClick?: (task: Task) => void;
-  onCreateTask?: (dueDate: string) => void;
+  onCreateTask?: (endDate: string) => void;
+  currentDate?: Date;
+  hideNavigation?: boolean;
 }
 
-const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onTaskClick, onCreateTask }) => {
-  const [currentDate, setCurrentDate] = useState(new Date());
+const CalendarView: React.FC<CalendarViewProps> = ({ 
+  tasks, 
+  onTaskClick, 
+  onCreateTask, 
+  currentDate: externalCurrentDate, 
+  hideNavigation = false 
+}) => {
+  const [currentDate, setCurrentDate] = useState(externalCurrentDate || new Date());
+  
+  // 外部から渡された日付を同期
+  useEffect(() => {
+    if (externalCurrentDate) {
+      setCurrentDate(externalCurrentDate);
+    }
+  }, [externalCurrentDate]);
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
   const [, setLocation] = useLocation();
@@ -31,33 +46,36 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onTaskClick, onCreat
     return date;
   }, [currentDate]);
   
-  // カレンダーグリッドの日付を生成
+  // カレンダーグリッドの日付を生成（固定6週間 = 42日）
   const calendarDays = useMemo(() => {
     const days: Date[] = [];
     const startDay = new Date(firstDay);
     startDay.setDate(startDay.getDate() - firstDay.getDay());
     
-    const endDay = new Date(lastDay);
-    endDay.setDate(endDay.getDate() + (6 - lastDay.getDay()));
-    
+    // 常に6週間（42日）を表示
     const current = new Date(startDay);
-    while (current <= endDay) {
+    for (let i = 0; i < 42; i++) {
       days.push(new Date(current));
       current.setDate(current.getDate() + 1);
     }
     
     return days;
-  }, [firstDay, lastDay]);
+  }, [firstDay]);
   
   // 日付ごとのタスクをグループ化
   const tasksByDate = useMemo(() => {
     const grouped: { [key: string]: Task[] } = {};
     
     tasks.forEach(task => {
-      const dueDateValue = task.dueDate;
-      if (dueDateValue) {
-        const date = new Date(dueDateValue);
-        const dateKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+      const endDateValue = task.endDate;
+      if (endDateValue) {
+        const date = new Date(endDateValue);
+        // ISO 8601形式の日付キーに統一
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dateKey = `${year}-${month}-${day}`;
+        
         if (!grouped[dateKey]) {
           grouped[dateKey] = [];
         }
@@ -152,26 +170,28 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onTaskClick, onCreat
   return (
     <div className="calendar-view">
       {/* カレンダーヘッダー */}
-      <div className="calendar-header">
-        <h2 className="calendar-title">
-          {currentDate.getFullYear()}年 {monthNames[currentDate.getMonth()]}
-        </h2>
-        <div className="calendar-nav">
-          <button className="calendar-nav-button" onClick={goToPreviousMonth}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <button className="today-button" onClick={goToToday}>
-            今日
-          </button>
-          <button className="calendar-nav-button" onClick={goToNextMonth}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+      {!hideNavigation && (
+        <div className="calendar-header">
+          <h2 className="calendar-title">
+            {currentDate.getFullYear()}年 {monthNames[currentDate.getMonth()]}
+          </h2>
+          <div className="calendar-nav">
+            <button className="calendar-nav-button" onClick={goToPreviousMonth}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button className="today-button" onClick={goToToday}>
+              今日
+            </button>
+            <button className="calendar-nav-button" onClick={goToNextMonth}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
       
       {/* 曜日ヘッダー */}
       <div className="calendar-weekdays">
@@ -185,7 +205,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onTaskClick, onCreat
       {/* カレンダーグリッド */}
       <div className="calendar-grid">
         {calendarDays.map((date, index) => {
-          const dateKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+          // 日付キーをISO 8601形式に統一
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const dateKey = `${year}-${month}-${day}`;
           const dayTasks = tasksByDate[dateKey] || [];
           const isToday = date.toDateString() === new Date().toDateString();
           const isCurrentMonth = date.getMonth() === currentDate.getMonth();
@@ -203,7 +227,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onTaskClick, onCreat
           return (
             <div
               key={index}
-              className={`calendar-day ${!isCurrentMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}`}
+              className={`calendar-day ${!isCurrentMonth ? 'other-month' : ''} ${isToday ? 'today' : ''} ${expandedDates.has(dateKey) ? 'expanded' : ''}`}
               onMouseEnter={() => {
                 setHoveredDate(dateKey);
                 // タスク作成用の日付フォーマットを設定
@@ -288,16 +312,43 @@ const CalendarView: React.FC<CalendarViewProps> = ({ tasks, onTaskClick, onCreat
 };
 
 export default React.memo(CalendarView, (prevProps, nextProps) => {
-  return (
-    prevProps.tasks.length === nextProps.tasks.length &&
-    prevProps.onTaskClick === nextProps.onTaskClick &&
-    prevProps.onCreateTask === nextProps.onCreateTask &&
-    prevProps.tasks.every((task, index) => {
-      const nextTask = nextProps.tasks[index];
-      return nextTask && 
-        task.id === nextTask.id &&
-        task.status === nextTask.status &&
-        task.dueDate === nextTask.dueDate;
-    })
-  );
+  // 長さが違う場合は即座にfalseを返す（新規タスク作成時など）
+  if (prevProps.tasks.length !== nextProps.tasks.length) {
+    return false;
+  }
+  
+  // コールバック関数の比較
+  if (prevProps.onTaskClick !== nextProps.onTaskClick || 
+      prevProps.onCreateTask !== nextProps.onCreateTask) {
+    return false;
+  }
+  
+  // タスクの内容を比較（IDでソートしてから比較）
+  const prevTasksById = new Map(prevProps.tasks.map(task => [task.id, task]));
+  const nextTasksById = new Map(nextProps.tasks.map(task => [task.id, task]));
+  
+  // IDの集合が異なる場合は更新
+  const prevIds = new Set(prevTasksById.keys());
+  const nextIds = new Set(nextTasksById.keys());
+  if (prevIds.size !== nextIds.size) {
+    return false;
+  }
+  
+  // 各タスクの内容を比較
+  for (const id of prevIds) {
+    if (!nextIds.has(id)) {
+      return false;
+    }
+    
+    const prevTask = prevTasksById.get(id)!;
+    const nextTask = nextTasksById.get(id)!;
+    
+    if (prevTask.status !== nextTask.status ||
+        prevTask.endDate !== nextTask.endDate ||
+        prevTask.title !== nextTask.title) {
+      return false;
+    }
+  }
+  
+  return true;
 });

@@ -19,13 +19,20 @@ body {
 
 .app {
     display: flex;
-    flex-direction: column;
     min-height: 100vh;
 }
 
 .main-content {
     flex: 1;
-    padding: var(--height-header) 0 var(--space-10) 0; /* Top padding for fixed header, bottom padding */
+    margin-left: 220px; /* Width of sidebar */
+    min-height: 100vh;
+}
+
+/* レスポンシブデザイン - 小さい画面では狭いサイドバー */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 60px; /* Collapsed sidebar width */
+    }
 }
 
 .container {

@@ -84,29 +84,54 @@ export class TaskRepository {
   getAllTasksAsTree(): Task[] {
     const db = this.getDb();
     
-    // Check if routine columns exist
+    // Check if routine columns and new date columns exist
     const tableInfo = db.prepare("PRAGMA table_info(tasks)").all();
     const columnNames = (tableInfo as any[]).map(col => col.name);
     const hasRoutineColumns = columnNames.includes('is_routine');
+    const hasNewDateColumns = columnNames.includes('start_date') && columnNames.includes('end_date');
     
     let query;
-    if (hasRoutineColumns) {
+    if (hasRoutineColumns && hasNewDateColumns) {
       query = `
         SELECT id, parent_id as parentId, title, description, status, priority,
-               due_date as dueDate, created_at as createdAt, updated_at as updatedAt,
+               start_date as startDate, end_date as endDate,
+               created_at as createdAt, updated_at as updatedAt,
                completed_at as completedAt, position, expanded,
                is_routine as isRoutine, routine_type as routineType,
                last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
         FROM tasks
         ORDER BY COALESCE(parent_id, -1), position, id
       `;
-    } else {
+    } else if (hasRoutineColumns) {
       query = `
         SELECT id, parent_id as parentId, title, description, status, priority,
-               due_date as dueDate, created_at as createdAt, updated_at as updatedAt,
+               created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               is_routine as isRoutine, routine_type as routineType,
+               last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId,
+               NULL as startDate, NULL as endDate
+        FROM tasks
+        ORDER BY COALESCE(parent_id, -1), position, id
+      `;
+    } else if (hasNewDateColumns) {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               start_date as startDate, end_date as endDate,
+               created_at as createdAt, updated_at as updatedAt,
                completed_at as completedAt, position, expanded,
                0 as isRoutine, NULL as routineType,
                NULL as lastGeneratedAt, NULL as routineParentId
+        FROM tasks
+        ORDER BY COALESCE(parent_id, -1), position, id
+      `;
+    } else {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               0 as isRoutine, NULL as routineType,
+               NULL as lastGeneratedAt, NULL as routineParentId,
+               NULL as startDate, NULL as endDate
         FROM tasks
         ORDER BY COALESCE(parent_id, -1), position, id
       `;
@@ -143,28 +168,51 @@ export class TaskRepository {
   getTaskById(id: number): Task | null {
     const db = this.getDb();
     
-    // Check if routine columns exist
+    // Check if routine columns and new date columns exist
     const tableInfo = db.prepare("PRAGMA table_info(tasks)").all();
     const columnNames = (tableInfo as any[]).map(col => col.name);
     const hasRoutineColumns = columnNames.includes('is_routine');
+    const hasNewDateColumns = columnNames.includes('start_date') && columnNames.includes('end_date');
     
     let query;
-    if (hasRoutineColumns) {
+    if (hasRoutineColumns && hasNewDateColumns) {
       query = `
         SELECT id, parent_id as parentId, title, description, status, priority,
-               due_date as dueDate, created_at as createdAt, updated_at as updatedAt,
+               start_date as startDate, end_date as endDate,
+               created_at as createdAt, updated_at as updatedAt,
                completed_at as completedAt, position, expanded,
                is_routine as isRoutine, routine_type as routineType,
                last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
         FROM tasks WHERE id = ?
       `;
-    } else {
+    } else if (hasRoutineColumns) {
       query = `
         SELECT id, parent_id as parentId, title, description, status, priority,
-               due_date as dueDate, created_at as createdAt, updated_at as updatedAt,
+               created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               is_routine as isRoutine, routine_type as routineType,
+               last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId,
+               NULL as startDate, NULL as endDate
+        FROM tasks WHERE id = ?
+      `;
+    } else if (hasNewDateColumns) {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               start_date as startDate, end_date as endDate,
+               created_at as createdAt, updated_at as updatedAt,
                completed_at as completedAt, position, expanded,
                0 as isRoutine, NULL as routineType,
                NULL as lastGeneratedAt, NULL as routineParentId
+        FROM tasks WHERE id = ?
+      `;
+    } else {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               0 as isRoutine, NULL as routineType,
+               NULL as lastGeneratedAt, NULL as routineParentId,
+               NULL as startDate, NULL as endDate
         FROM tasks WHERE id = ?
       `;
     }
@@ -192,7 +240,7 @@ export class TaskRepository {
     if (hasRoutineColumns) {
       query = `
         SELECT id, parent_id as parentId, title, description, status, priority,
-               due_date as dueDate, created_at as createdAt, updated_at as updatedAt,
+               created_at as createdAt, updated_at as updatedAt,
                completed_at as completedAt, position, expanded,
                is_routine as isRoutine, routine_type as routineType,
                last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
@@ -202,7 +250,7 @@ export class TaskRepository {
     } else {
       query = `
         SELECT id, parent_id as parentId, title, description, status, priority,
-               due_date as dueDate, created_at as createdAt, updated_at as updatedAt,
+               created_at as createdAt, updated_at as updatedAt,
                completed_at as completedAt, position, expanded,
                0 as isRoutine, NULL as routineType,
                NULL as lastGeneratedAt, NULL as routineParentId
@@ -225,23 +273,36 @@ export class TaskRepository {
   createTask(input: CreateTaskInput): Task {
     const db = this.getDb();
     
-    // Check if routine columns exist
+    // Check if routine columns and new date columns exist
     const tableInfo = db.prepare("PRAGMA table_info(tasks)").all();
     const columnNames = (tableInfo as any[]).map(col => col.name);
     const hasRoutineColumns = columnNames.includes('is_routine');
+    const hasNewDateColumns = columnNames.includes('start_date') && columnNames.includes('end_date');
     
     let stmt;
-    if (hasRoutineColumns) {
+    if (hasRoutineColumns && hasNewDateColumns) {
       stmt = db.prepare(`
-        INSERT INTO tasks (parent_id, title, description, status, priority, due_date, position, expanded, 
+        INSERT INTO tasks (parent_id, title, description, status, priority, start_date, end_date, position, expanded, 
                           is_routine, routine_type, routine_parent_id)
-        VALUES (@parentId, @title, @description, @status, @priority, @dueDate, @position, @expanded,
+        VALUES (@parentId, @title, @description, @status, @priority, @startDate, @endDate, @position, @expanded,
                 @isRoutine, @routineType, @routineParentId)
+      `);
+    } else if (hasRoutineColumns) {
+      stmt = db.prepare(`
+        INSERT INTO tasks (parent_id, title, description, status, priority, position, expanded, 
+                          is_routine, routine_type, routine_parent_id)
+        VALUES (@parentId, @title, @description, @status, @priority, @position, @expanded,
+                @isRoutine, @routineType, @routineParentId)
+      `);
+    } else if (hasNewDateColumns) {
+      stmt = db.prepare(`
+        INSERT INTO tasks (parent_id, title, description, status, priority, start_date, end_date, position, expanded)
+        VALUES (@parentId, @title, @description, @status, @priority, @startDate, @endDate, @position, @expanded)
       `);
     } else {
       stmt = db.prepare(`
-        INSERT INTO tasks (parent_id, title, description, status, priority, due_date, position, expanded)
-        VALUES (@parentId, @title, @description, @status, @priority, @dueDate, @position, @expanded)
+        INSERT INTO tasks (parent_id, title, description, status, priority, position, expanded)
+        VALUES (@parentId, @title, @description, @status, @priority, @position, @expanded)
       `);
     }
 
@@ -275,10 +336,14 @@ export class TaskRepository {
       description: input.description === '' ? null : (input.description || null),
       status: input.status || 'pending',
       priority: input.priority || 'medium',
-      dueDate: input.dueDate || null,
       position: position,
       expanded: input.expanded !== undefined ? (input.expanded ? 1 : 0) : 0
     };
+
+    if (hasNewDateColumns) {
+      params.startDate = input.startDate || null;
+      params.endDate = input.endDate || null;
+    }
     
     if (hasRoutineColumns) {
       params.isRoutine = input.isRoutine ? 1 : 0;
@@ -421,9 +486,13 @@ export class TaskRepository {
       updates.push('priority = @priority');
       params.priority = input.priority;
     }
-    if (input.dueDate !== undefined) {
-      updates.push('due_date = @dueDate');
-      params.dueDate = input.dueDate;
+    if (input.startDate !== undefined) {
+      updates.push('start_date = @startDate');
+      params.startDate = input.startDate;
+    }
+    if (input.endDate !== undefined) {
+      updates.push('end_date = @endDate');
+      params.endDate = input.endDate;
     }
     if (input.parentId !== undefined) {
       updates.push('parent_id = @parentId');
@@ -778,7 +847,7 @@ export class TaskRepository {
     
     const tasks = db.prepare(`
       SELECT id, parent_id as parentId, title, description, status, priority,
-             due_date as dueDate, created_at as createdAt, updated_at as updatedAt,
+             created_at as createdAt, updated_at as updatedAt,
              completed_at as completedAt, position, expanded,
              is_routine as isRoutine, routine_type as routineType,
              last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
@@ -811,7 +880,7 @@ export class TaskRepository {
       
       // デイリールーティンタスクを取得（今日まだ生成されていないもの）
       const routineTasks = db.prepare(`
-        SELECT id, title, description, priority, due_date as dueDate,
+        SELECT id, title, description, priority,
                is_routine as isRoutine, routine_type as routineType,
                last_generated_at as lastGeneratedAt
         FROM tasks 
@@ -827,10 +896,10 @@ export class TaskRepository {
       // 各ルーティンタスクから今日のタスクを生成
       const insertTask = db.prepare(`
         INSERT INTO tasks (
-          parent_id, title, description, status, priority, due_date,
+          parent_id, title, description, status, priority,
           created_at, updated_at, position,
           is_routine, routine_type, routine_parent_id
-        ) VALUES (?, ?, ?, 'pending', ?, ?, ?, ?, ?, 0, NULL, ?)
+        ) VALUES (?, ?, ?, 'pending', ?, ?, ?, ?, 0, NULL, ?)
       `);
       
       const updateLastGenerated = db.prepare(`
@@ -841,16 +910,12 @@ export class TaskRepository {
       
       const transaction = db.transaction(() => {
         for (const routineTask of routineTasks) {
-          // 新しいタスクの期限日を今日に設定
-          const newDueDate = routineTask.dueDate ? todayTimestamp : null;
-          
           // 新しいタスクを作成
           insertTask.run(
             null, // parent_id - ルーティンから生成されたタスクはルートレベル
             routineTask.title,
             routineTask.description || '',
             routineTask.priority,
-            newDueDate,
             todayTimestamp, // created_at
             todayTimestamp, // updated_at
             0, // position

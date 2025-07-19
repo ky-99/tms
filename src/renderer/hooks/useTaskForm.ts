@@ -4,7 +4,7 @@ import { Task, TaskStatus, TaskPriority } from '../types';
 interface UseTaskFormProps {
   task: Task;
   isCreating: boolean;
-  defaultDueDate?: string;
+  defaultEndDate?: string;
   defaultParentId?: number;
 }
 
@@ -12,21 +12,21 @@ interface UseTaskFormReturn {
   // 編集状態
   isEditingTitle: boolean;
   isEditingDescription: boolean;
-  isEditingDueDate: boolean;
+  isEditingEndDate: boolean;
   isEditingStatus: boolean;
   isEditingPriority: boolean;
   
   // 編集値
   editedTitle: string;
   editedDescription: string;
-  editedDueDate: string;
+  editedEndDate: string;
   editedStatus: TaskStatus;
   editedPriority: TaskPriority;
   
   // 楽観的更新状態
   optimisticTitle: string | null;
   optimisticDescription: string | null;
-  optimisticDueDate: string | null;
+  optimisticEndDate: string | null;
   optimisticStatus: TaskStatus | null;
   optimisticPriority: TaskPriority | null;
   
@@ -42,19 +42,19 @@ interface UseTaskFormReturn {
   // ハンドラー
   setIsEditingTitle: (editing: boolean) => void;
   setIsEditingDescription: (editing: boolean) => void;
-  setIsEditingDueDate: (editing: boolean) => void;
+  setIsEditingEndDate: (editing: boolean) => void;
   setIsEditingStatus: (editing: boolean) => void;
   setIsEditingPriority: (editing: boolean) => void;
   
   setEditedTitle: (title: string) => void;
   setEditedDescription: (description: string) => void;
-  setEditedDueDate: (dueDate: string) => void;
+  setEditedEndDate: (endDate: string) => void;
   setEditedStatus: (status: TaskStatus) => void;
   setEditedPriority: (priority: TaskPriority) => void;
   
   setOptimisticTitle: (title: string | null) => void;
   setOptimisticDescription: (description: string | null) => void;
-  setOptimisticDueDate: (dueDate: string | null) => void;
+  setOptimisticEndDate: (endDate: string | null) => void;
   setOptimisticStatus: (status: TaskStatus | null) => void;
   setOptimisticPriority: (priority: TaskPriority | null) => void;
   
@@ -68,25 +68,25 @@ interface UseTaskFormReturn {
 export const useTaskForm = ({
   task,
   isCreating,
-  defaultDueDate,
+  defaultEndDate,
   defaultParentId
 }: UseTaskFormProps): UseTaskFormReturn => {
   // 編集状態
   const [isEditingTitle, setIsEditingTitle] = useState(isCreating);
   const [isEditingDescription, setIsEditingDescription] = useState(isCreating);
-  const [isEditingDueDate, setIsEditingDueDate] = useState(false);
+  const [isEditingEndDate, setIsEditingEndDate] = useState(false);
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [isEditingPriority, setIsEditingPriority] = useState(false);
   
   // 編集値の管理
   const [editedTitle, setEditedTitle] = useState(task.title);
   const [editedDescription, setEditedDescription] = useState(task.description || '');
-  const [editedDueDate, setEditedDueDate] = useState(() => {
+  const [editedEndDate, setEditedEndDate] = useState(() => {
     if (isCreating) {
-      return defaultDueDate || '';
+      return defaultEndDate || '';
     }
-    const dueDate = task.dueDate || (task as any).due_date;
-    return dueDate ? new Date(dueDate).toISOString().split('T')[0] : '';
+    const endDate = task.endDate || (task as any).end_date;
+    return endDate ? new Date(endDate).toISOString().split('T')[0] : '';
   });
   const [editedStatus, setEditedStatus] = useState<TaskStatus>(task.status);
   const [editedPriority, setEditedPriority] = useState<TaskPriority>(task.priority);
@@ -94,7 +94,7 @@ export const useTaskForm = ({
   // 楽観的更新の状態管理
   const [optimisticTitle, setOptimisticTitle] = useState<string | null>(null);
   const [optimisticDescription, setOptimisticDescription] = useState<string | null>(null);
-  const [optimisticDueDate, setOptimisticDueDate] = useState<string | null>(null);
+  const [optimisticEndDate, setOptimisticEndDate] = useState<string | null>(null);
   const [optimisticStatus, setOptimisticStatus] = useState<TaskStatus | null>(null);
   const [optimisticPriority, setOptimisticPriority] = useState<TaskPriority | null>(null);
   
@@ -119,7 +119,7 @@ export const useTaskForm = ({
   const resetForm = useCallback(() => {
     setIsEditingTitle(isCreating);
     setIsEditingDescription(isCreating);
-    setIsEditingDueDate(false);
+    setIsEditingEndDate(false);
     setIsEditingStatus(false);
     setIsEditingPriority(false);
     
@@ -130,7 +130,7 @@ export const useTaskForm = ({
     
     setOptimisticTitle(null);
     setOptimisticDescription(null);
-    setOptimisticDueDate(null);
+    setOptimisticEndDate(null);
     setOptimisticStatus(null);
     setOptimisticPriority(null);
     
@@ -144,21 +144,21 @@ export const useTaskForm = ({
     // 編集状態
     isEditingTitle,
     isEditingDescription,
-    isEditingDueDate,
+    isEditingEndDate,
     isEditingStatus,
     isEditingPriority,
     
     // 編集値
     editedTitle,
     editedDescription,
-    editedDueDate,
+    editedEndDate,
     editedStatus,
     editedPriority,
     
     // 楽観的更新状態
     optimisticTitle,
     optimisticDescription,
-    optimisticDueDate,
+    optimisticEndDate,
     optimisticStatus,
     optimisticPriority,
     
@@ -174,19 +174,19 @@ export const useTaskForm = ({
     // ハンドラー
     setIsEditingTitle,
     setIsEditingDescription,
-    setIsEditingDueDate,
+    setIsEditingEndDate,
     setIsEditingStatus,
     setIsEditingPriority,
     
     setEditedTitle,
     setEditedDescription,
-    setEditedDueDate,
+    setEditedEndDate,
     setEditedStatus,
     setEditedPriority,
     
     setOptimisticTitle,
     setOptimisticDescription,
-    setOptimisticDueDate,
+    setOptimisticEndDate,
     setOptimisticStatus,
     setOptimisticPriority,
     

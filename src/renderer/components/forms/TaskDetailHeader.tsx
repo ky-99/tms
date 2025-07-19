@@ -9,6 +9,7 @@ interface TaskDetailHeaderProps {
   setIsEditingTitle: (editing: boolean) => void;
   onTitleSave: (title: string) => Promise<void>;
   onTitleCancel: () => void;
+  onTitleChange?: (title: string) => void;
   optimisticTitle?: string | null;
 }
 
@@ -19,6 +20,7 @@ const TaskDetailHeader: React.FC<TaskDetailHeaderProps> = ({
   setIsEditingTitle,
   onTitleSave,
   onTitleCancel,
+  onTitleChange,
   optimisticTitle
 }) => {
   const [editedTitle, setEditedTitle] = useState(task.title);
@@ -32,6 +34,17 @@ const TaskDetailHeader: React.FC<TaskDetailHeaderProps> = ({
     setEditedTitle(optimisticTitle || task.title);
   }, [task.title, optimisticTitle]);
 
+  // 編集モードになったときに入力フィールドにフォーカス（選択はしない）
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current && isCreating) {
+      // 新規作成時のみフォーカス
+      const timeout = setTimeout(() => {
+        titleInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timeout);
+    }
+  }, [isEditingTitle, isCreating]);
+
   const handleTitleEdit = () => {
     if (blurTimeoutRef.current) {
       clearTimeout(blurTimeoutRef.current);
@@ -39,12 +52,6 @@ const TaskDetailHeader: React.FC<TaskDetailHeaderProps> = ({
     }
     setIsEditingTitle(true);
     setEditedTitle(optimisticTitle || task.title);
-    
-    setTimeout(() => {
-      if (titleInputRef.current) {
-        titleInputRef.current.focus();
-      }
-    }, 0);
   };
 
   const handleTitleSave = async () => {
@@ -79,8 +86,12 @@ const TaskDetailHeader: React.FC<TaskDetailHeaderProps> = ({
     if (isComposing) return;
     
     blurTimeoutRef.current = setTimeout(() => {
+      // 新規作成時はblurでは保存しない（Enterキーまたは明示的な保存のみ）
+      if (isCreating) {
+        return;
+      }
       handleTitleSave();
-    }, 100);
+    }, 150);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -96,49 +107,26 @@ const TaskDetailHeader: React.FC<TaskDetailHeaderProps> = ({
   return (
     <div className="task-detail-header">
       <div className="task-detail-title-section">
-        {isEditingTitle ? (
-          <input
-            ref={titleInputRef}
-            type="text"
-            value={editedTitle}
-            onChange={(e) => setEditedTitle(e.target.value)}
-            onBlur={handleDelayedBlur}
-            onKeyDown={handleKeyDown}
-            onCompositionStart={() => setIsComposing(true)}
-            onCompositionEnd={() => setIsComposing(false)}
-            className="task-detail-title-input"
-            placeholder="タスクのタイトルを入力..."
-            maxLength={100}
-          />
-        ) : (
-          <h2 
-            className="task-detail-title"
-            onClick={handleTitleEdit}
-            title="クリックして編集"
-          >
-            {optimisticTitle || task.title || '新しいタスク'}
-          </h2>
-        )}
+        <input
+          ref={titleInputRef}
+          type="text"
+          value={editedTitle}
+          onChange={(e) => {
+            setEditedTitle(e.target.value);
+            if (onTitleChange) {
+              onTitleChange(e.target.value);
+            }
+          }}
+          onBlur={handleDelayedBlur}
+          onKeyDown={handleKeyDown}
+          onCompositionStart={() => setIsComposing(true)}
+          onCompositionEnd={() => setIsComposing(false)}
+          className="task-detail-title-input"
+          placeholder="タスクのタイトルを入力..."
+          maxLength={100}
+        />
       </div>
       
-      {isEditingTitle && (
-        <div className="task-detail-title-actions">
-          <button 
-            type="button" 
-            onClick={handleTitleSave}
-            className="btn btn-sm btn-primary"
-          >
-            保存
-          </button>
-          <button 
-            type="button" 
-            onClick={handleTitleCancel}
-            className="btn btn-sm btn-secondary"
-          >
-            キャンセル
-          </button>
-        </div>
-      )}
     </div>
   );
 };

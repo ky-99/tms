@@ -6,7 +6,7 @@ import { useTaskContext } from '../../contexts/TaskContext';
 import { useShortcut } from '../../contexts/ShortcutContext';
 import { useGlobalAlert } from '../../hooks';
 import StatusPriorityModal from '../modals/StatusPriorityModal';
-import { isParentTask } from '../../utils/taskUtils';
+import { isParentTask, getTaskDateRange } from '../../utils/taskUtils';
 
 interface TaskItemProps {
   task: Task;
@@ -26,7 +26,6 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onTasksChan
   const { updateTask, createTaskAfter } = useTaskContext();
   const { setCurrentContext, setHoveredTask } = useShortcut();
   const { showAlert } = useGlobalAlert();
-  const [isClicked, setIsClicked] = useState(false);
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [showTagEditor, setShowTagEditor] = useState(false);
@@ -41,7 +40,6 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onTasksChan
   const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
   const [isOperationMode, setIsOperationMode] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
-  const [removingTagIds, setRemovingTagIds] = useState<Set<number>>(new Set());
   const statusRef = useRef<HTMLSpanElement>(null);
   const priorityRef = useRef<HTMLSpanElement>(null);
 
@@ -77,13 +75,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onTasksChan
   const handleTitleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onTaskClick) {
-      setIsClicked(true);
-      setTimeout(() => setIsClicked(false), 300);
-      
-      // 少し遅延を入れてアニメーションを見せる
-      setTimeout(() => {
-        onTaskClick(task.id);
-      }, 100);
+      onTaskClick(task.id);
     }
   };
 
@@ -326,7 +318,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onTasksChan
         description: task.description,
         status: 'pending',
         priority: task.priority,
-        dueDate: task.dueDate,
+        endDate: task.endDate,
         parentId: task.parentId,
       };
       
@@ -387,7 +379,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onTasksChan
   return (
     <>
       <div 
-        className={`task-list__item ${level > 0 ? 'task-list__item--child' : ''} ${isClicked ? 'task-list__item--clicked' : ''} ${isOperationMode ? 'task-list__item--operation-mode' : ''} ${task.isRoutine ? 'task-list__item--routine' : ''}`} 
+        className={`task-list__item ${level > 0 ? 'task-list__item--child' : ''} ${isOperationMode ? 'task-list__item--operation-mode' : ''} ${task.isRoutine ? 'task-list__item--routine' : ''}`} 
         style={{ 
           marginLeft: `${level * 30}px`,
           ...(isOperationMode ? {
@@ -491,7 +483,7 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onTasksChan
                   return (
                     <span 
                       key={tag.id} 
-                      className={`task-list__tag ${removingTagIds.has(tag.id) ? 'removing' : ''}`}
+                      className="task-list__tag"
                       style={{ 
                         backgroundColor: tag.color,
                         color: textColor
@@ -502,29 +494,8 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onTasksChan
                         className="task-list__tag-remove" 
                         onClick={async (e) => {
                           e.stopPropagation();
-                          
-                          // アニメーション開始
-                          setRemovingTagIds(prev => new Set([...prev, tag.id]));
-                          
-                          // アニメーション完了を待ってからタグを削除
-                          setTimeout(async () => {
-                            try {
-                              await window.taskAPI.removeTagFromTask(task.id, tag.id);
-                              setRemovingTagIds(prev => {
-                                const newSet = new Set(prev);
-                                newSet.delete(tag.id);
-                                return newSet;
-                              });
-                              onTasksChange();
-                            } catch (error) {
-                              // エラー時はアニメーション状態を戻す
-                              setRemovingTagIds(prev => {
-                                const newSet = new Set(prev);
-                                newSet.delete(tag.id);
-                                return newSet;
-                              });
-                            }
-                          }, 300); // CSSアニメーションの時間に合わせる
+                          await window.taskAPI.removeTagFromTask(task.id, tag.id);
+                          onTasksChange();
                         }}
                       >
                         ×
@@ -550,28 +521,18 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onTasksChan
             <div className="task-list__description">{task.description}</div>
           )}
           
-          {!(task.isRoutine || task.isRoutine) && (
+          {!task.isRoutine && (
             <div className="task-list__timeline">
               {(() => {
-                const startDate = new Date(task.createdAt || task.createdAt || Date.now()).toLocaleDateString('ja-JP');
-                const completedDate = (task.completedAt || task.completedAt) ? 
-                  new Date(task.completedAt || task.completedAt!).toLocaleDateString('ja-JP') : null;
-                const dueDate = (task.dueDate || task.dueDate) ? 
-                  new Date(task.dueDate || task.dueDate!).toLocaleDateString('ja-JP') : null;
-                
-                return (
-                  <>
-                    <span className="timeline-start">{startDate}</span>
-                    <span className="timeline-separator">〜</span>
-                    {task.status === 'completed' && completedDate ? (
-                      <span className="timeline-completed">{completedDate} (完了)</span>
-                    ) : dueDate ? (
-                      <span className="timeline-end">{dueDate} (期限)</span>
-                    ) : (
-                      <span className="timeline-ongoing">進行中</span>
-                    )}
-                  </>
-                );
+                const dateRangeText = getTaskDateRange(task);
+                if (dateRangeText) {
+                  return (
+                    <span className="timeline-range">
+                      {dateRangeText}
+                    </span>
+                  );
+                }
+                return null;
               })()}
             </div>
           )}
@@ -956,7 +917,7 @@ export default React.memo(TaskItem, (prevProps, nextProps) => {
     prevTask.status === nextTask.status &&
     prevTask.priority === nextTask.priority &&
     prevTask.description === nextTask.description &&
-    prevTask.dueDate === nextTask.dueDate &&
+    prevTask.endDate === nextTask.endDate &&
     prevTask.isRoutine === nextTask.isRoutine &&
     prevTask.children?.length === nextTask.children?.length &&
     prevProps.level === nextProps.level &&

@@ -8,7 +8,7 @@ import { Task, TaskStatus, TaskPriority } from '../types';
 // Cache for sort results
 const sortCache = new WeakMap<Task[], Map<string, Task[]>>();
 
-export type SortField = 'title' | 'status' | 'priority' | 'dueDate' | 'createdAt' | 'completedAt' | 'position';
+export type SortField = 'title' | 'status' | 'priority' | 'endDate' | 'createdAt' | 'completedAt' | 'position';
 export type SortDirection = 'asc' | 'desc';
 
 export interface SortOption {
@@ -50,8 +50,8 @@ const getSortValue = (task: Task, field: SortField): any => {
     case 'title':
       return task.title.toLowerCase();
     
-    case 'dueDate':
-      return task.dueDate ? new Date(task.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+    case 'endDate':
+      return task.endDate ? new Date(task.endDate).getTime() : Number.MAX_SAFE_INTEGER;
     
     case 'priority':
       return PRIORITY_ORDER[task.priority] || 0;
@@ -149,19 +149,19 @@ export const sortPresets = {
   smart: (tasks: Task[]): Task[] => {
     return sortTasksMultiple(tasks, [
       { field: 'priority', direction: 'desc' },
-      { field: 'dueDate', direction: 'asc' },
+      { field: 'endDate', direction: 'asc' },
       { field: 'status', direction: 'asc' }
     ]);
   },
 
   // Due date ascending (closest first)
-  dueDateAsc: (tasks: Task[]): Task[] => {
-    return sortTasks(tasks, 'dueDate', 'asc');
+  endDateAsc: (tasks: Task[]): Task[] => {
+    return sortTasks(tasks, 'endDate', 'asc');
   },
 
   // Due date descending (furthest first)
-  dueDateDesc: (tasks: Task[]): Task[] => {
-    return sortTasks(tasks, 'dueDate', 'desc');
+  endDateDesc: (tasks: Task[]): Task[] => {
+    return sortTasks(tasks, 'endDate', 'desc');
   },
 
   // Priority descending (urgent first)

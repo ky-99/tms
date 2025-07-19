@@ -490,7 +490,7 @@
 .today-progress {
     margin-top: 20px;
     padding: 16px;
-    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    background: #fafafa;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
 }

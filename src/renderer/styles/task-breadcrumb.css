@@ -1,0 +1,151 @@
+/* Task Breadcrumb Styles */
+.task-breadcrumb {
+  padding: 12px 0;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 16px;
+}
+
+.task-breadcrumb-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.task-breadcrumb-item {
+  display: flex;
+  align-items: center;
+}
+
+.task-breadcrumb-separator {
+  display: flex;
+  align-items: center;
+  color: #9ca3af;
+  font-size: 12px;
+  margin: 0 4px;
+}
+
+.task-breadcrumb-home {
+  color: #3b82f6;
+  font-weight: 400;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 4px 6px;
+  transition: all 0.15s ease;
+}
+
+.task-breadcrumb-home:hover {
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+.task-breadcrumb-task {
+  color: #4b5563;
+  font-weight: 400;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.task-breadcrumb-task.clickable {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.task-breadcrumb-task.clickable:hover {
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+.task-breadcrumb-task:not(.clickable):hover {
+  color: #1f2937;
+}
+
+.task-breadcrumb-task.current {
+  color: #1f2937;
+  font-weight: 400;
+}
+
+.task-breadcrumb-task.new {
+  color: #3b82f6;
+  font-style: italic;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .task-breadcrumb {
+    padding: 8px 0;
+  }
+  
+  .task-breadcrumb-list {
+    font-size: 12px;
+  }
+  
+  .task-breadcrumb-task {
+    max-width: 120px;
+  }
+  
+  .task-breadcrumb-home {
+    font-size: 11px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .task-breadcrumb {
+    border-bottom-color: #374151;
+  }
+  
+  .task-breadcrumb-home {
+    color: #9ca3af;
+  }
+  
+  .task-breadcrumb-home:hover {
+    background-color: #374151;
+    color: #f9fafb;
+  }
+  
+  .task-breadcrumb-task {
+    color: #d1d5db;
+  }
+  
+  .task-breadcrumb-task.clickable:hover {
+    background-color: #374151;
+    color: #f9fafb;
+  }
+  
+  .task-breadcrumb-task:not(.clickable):hover {
+    color: #f9fafb;
+  }
+  
+  .task-breadcrumb-task.current {
+    color: #f9fafb;
+  }
+  
+  .task-breadcrumb-task.new {
+    color: #60a5fa;
+  }
+  
+  .task-breadcrumb-separator {
+    color: #6b7280;
+  }
+}

@@ -144,8 +144,8 @@ const TasksPage: React.FC = () => {
     
     // Date filter (if implemented)
     if (dateFilterFrom || dateFilterTo) {
-      if (!task.dueDate) return false;
-      const taskDate = new Date(task.dueDate);
+      if (!task.endDate) return false;
+      const taskDate = new Date(task.endDate);
       if (dateFilterFrom && taskDate < new Date(dateFilterFrom)) return false;
       if (dateFilterTo && taskDate > new Date(dateFilterTo)) return false;
     }
@@ -663,7 +663,7 @@ const TasksPage: React.FC = () => {
         )}
 
         {isLeafNode && currentTargetTask ? (
-          <div className="task-detail-view">
+          <div className="task-detail-view-simple">
             <TaskItem
               task={currentTargetTask}
               level={0}

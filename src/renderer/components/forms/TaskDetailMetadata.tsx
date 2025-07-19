@@ -4,19 +4,28 @@ import { useGlobalAlert } from '../../hooks';
 import { isParentTask } from '../../utils/taskUtils';
 import { TASK_STATUS_LABELS, TASK_PRIORITY_LABELS } from '../../constants/task';
 import StatusPriorityModal from '../modals/StatusPriorityModal';
+import GoogleSeparatedDateTimePicker from '../ui/GoogleSeparatedDateTimePicker';
+import { localDateTimeToJST, formatLocalDateTime, updateDateTimeInput } from '../../utils/lightDateUtils';
+
+
 
 interface TaskDetailMetadataProps {
   task: Task;
   isCreating: boolean;
   editedStatus: 'pending' | 'in_progress' | 'completed';
   editedPriority: 'low' | 'medium' | 'high' | 'urgent';
-  editedDueDate: string;
+  editedStartDate?: string;
+  editedEndDate?: string;
+  editedParentId?: number | undefined;
   setEditedStatus: (status: 'pending' | 'in_progress' | 'completed') => void;
   setEditedPriority: (priority: 'low' | 'medium' | 'high' | 'urgent') => void;
-  setEditedDueDate: (date: string) => void;
+  setEditedStartDate?: (date: string) => void;
+  setEditedEndDate?: (date: string) => void;
+  setEditedParentId?: (parentId: number | undefined) => void;
   onStatusChange?: () => void;
   onUpdate?: (updates: Partial<Task>) => Promise<void>;
-  optimisticDueDate?: string | null;
+  optimisticStartDate?: string | null;
+  optimisticEndDate?: string | null;
 }
 
 const TaskDetailMetadata: React.FC<TaskDetailMetadataProps> = ({
@@ -24,70 +33,28 @@ const TaskDetailMetadata: React.FC<TaskDetailMetadataProps> = ({
   isCreating,
   editedStatus,
   editedPriority,
-  editedDueDate,
+  editedStartDate,
+  editedEndDate,
+  editedParentId,
   setEditedStatus,
   setEditedPriority,
-  setEditedDueDate,
+  setEditedStartDate,
+  setEditedEndDate,
+  setEditedParentId,
   onStatusChange,
   onUpdate,
-  optimisticDueDate
+  optimisticStartDate,
+  optimisticEndDate
 }) => {
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [isEditingPriority, setIsEditingPriority] = useState(false);
-  const [isEditingDueDate, setIsEditingDueDate] = useState(false);
   const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
   
   const statusRef = useRef<HTMLSpanElement>(null);
   const priorityRef = useRef<HTMLSpanElement>(null);
-  const dueDateInputRef = useRef<HTMLInputElement>(null);
-  const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const { showAlert } = useGlobalAlert();
 
-  // 期限日編集ハンドラー
-  const handleDueDateEdit = () => {
-    if (blurTimeoutRef.current) {
-      clearTimeout(blurTimeoutRef.current);
-      blurTimeoutRef.current = null;
-    }
-    setIsEditingDueDate(true);
-    
-    setTimeout(() => {
-      if (dueDateInputRef.current) {
-        dueDateInputRef.current.focus();
-      }
-    }, 0);
-  };
-
-  const handleDueDateSave = async () => {
-    if (isCreating) {
-      setIsEditingDueDate(false);
-      return;
-    }
-    
-    const currentDueDate = task.dueDate;
-    const currentDateString = currentDueDate ? new Date(currentDueDate).toISOString().split('T')[0] : '';
-    
-    if (editedDueDate !== currentDateString) {
-      try {
-        const newDueDate = editedDueDate ? new Date(editedDueDate).toISOString() : undefined;
-        setIsEditingDueDate(false);
-        if (onUpdate) {
-          await onUpdate({ dueDate: newDueDate });
-        }
-      } catch (error) {
-        setIsEditingDueDate(true);
-      }
-    } else {
-      setIsEditingDueDate(false);
-    }
-  };
-
-  const handleDueDateCancel = () => {
-    const dueDate = task.dueDate;
-    setEditedDueDate(dueDate ? new Date(dueDate).toISOString().split('T')[0] : '');
-    setIsEditingDueDate(false);
-  };
 
   // ステータス編集ハンドラー
   const handleStatusClick = () => {
@@ -159,25 +126,6 @@ const TaskDetailMetadata: React.FC<TaskDetailMetadataProps> = ({
     }
   };
 
-  const handleDelayedBlur = () => {
-    blurTimeoutRef.current = setTimeout(() => {
-      handleDueDateSave();
-      blurTimeoutRef.current = null;
-    }, 150);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleDueDateSave();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      handleDueDateCancel();
-    }
-  };
-
-  const displayDueDate = optimisticDueDate || (task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '');
-
   return (
     <div className="task-detail-metadata">
       <div className="task-detail-metadata-grid">
@@ -209,29 +157,66 @@ const TaskDetailMetadata: React.FC<TaskDetailMetadataProps> = ({
           </span>
         </div>
 
-        {/* 期限日 */}
-        <div className="task-detail-field">
-          <label className="task-detail-label">期限日</label>
-          {isEditingDueDate ? (
-            <input
-              ref={dueDateInputRef}
-              type="date"
-              value={editedDueDate}
-              onChange={(e) => setEditedDueDate(e.target.value)}
-              onBlur={handleDelayedBlur}
-              onKeyDown={handleKeyDown}
-              className="task-detail-date-input"
-            />
-          ) : (
-            <div 
-              className="task-detail-date-display"
-              onClick={handleDueDateEdit}
-              title="クリックして編集"
-            >
-              {displayDueDate || '設定なし'}
-            </div>
-          )}
+        {/* 開始日時 */}
+        <div className="task-detail-field datetime-field start-datetime-field">
+          <label className="task-detail-label">開始日時</label>
+          <GoogleSeparatedDateTimePicker
+            value={editedStartDate || ''}
+            onChange={(date) => {
+              if (setEditedStartDate) {
+                setEditedStartDate(date);
+                if (!isCreating && onUpdate) {
+                  const newStartDate = date ? localDateTimeToJST(date) : undefined;
+                  // API層でバリデーションを処理するため、シンプルに更新
+                  onUpdate({ startDate: newStartDate });
+                }
+              }
+            }}
+            placeholder="開始日時を設定"
+            showTime={true}
+            timeInterval={15}
+          />
         </div>
+
+        {/* 終了日時 */}
+        <div className="task-detail-field datetime-field end-datetime-field">
+          <label className="task-detail-label">終了日時</label>
+          <GoogleSeparatedDateTimePicker
+            value={editedEndDate || ''}
+            onChange={(date) => {
+              if (setEditedEndDate) {
+                setEditedEndDate(date);
+                if (!isCreating && onUpdate) {
+                  const newEndDate = date ? localDateTimeToJST(date) : undefined;
+                  // API層でバリデーションを処理するため、シンプルに更新
+                  onUpdate({ endDate: newEndDate });
+                }
+              }
+            }}
+            placeholder="終了日時を設定"
+            showTime={true}
+            timeInterval={15}
+          />
+        </div>
+
+        {/* 日時範囲表示 */}
+        <div className="task-detail-field task-detail-datetime-range-display">
+          <div className="datetime-range-text">
+            {(() => {
+              if (editedStartDate && editedEndDate) {
+                return `${formatLocalDateTime(editedStartDate)} ~ ${formatLocalDateTime(editedEndDate)}`;
+              } else if (editedStartDate) {
+                return `${formatLocalDateTime(editedStartDate)} から開始`;
+              } else if (editedEndDate) {
+                return `${formatLocalDateTime(editedEndDate)} まで`;
+              }
+              return '日時未設定';
+            })()
+          }
+          </div>
+        </div>
+
+
       </div>
 
       {/* ステータス編集モーダル */}

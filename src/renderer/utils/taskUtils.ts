@@ -37,28 +37,28 @@ export const normalizeTasks = (apiTasks: ApiTask[]): Task[] => {
  * Checks if a task is overdue
  */
 export const isTaskOverdue = (task: Task): boolean => {
-  if (!task.dueDate || task.status === 'completed') return false;
+  if (!task.endDate || task.status === 'completed') return false;
   
   const today = new Date();
-  const dueDate = new Date(task.dueDate);
+  const endDate = new Date(task.endDate);
   today.setHours(0, 0, 0, 0);
-  dueDate.setHours(0, 0, 0, 0);
+  endDate.setHours(0, 0, 0, 0);
   
-  return dueDate < today;
+  return endDate < today;
 };
 
 /**
- * Gets relative due date text (e.g., "明日", "2日後")
+ * Gets relative end date text (e.g., "明日", "2日後")
  */
-export const getDueDateText = (task: Task): string | null => {
-  if (!task.dueDate) return null;
+export const getEndDateText = (task: Task): string | null => {
+  if (!task.endDate) return null;
   
   const today = new Date();
-  const dueDate = new Date(task.dueDate);
+  const endDate = new Date(task.endDate);
   today.setHours(0, 0, 0, 0);
-  dueDate.setHours(0, 0, 0, 0);
+  endDate.setHours(0, 0, 0, 0);
   
-  const diffTime = dueDate.getTime() - today.getTime();
+  const diffTime = endDate.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   
   if (diffDays === 0) return '今日';
@@ -67,6 +67,9 @@ export const getDueDateText = (task: Task): string | null => {
   if (diffDays < 0) return `${Math.abs(diffDays)}日前`;
   return `${diffDays}日後`;
 };
+
+// Legacy export for backwards compatibility
+export { getEndDateText as getDueDateText };
 
 
 /**
@@ -275,6 +278,55 @@ export const getRootTask = (task: Task, allTasks: Task[]): Task => {
 /**
  * タスクの統計情報を計算
  */
+/**
+ * タスクの期間を取得（開始日〜終了日の表示用）
+ */
+export const getTaskDateRange = (task: Task): string | null => {
+  const { startDate, endDate } = task;
+  
+  // 日時フォーマット関数
+  const formatDateTime = (dateStr: string): string => {
+    if (!dateStr) return '未定';
+    
+    const date = new Date(dateStr);
+    
+    // Invalid Dateの場合は「未定」を返す
+    if (isNaN(date.getTime())) {
+      return '未定';
+    }
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    // 時刻が00:00の場合は時刻部分を「未定」と表示
+    if (hours === '00' && minutes === '00') {
+      return `${year}/${month}/${day} 未定`;
+    }
+    
+    return `${year}/${month}/${day} ${hours}:${minutes}`;
+  };
+  
+  // 終了日のみの場合
+  if (endDate && !startDate) {
+    return `〜${formatDateTime(endDate)}`;
+  }
+  
+  // 開始日のみの場合
+  if (startDate && !endDate) {
+    return `${formatDateTime(startDate)}〜`;
+  }
+  
+  // 開始日と終了日両方の場合
+  if (startDate && endDate) {
+    return `${formatDateTime(startDate)} ~ ${formatDateTime(endDate)}`;
+  }
+  
+  return null;
+};
+
 export const calculateTaskStats = (tasks: Task[]) => {
   const flatTasks = flattenTasks(tasks);
   
@@ -284,10 +336,10 @@ export const calculateTaskStats = (tasks: Task[]) => {
     inProgress: flatTasks.filter(t => t.status === 'in_progress').length,
     pending: flatTasks.filter(t => t.status === 'pending').length,
     overdue: flatTasks.filter(t => {
-      if (!t.dueDate) return false;
-      const dueDate = new Date(t.dueDate);
+      if (!t.endDate) return false;
+      const endDate = new Date(t.endDate);
       const now = new Date();
-      return dueDate < now && t.status !== 'completed';
+      return endDate < now && t.status !== 'completed';
     }).length
   };
   

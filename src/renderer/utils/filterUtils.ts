@@ -106,9 +106,9 @@ export const filterTasks = (tasks: Task[], criteria: FilterCriteria): Task[] => 
   // Due date range filter
   if (criteria.dueDateFrom || criteria.dueDateTo) {
     filtered = filtered.filter(task => {
-      if (!task.dueDate) return false;
+      if (!task.endDate) return false;
       
-      const taskDate = new Date(task.dueDate);
+      const taskDate = new Date(task.endDate);
       
       if (criteria.dueDateFrom) {
         const fromDate = new Date(criteria.dueDateFrom);

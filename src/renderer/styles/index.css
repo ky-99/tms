@@ -7,7 +7,7 @@
 @import './base.css';
 
 /* Layout components */
-@import './header.css';
+@import './sidebar.css';
 @import './breadcrumb.css';
 
 /* Form components */
@@ -22,6 +22,7 @@
 @import './weekly-task-cards.css';
 @import './calendar-view.css';
 @import './task-tree-overview.css';
+@import './timeline-view.css';
 @import './task-selection.css';
 
 /* Page layouts */
@@ -52,6 +53,9 @@
 @import './utilities.css';
 @import './states.css';
 @import './overlays.css';
+@import './google-datetime-picker.css';
+@import './google-datetime-range.css';
+@import './google-date-time-separated.css';
 
 
 /* Page specific styles */

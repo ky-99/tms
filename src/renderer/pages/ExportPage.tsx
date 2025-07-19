@@ -135,16 +135,16 @@ const ExportPage: React.FC = () => {
 
       // Date range filter
       if (settings.dateRangeStart || settings.dateRangeEnd) {
-        const dueDateValue = task.dueDate || task.dueDate;
-        if (dueDateValue) {
-          const dueDate = new Date(dueDateValue);
+        const endDateValue = task.endDate || task.endDate;
+        if (endDateValue) {
+          const endDate = new Date(endDateValue);
           if (settings.dateRangeStart) {
             const startDate = new Date(settings.dateRangeStart);
-            if (dueDate < startDate) return false;
+            if (endDate < startDate) return false;
           }
           if (settings.dateRangeEnd) {
             const endDate = new Date(settings.dateRangeEnd);
-            if (dueDate > endDate) return false;
+            if (endDate > endDate) return false;
           }
         } else if (settings.dateRangeStart || settings.dateRangeEnd) {
           return false; // Exclude tasks without due date when date filter is applied
@@ -261,9 +261,9 @@ const ExportPage: React.FC = () => {
       details += `**重要度:** ${priorityMap[task.priority] || task.priority}\n\n`;
     }
     
-    if (settings.includeDueDate && (task.dueDate || task.dueDate)) {
-      const dueDate = new Date(task.dueDate || task.dueDate || '');
-      details += `**期限:** ${dueDate.toLocaleDateString('ja-JP')}\n\n`;
+    if (settings.includeDueDate && (task.endDate || task.endDate)) {
+      const endDate = new Date(task.endDate || task.endDate || '');
+      details += `**期限:** ${endDate.toLocaleDateString('ja-JP')}\n\n`;
     }
     
     if (settings.includeCreatedDate && (task.createdAt || task.createdAt)) {

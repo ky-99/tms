@@ -12,6 +12,7 @@ import TaskDetailMetadata from '../forms/TaskDetailMetadata';
 import TaskDetailSubtasks from '../forms/TaskDetailSubtasks';
 import TaskDetailActions from '../forms/TaskDetailActions';
 import { flattenTasks } from '../../utils/taskUtils';
+import { jstToLocalDateTime, localDateTimeToJST, validateAndAdjustDateTimes, getDateTimeAdjustmentMessage } from '../../utils/lightDateUtils';
 
 interface TaskDetailModalProps {
   isOpen: boolean;
@@ -19,7 +20,7 @@ interface TaskDetailModalProps {
   task?: Task;
   isCreating?: boolean;
   defaultParentId?: number;
-  defaultDueDate?: string;
+  defaultEndDate?: string;
   onStatusChange?: () => void;
 }
 
@@ -29,7 +30,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   task: initialTask, 
   isCreating = false,
   defaultParentId,
-  defaultDueDate,
+  defaultEndDate,
   onStatusChange
 }) => {
   const [, setLocation] = useLocation();
@@ -44,7 +45,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   // 状態管理
   const [optimisticTitle, setOptimisticTitle] = useState<string | null>(null);
   const [optimisticDescription, setOptimisticDescription] = useState<string | null>(null);
-  const [optimisticDueDate, setOptimisticDueDate] = useState<string | null>(null);
+  const [optimisticStartDate, setOptimisticStartDate] = useState<string | null>(null);
+  const [optimisticEndDate, setOptimisticEndDate] = useState<string | null>(null);
   
   // 現在のタスクを取得（楽観的更新を考慮）
   const task = React.useMemo(() => {
@@ -55,7 +57,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         description: '',
         status: 'pending' as const,
         priority: 'medium' as const,
-        dueDate: defaultDueDate || '',
+        startDate: '',
+        endDate: defaultEndDate || '',
         parentId: defaultParentId,
         children: [],
         isRoutine: false,
@@ -76,23 +79,39 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         ...initialTask,
         title: optimisticTitle || initialTask.title,
         description: optimisticDescription !== null ? optimisticDescription : (initialTask.description || ''),
-        dueDate: optimisticDueDate || initialTask.dueDate || ''
+        startDate: optimisticStartDate || initialTask.startDate || '',
+        endDate: optimisticEndDate || initialTask.endDate || ''
       };
     }
     
     return null;
-  }, [isCreating, initialTask, optimisticTitle, optimisticDescription, optimisticDueDate, defaultParentId, defaultDueDate]);
+  }, [isCreating, initialTask, optimisticTitle, optimisticDescription, optimisticStartDate, optimisticEndDate, defaultParentId, defaultEndDate]);
 
-  // 編集状態
-  const [isEditingTitle, setIsEditingTitle] = useState(isCreating);
-  const [isEditingDescription, setIsEditingDescription] = useState(isCreating);
+  // 編集状態 - 常時編集モード
+  const [isEditingTitle, setIsEditingTitle] = useState(true);
+  const [isEditingDescription, setIsEditingDescription] = useState(true);
   
   // 編集中の値
   const [editedTitle, setEditedTitle] = useState(task?.title || '');
+  
+  // タイトル変更のハンドラー
+  const handleTitleChange = (title: string) => {
+    setEditedTitle(title);
+  };
   const [editedDescription, setEditedDescription] = useState(task?.description || '');
-  const [editedDueDate, setEditedDueDate] = useState(() => {
-    if (task?.dueDate) {
-      return new Date(task.dueDate).toISOString().split('T')[0];
+  const [editedStartDate, setEditedStartDate] = useState(() => {
+    if (task?.startDate) {
+      return jstToLocalDateTime(task.startDate);
+    }
+    return '';
+  });
+  const [editedEndDate, setEditedEndDate] = useState(() => {
+    if (task?.endDate) {
+      return jstToLocalDateTime(task.endDate);
+    }
+    // 新規作成時でdefaultEndDateがある場合
+    if (isCreating && defaultEndDate) {
+      return jstToLocalDateTime(defaultEndDate);
     }
     return '';
   });
@@ -110,11 +129,15 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       if (task) {
         setEditedTitle(task.title);
         setEditedDescription(task.description || '');
-        setEditedDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '');
+        setEditedStartDate(task.startDate ? jstToLocalDateTime(task.startDate) : '');
+        setEditedEndDate(task.endDate ? jstToLocalDateTime(task.endDate) : '');
         setEditedParentId(task.parentId);
         setEditedStatus(task.status);
         setEditedPriority(task.priority);
         setEditedIsRoutine(task.isRoutine || false);
+        // 常時編集モード
+        setIsEditingTitle(true);
+        setIsEditingDescription(true);
       }
       setIsInitialized(true);
     }
@@ -122,26 +145,73 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     if (!isOpen) {
       setIsInitialized(false);
     }
-  }, [isOpen, task, isInitialized]);
+  }, [isOpen, task, isInitialized, isCreating]);
 
   // タスクが変更されたときの更新
   useEffect(() => {
     if (task) {
       setEditedTitle(optimisticTitle || task.title);
       setEditedDescription(optimisticDescription !== null ? optimisticDescription : (task.description || ''));
-      setEditedDueDate(optimisticDueDate || (task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''));
+      setEditedStartDate(optimisticStartDate || (task.startDate ? jstToLocalDateTime(task.startDate) : ''));
+      setEditedEndDate(optimisticEndDate || (task.endDate ? jstToLocalDateTime(task.endDate) : ''));
     }
-  }, [task, optimisticTitle, optimisticDescription, optimisticDueDate]);
+  }, [task, optimisticTitle, optimisticDescription, optimisticStartDate, optimisticEndDate]);
+
+  // 日時変更時の整合性チェックと自動調整
+  const handleDateTimeValidation = React.useCallback((startDate: string, endDate: string, changedField: 'start' | 'end') => {
+    if (startDate && endDate) {
+      const validation = validateAndAdjustDateTimes(startDate, endDate);
+      
+      if (validation.wasAdjusted) {
+        // 自動調整が行われた場合は状態を更新
+        if (validation.adjustmentType === 'end_adjusted') {
+          setEditedEndDate(validation.adjustedEnd);
+          // 楽観的更新も反映
+          if (!isCreating) {
+            setOptimisticEndDate(validation.adjustedEnd);
+          }
+        } else if (validation.adjustmentType === 'start_adjusted') {
+          setEditedStartDate(validation.adjustedStart);
+          // 楽観的更新も反映
+          if (!isCreating) {
+            setOptimisticStartDate(validation.adjustedStart);
+          }
+        }
+        
+        // ユーザーにフィードバック
+        const message = getDateTimeAdjustmentMessage(validation.adjustmentType);
+        showAlert(message, { type: 'success', title: '日時調整' });
+      }
+    }
+  }, [isCreating, showAlert]);
+
+  // カスタム日時変更ハンドラー
+  const handleStartDateChange = React.useCallback((newStartDate: string) => {
+    setEditedStartDate(newStartDate);
+    // 少し遅延させて整合性チェック
+    setTimeout(() => {
+      handleDateTimeValidation(newStartDate, editedEndDate, 'start');
+    }, 100);
+  }, [editedEndDate, handleDateTimeValidation]);
+
+  const handleEndDateChange = React.useCallback((newEndDate: string) => {
+    setEditedEndDate(newEndDate);
+    // 少し遅延させて整合性チェック
+    setTimeout(() => {
+      handleDateTimeValidation(editedStartDate, newEndDate, 'end');
+    }, 100);
+  }, [editedStartDate, handleDateTimeValidation]);
 
   // 利用可能な親タスクの取得
   const availableParentTasks = React.useMemo(() => {
-    if (!tasks || isCreating) return [];
+    if (!tasks) return [];
     
     const flatTasks = flattenTasks(tasks);
     const currentTaskId = task?.id;
     
+    // 新規作成時は全てのタスクを選択可能、編集時は自分自身を除外
     return flatTasks
-      .filter(t => t.id !== currentTaskId)
+      .filter(t => !isCreating ? t.id !== currentTaskId : true)
       .map(t => ({
         id: t.id,
         title: t.title,
@@ -193,13 +263,14 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           setOptimisticTitle(title);
           setIsEditingTitle(false);
           
-          const newTask = await createTask({
+          await createTask({
             title,
             description: editedDescription,
             status: editedStatus,
             priority: editedPriority,
             parentId: editedParentId,
-            dueDate: editedDueDate ? new Date(editedDueDate).toISOString() : undefined,
+            startDate: editedStartDate ? localDateTimeToJST(editedStartDate) : undefined,
+            endDate: editedEndDate ? localDateTimeToJST(editedEndDate) : undefined,
             isRoutine: editedIsRoutine
           });
           
@@ -244,13 +315,14 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           setOptimisticDescription(description);
           setIsEditingDescription(false);
           
-          const newTask = await createTask({
+          await createTask({
             title: editedTitle.trim(),
             description,
             status: editedStatus,
             priority: editedPriority,
             parentId: editedParentId,
-            dueDate: editedDueDate ? new Date(editedDueDate).toISOString() : undefined,
+            startDate: editedStartDate ? localDateTimeToJST(editedStartDate) : undefined,
+            endDate: editedEndDate ? localDateTimeToJST(editedEndDate) : undefined,
             isRoutine: editedIsRoutine
           });
           
@@ -292,7 +364,36 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
   const handleUpdate = async (updates: Partial<Task>) => {
     if (task) {
-      await updateTask(task.id, updates);
+      // 楽観的更新を行う
+      if (updates.startDate !== undefined) {
+        const localStartDate = updates.startDate ? jstToLocalDateTime(updates.startDate) : '';
+        setOptimisticStartDate(localStartDate);
+      }
+      if (updates.endDate !== undefined) {
+        const localEndDate = updates.endDate ? jstToLocalDateTime(updates.endDate) : '';
+        setOptimisticEndDate(localEndDate);
+      }
+      
+      try {
+        await updateTask(task.id, updates);
+        // 成功時は楽観的更新をクリア
+        if (updates.startDate !== undefined) {
+          setOptimisticStartDate(null);
+        }
+        if (updates.endDate !== undefined) {
+          setOptimisticEndDate(null);
+        }
+      } catch (error) {
+        // エラー時は楽観的更新を元に戻す
+        if (updates.startDate !== undefined) {
+          setOptimisticStartDate(null);
+          setEditedStartDate(task.startDate ? jstToLocalDateTime(task.startDate) : '');
+        }
+        if (updates.endDate !== undefined) {
+          setOptimisticEndDate(null);
+          setEditedEndDate(task.endDate ? jstToLocalDateTime(task.endDate) : '');
+        }
+      }
     }
   };
 
@@ -328,6 +429,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             setIsEditingTitle={setIsEditingTitle}
             onTitleSave={handleTitleSave}
             onTitleCancel={handleTitleCancel}
+            onTitleChange={handleTitleChange}
             optimisticTitle={optimisticTitle}
           />
           
@@ -346,25 +448,26 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             isCreating={isCreating}
             editedStatus={editedStatus}
             editedPriority={editedPriority}
-            editedDueDate={editedDueDate}
+            editedStartDate={editedStartDate}
+            editedEndDate={editedEndDate}
             setEditedStatus={setEditedStatus}
             setEditedPriority={setEditedPriority}
-            setEditedDueDate={setEditedDueDate}
+            setEditedStartDate={handleStartDateChange}
+            setEditedEndDate={handleEndDateChange}
             onStatusChange={onStatusChange}
             onUpdate={handleUpdate}
-            optimisticDueDate={optimisticDueDate}
+            optimisticStartDate={optimisticStartDate}
+            optimisticEndDate={optimisticEndDate}
           />
           
-          {!isCreating && (
-            <div className="task-detail-field">
-              <label className="task-detail-label">親タスク</label>
-              <ParentTaskSelector
-                availableTasks={availableParentTasks}
-                selectedParentId={editedParentId}
-                onParentSelect={setEditedParentId}
-              />
-            </div>
-          )}
+          <div className="task-detail-field parent-task-field">
+            <label className="task-detail-label">親タスク</label>
+            <ParentTaskSelector
+              availableTasks={availableParentTasks}
+              selectedParentId={editedParentId}
+              onParentSelect={setEditedParentId}
+            />
+          </div>
           
           <TaskDetailSubtasks
             task={task}

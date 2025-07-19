@@ -1,0 +1,148 @@
+/* Google Calendar風 DateTimeRange スタイル */
+
+.google-datetime-range {
+  width: 100%;
+}
+
+.google-datetime-range-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.google-datetime-range-start,
+.google-datetime-range-end {
+  flex: 1;
+  min-width: 0;
+}
+
+.google-datetime-range-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 36px;
+}
+
+.range-arrow {
+  font-size: 16px;
+  color: #5f6368;
+  font-weight: 500;
+  user-select: none;
+}
+
+/* フォーカス状態の強調 */
+.google-datetime-range-start .google-datetime-picker.focused,
+.google-datetime-range-end .google-datetime-picker.focused {
+  position: relative;
+  z-index: 10;
+}
+
+.google-datetime-range-start .google-datetime-picker.focused .google-datetime-input,
+.google-datetime-range-end .google-datetime-picker.focused .google-datetime-input {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+/* 範囲表示エリア */
+.google-datetime-range-display {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e8eaed;
+}
+
+.range-display-text {
+  font-size: 13px;
+  color: #5f6368;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+  line-height: 1.4;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .google-datetime-range-container {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .google-datetime-range-separator {
+    transform: rotate(90deg);
+    min-width: auto;
+    height: 24px;
+  }
+  
+  .range-arrow {
+    font-size: 14px;
+  }
+  
+  .google-datetime-range-start,
+  .google-datetime-range-end {
+    width: 100%;
+  }
+}
+
+/* 小さなスクリーン向けのコンパクトレイアウト */
+@media (max-width: 480px) {
+  .google-datetime-range-container {
+    gap: 6px;
+  }
+  
+  .google-datetime-range-display {
+    margin-top: 6px;
+    padding: 6px 10px;
+  }
+  
+  .range-display-text {
+    font-size: 12px;
+  }
+}
+
+/* エラー状態（開始 > 終了の場合） */
+.google-datetime-range.error .google-datetime-range-start .google-datetime-input,
+.google-datetime-range.error .google-datetime-range-end .google-datetime-input {
+  border-color: #ea4335;
+  background-color: #fef7f0;
+}
+
+.google-datetime-range.error .range-display-text {
+  color: #ea4335;
+}
+
+/* 無効状態 */
+.google-datetime-range.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.google-datetime-range.disabled .range-arrow {
+  color: #bdc1c6;
+}
+
+.google-datetime-range.disabled .range-display-text {
+  color: #80868b;
+}
+
+/* ホバー効果 */
+.google-datetime-range-container:hover .range-arrow {
+  color: #3c4043;
+  transition: color 0.15s ease;
+}
+
+/* アニメーション */
+.google-datetime-range-display {
+  animation: fadeInUp 0.2s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

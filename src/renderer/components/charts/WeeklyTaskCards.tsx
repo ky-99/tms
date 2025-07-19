@@ -41,10 +41,10 @@ const WeeklyTaskCards: React.FC<WeeklyTaskCardsProps> = ({ tasks, onTaskClick })
 
     const flatTasks = flattenTasks(tasks);
     const weeklyFiltered = flatTasks.filter(task => {
-      const dueDateValue = task.dueDate;
-      if (!dueDateValue) return false;
-      const dueDate = new Date(dueDateValue);
-      return dueDate >= sunday && dueDate <= saturday;
+      const endDateValue = task.endDate;
+      if (!endDateValue) return false;
+      const endDate = new Date(endDateValue);
+      return endDate >= sunday && endDate <= saturday;
     });
 
     return {
@@ -81,9 +81,14 @@ const WeeklyTaskCards: React.FC<WeeklyTaskCardsProps> = ({ tasks, onTaskClick })
         title="クリックでタスク詳細を表示"
       >
         <div className="task-card-header">
-          <span className={`priority ${task.priority}`}>
-            {TASK_PRIORITY_LABELS[task.priority]}
-          </span>
+          <div className="task-card-badges">
+            <span className={`priority priority-${task.priority}`}>
+              {TASK_PRIORITY_LABELS[task.priority]}
+            </span>
+            <span className={`status status-${task.status}`}>
+              {task.status === 'completed' ? '完了' : task.status === 'in_progress' ? '進行中' : '未着手'}
+            </span>
+          </div>
         </div>
         <div className="task-card-title">
           {isParentTask && (
@@ -102,6 +107,11 @@ const WeeklyTaskCards: React.FC<WeeklyTaskCardsProps> = ({ tasks, onTaskClick })
           )}
           {task.title}
         </div>
+        {task.description && (
+          <div className="task-card-description">
+            {task.description}
+          </div>
+        )}
       </div>
     );
   };

@@ -30,9 +30,9 @@ const TaskDetailSubtasks: React.FC<TaskDetailSubtasksProps> = ({
               {TASK_STATUS_LABELS[child.status]}
             </span>
             <span className="child-title">{child.title}</span>
-            {child.dueDate && (
+            {child.endDate && (
               <span className="child-due-date">
-                {new Date(child.dueDate).toLocaleDateString()}
+                {new Date(child.endDate).toLocaleDateString()}
               </span>
             )}
           </div>

@@ -16,16 +16,42 @@
 
 .task-detail-modal {
   background: white;
-  border-radius: 4px;
-  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
-  width: 600px;
+  border-radius: 12px;
+  box-shadow: 
+    0 8px 28px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(0, 0, 0, 0.08);
+  width: 540px;
+  max-width: 90vw;
   max-height: 85vh;
   min-height: 400px;
   height: auto;
   overflow: hidden;
-  animation: modalFadeIn 0.15s ease-out;
+  animation: modalSlideIn 0.2s ease-out;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes modalSlideOut {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
 }
 
 @keyframes modalFadeIn {
@@ -93,16 +119,18 @@
 /* 新規作成時の設定セクション */
 .task-detail-create-settings {
   background-color: #f9fafb;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
-  overflow: hidden;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .task-detail-create-row {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
 .task-detail-create-row:last-child {
@@ -110,22 +138,22 @@
 }
 
 .task-detail-create-field {
-  width: 100%;
-  margin-bottom: 16px;
-}
-
-.task-detail-create-field:last-child {
-  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .task-detail-create-label {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 13px;
   font-weight: 600;
   color: #4b5563;
-  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  line-height: 1.2;
 }
 
 .task-detail-icon {
@@ -169,136 +197,147 @@
 /* 新規作成時のセレクトボックス */
 .task-detail-select {
   width: 100%;
-  max-width: 100%;
-  padding: 6px 12px;
+  padding: 12px 16px;
   border: 1px solid #e5e7eb;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 14px;
   background-color: white;
-  color: #1f2937;
+  color: #374151;
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
   box-sizing: border-box;
-  height: 36px;
+  height: 44px;
   line-height: 1.4;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .task-detail-select:hover {
   border-color: #d1d5db;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .task-detail-select:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* 新規作成時の日付入力 */
 .task-detail-create-settings .task-detail-date-input {
   width: 100%;
-  max-width: 100%;
-  padding: 6px 12px;
+  padding: 12px 16px;
   border: 1px solid #e5e7eb;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 14px;
   background-color: white;
-  color: #1f2937;
+  color: #374151;
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
   box-sizing: border-box;
-  height: 36px;
+  height: 44px;
   line-height: 1.4;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .task-detail-create-settings .task-detail-date-input:hover {
   border-color: #d1d5db;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .task-detail-create-settings .task-detail-date-input:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* 新規作成時のアクションボタン */
+/* Google Calendar style action buttons */
 .task-detail-actions {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  margin-top: 20px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e8eaed;
 }
 
 .task-detail-save-btn,
 .task-detail-cancel-btn {
-  padding: 8px 16px;
-  border-radius: 6px;
+  padding: 10px 24px;
+  border-radius: 24px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   border: 1px solid;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+  min-width: 90px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
 }
 
 .task-detail-save-btn {
-  background-color: #3b82f6;
+  background-color: #1a73e8;
   color: white;
-  border-color: #3b82f6;
+  border-color: #1a73e8;
 }
 
 .task-detail-save-btn:hover:not(:disabled) {
-  background-color: #2563eb;
-  border-color: #2563eb;
+  background-color: #1557b0;
+  border-color: #1557b0;
+  box-shadow: 0 1px 3px rgba(26, 115, 232, 0.4);
 }
 
 .task-detail-save-btn:disabled {
-  background-color: #9ca3af;
-  border-color: #9ca3af;
+  background-color: #e8eaed;
+  border-color: #e8eaed;
+  color: #80868b;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .task-detail-cancel-btn {
   background-color: white;
-  color: #6b7280;
-  border-color: #d1d5db;
+  color: #3c4043;
+  border-color: #dadce0;
 }
 
 .task-detail-cancel-btn:hover {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
+  background-color: #f8f9fa;
+  border-color: #bdc1c6;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.15);
 }
 
 .task-detail-modal-header {
   padding: 24px 24px 0 24px;
-  border-bottom: 1px solid #e5e7eb;
   flex-shrink: 0;
   position: relative;
+  background: white;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
 .task-detail-modal-close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: #6b7280;
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.task-detail-modal-close:hover {
-  background-color: #f3f4f6;
-  color: #374151;
+  display: none;
 }
 
 .task-detail-header-content {
   flex: 1;
+  width: 100%;
+}
+
+.task-detail-header {
+  width: 100%;
+}
+
+.task-detail-title-section {
+  margin-bottom: 16px;
+  width: 100%;
 }
 
 .task-detail-title-container {
@@ -356,28 +395,45 @@
 }
 
 .task-detail-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 22px;
+  font-weight: 400;
+  color: #202124;
   margin: 0;
-  line-height: 1.4;
-  cursor: text;
-  padding: 8px 0px;
-  border-radius: 4px;
-  min-height: calc(1.4em + 16px);
+  line-height: 1.3;
+  cursor: pointer;
+  padding: 8px 0;
+  border-radius: 8px;
+  min-height: 36px;
   box-sizing: border-box;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+  transition: background-color 0.15s ease;
+  display: flex;
+  align-items: center;
+  border: 1px solid transparent;
+}
+
+.task-detail-title:hover {
+  /* ホバー時の背景を削除 */
 }
 
 /* Header actions removed to prevent flickering */
 
 .task-detail-content {
-  padding: 24px;
+  padding: 0 24px 24px 24px;
   flex: 1;
   overflow-y: auto;
   min-height: 300px;
+  background: white;
+}
+
+/* Description section full width */
+.task-detail-description {
+  margin: 20px -24px 0 -24px;
+  padding: 20px 24px;
+  background: transparent;
 }
 
 .task-detail-badges {
@@ -398,7 +454,7 @@
 }
 
 .task-detail-section {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
   width: 100%;
 }
 
@@ -408,45 +464,75 @@
 
 .task-detail-section h3 {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: #374151;
-  margin: 0 0 12px 0;
+  margin: 0 0 16px 0;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e5e7eb;
+  position: relative;
 }
 
-.task-detail-description {
-  color: #6b7280;
+.task-detail-section h3::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+}
+
+.task-detail-description-display {
+  color: #3c4043;
   line-height: 1.6;
   margin: 0;
   white-space: pre-wrap;
   word-wrap: break-word;
-  padding: 12px;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
-  height: 120px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: none;
+  border-bottom: none;
+  background: #f5f5f5;
+  min-height: 100px;
   box-sizing: border-box;
   font-size: 14px;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
   cursor: pointer;
   overflow-y: auto;
+  transition: all 0.15s ease;
+  width: 100%;
+  box-shadow: none;
+}
+
+.task-detail-description-display:hover {
+  background-color: #eeeeee;
+  box-shadow: none;
+  border-bottom: none;
+}
+
+.task-detail-description-display:empty::before {
+  content: '説明を追加...';
+  color: #80868b;
+  font-style: normal;
 }
 
 .task-detail-description-input {
   width: 100%;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
-  padding: 12px;
+  border: none;
+  background: #f5f5f5;
+  padding: 12px 16px;
   font-size: 14px;
-  color: #6b7280;
+  color: #3c4043;
   line-height: 1.6;
-  border-radius: 6px;
+  border-radius: 8px;
   resize: none;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  height: 120px;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+  min-height: 100px;
+  max-height: 100px;
+  height: 100px;
   box-sizing: border-box;
-  /* ブラウザデフォルトのテキストエリアスタイルをリセット */
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -456,35 +542,56 @@
   white-space: pre-wrap;
   word-wrap: break-word;
   overflow-y: auto;
+  transition: all 0.15s ease;
+  box-shadow: none;
 }
 
 .task-detail-description-input:focus {
   outline: none;
+  border-bottom: 2px solid #60a5fa;
+  background: #f5f5f5;
+  box-shadow: none;
+}
+
+.task-detail-description-input:hover:not(:focus) {
+  border-color: #bdc1c6;
+}
+
+.task-detail-description-input::placeholder {
+  color: #9ca3af;
+  font-style: italic;
 }
 
 .task-detail-title-input {
   width: 100%;
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
-  padding: 8px 0px;
-  font-size: 20px;
-  font-weight: 600;
-  color: #1f2937;
+  padding: 8px 0;
+  font-size: 22px;
+  font-weight: 400;
+  color: #202124;
   margin: 0;
-  line-height: 1.4;
-  border-radius: 4px;
+  line-height: 1.3;
+  border-radius: 8px;
   resize: none;
   overflow: hidden;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  min-height: calc(1.4em + 16px);
-  max-height: calc(1.4em + 16px);
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+  min-height: 36px;
   box-sizing: border-box;
   white-space: nowrap;
+  transition: all 0.15s ease;
 }
 
 .task-detail-title-input:focus {
   outline: none;
   background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.task-detail-title-input:hover:not(:focus) {
+  background-color: transparent;
+  border-color: transparent;
 }
 
 
@@ -609,7 +716,7 @@
   color: #374151;
 }
 
-/* レスポンシブ */
+/* レスポンシブデザイン */
 @media (max-width: 768px) {
   .task-detail-modal {
     width: 100%;
@@ -617,6 +724,8 @@
     max-height: 100vh;
     min-height: 100vh;
     border-radius: 0;
+    max-width: 100vw;
+    animation: modalSlideInMobile 0.3s ease-out;
   }
   
   .task-detail-modal-backdrop {
@@ -624,37 +733,358 @@
   }
   
   .task-detail-modal-header {
-    padding: 16px 16px 0 16px;
+    padding: 24px 20px 20px 20px;
   }
   
-  .task-detail-header-actions {
-    position: relative;
-    top: auto;
-    right: auto;
-    margin-top: 12px;
-    justify-content: flex-end;
+  .task-detail-modal-close {
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
   }
   
   .task-detail-content {
-    padding: 0 16px 16px 16px;
+    padding: 24px 20px 20px 20px;
   }
   
-  .task-detail-info-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+  .task-detail-create-settings {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .task-detail-create-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .task-detail-metadata-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 20px;
+  }
+  
+  .task-detail-actions {
+    flex-direction: column-reverse;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+  }
+  
+  .task-detail-save-btn,
+  .task-detail-cancel-btn {
+    width: 100%;
+    justify-content: center;
   }
   
   .task-detail-breadcrumb {
     font-size: 11px;
   }
   
-  .breadcrumb-link {
-    font-size: 11px;
-  }
-  
+  .breadcrumb-link,
   .breadcrumb-current {
     font-size: 11px;
+  }
+}
+
+@keyframes modalSlideInMobile {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Tablet responsive */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .task-detail-modal {
+    width: 90vw;
+    max-width: 600px;
+  }
+  
+  .task-detail-metadata-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Small desktop */
+@media (max-width: 1200px) and (min-width: 1025px) {
+  .task-detail-modal {
+    width: 80vw;
+    max-width: 650px;
+  }
+}
+
+/* Task Detail Metadata Section */
+.task-detail-metadata {
+  width: 100%;
+  margin-bottom: 24px;
+  margin-top: 20px;
+}
+
+.task-detail-metadata-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: white;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+}
+
+/* 日時範囲表示 */
+.task-detail-datetime-range-display {
+  border-bottom: 1px solid #e8eaed !important;
+  padding: 8px 0 !important;
+  min-height: auto !important;
+  justify-content: flex-end !important;
+}
+
+.datetime-range-text {
+  font-size: 13px;
+  color: #60a5fa;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 4px 0;
+  text-align: right;
+  width: 100%;
+}
+
+.task-detail-field {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 44px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e8eaed;
+}
+
+.task-detail-description .task-detail-field {
+  display: block;
+  border-bottom: none;
+  padding: 0;
+}
+
+.task-detail-field.task-detail-datetime-range {
+  align-items: flex-start;
+  min-height: 60px;
+  padding: 12px 0;
+}
+
+.task-detail-field.task-detail-datetime-range .task-detail-label {
+  margin-top: 8px;
+}
+
+/* 分離した日時フィールドのスタイリング */
+.task-detail-field .google-separated-datetime {
+  flex: 1;
+}
+
+/* 開始日時フィールドの下線を削除 */
+.task-detail-field.start-datetime-field {
+  border-bottom: none;
+}
+
+/* 終了日時フィールドの下線を削除 */
+.task-detail-field.end-datetime-field {
+  border-bottom: none;
+}
+
+/* 親タスクフィールドの下線を削除 */
+.task-detail-field.parent-task-field {
+  border-bottom: none;
+}
+
+.task-detail-field:last-child {
+  border-bottom: none;
+}
+
+.task-detail-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #3c4043;
+  min-width: 120px;
+  margin: 0;
+  line-height: 1.2;
+  text-transform: none;
+  letter-spacing: normal;
+  flex-shrink: 0;
+}
+
+.task-detail-description .task-detail-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #5f6368;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Status and Priority badges */
+.task-detail-field .status,
+.task-detail-field .priority {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+  min-height: 32px;
+  box-sizing: border-box;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+}
+
+/* Status colors */
+.task-detail-field .status.pending {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  border-color: #e5e7eb;
+}
+
+.task-detail-field .status.in_progress {
+  background-color: #dbeafe;
+  color: #3b82f6;
+  border-color: #bfdbfe;
+}
+
+.task-detail-field .status.completed {
+  background-color: #e8f5e9;
+  color: #388e3c;
+  border-color: #c8e6c9;
+}
+
+/* Priority colors */
+.task-detail-field .priority.low {
+  background-color: #f5f5f5;
+  color: #666;
+  border-color: #e0e0e0;
+}
+
+.task-detail-field .priority.medium {
+  background-color: #e1f5fe;
+  color: #0277bd;
+  border-color: #b3e5fc;
+}
+
+.task-detail-field .priority.high {
+  background-color: #fff3e0;
+  color: #ef6c00;
+  border-color: #ffe0b2;
+}
+
+.task-detail-field .priority.urgent {
+  background-color: #ffebee;
+  color: #c62828;
+  border-color: #ffcdd2;
+}
+
+.task-detail-field .status:hover {
+  filter: brightness(0.95);
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.15);
+}
+
+.task-detail-field .priority:hover {
+  filter: brightness(0.95);
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.15);
+}
+
+.task-detail-field .status.parent-task-status {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.task-detail-field .status.parent-task-status:hover {
+  background-color: white;
+  box-shadow: none;
+}
+
+/* Date fields styling */
+.task-detail-date-display {
+  background: white;
+  border: 1px solid #e8eaed;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #3c4043;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+  box-sizing: border-box;
+  border-radius: 8px;
+  flex: 1;
+}
+
+.task-detail-date-display:hover {
+  background-color: #f8f9fa;
+  border-color: #dadce0;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.15);
+}
+
+.task-detail-date-display:empty::before {
+  content: '日時を設定';
+  color: #80868b;
+  font-style: normal;
+}
+
+.task-detail-date-input {
+  background: white;
+  border: 2px solid #1a73e8;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #3c4043;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+  box-sizing: border-box;
+  flex: 1;
+  outline: none;
+  min-height: 36px;
+  transition: border-color 0.15s ease;
+}
+
+.task-detail-date-input:focus {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 1px #1a73e8;
+}
+
+/* Responsive design for metadata grid */
+@media (max-width: 768px) {
+  .task-detail-metadata-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+  
+  .task-detail-field {
+    min-height: 50px;
+  }
+  
+  .task-detail-label {
+    font-size: 12px;
+  }
+  
+  .task-detail-field .status,
+  .task-detail-field .priority {
+    padding: 6px 10px;
+    font-size: 11px;
+    min-height: 28px;
+  }
+  
+  .task-detail-date-display,
+  .task-detail-date-input {
+    padding: 8px 10px;
+    font-size: 13px;
   }
 }
 

@@ -1,0 +1,508 @@
+/* Google Calendar風 分離型 Date/Time Picker スタイル */
+
+/* 日付ピッカー */
+.google-date-picker {
+  position: relative;
+  width: 100%;
+}
+
+/* React DatePickerのラッパーサイズ統一 */
+.react-datepicker-wrapper {
+  width: 100% !important;
+  display: block !important;
+}
+
+.react-datepicker__input-container {
+  width: 100% !important;
+  display: block !important;
+}
+
+.react-datepicker__input-container input {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.google-date-input {
+  display: flex;
+  align-items: center;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #3c4043;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 36px;
+  box-sizing: border-box;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+  width: 100%;
+}
+
+.google-date-input:hover:not(.disabled) {
+  background: #eeeeee;
+}
+
+.google-date-input:focus-within:not(.disabled) {
+  background: #f5f5f5;
+  outline: none;
+}
+
+.google-date-input.disabled {
+  background-color: #f8f9fa;
+  color: #80868b;
+  cursor: not-allowed;
+  border-color: #e8eaed;
+}
+
+.google-date-value {
+  width: 100%;
+  text-align: left;
+  line-height: 1.4;
+}
+
+/* 日付ピッカーのカレンダー */
+.google-date-popper {
+  z-index: 10000 !important;
+  position: fixed !important;
+}
+
+.google-date-calendar {
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  background: #fafafa !important;
+  max-width: 90vw !important;
+  max-height: 90vh !important;
+}
+
+/* カレンダー内のスタイル調整 */
+.google-date-calendar .react-datepicker__header {
+  background: #f5f5f5 !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+}
+
+.google-date-calendar .react-datepicker__day {
+  color: #424242 !important;
+}
+
+.google-date-calendar .react-datepicker__day:hover {
+  background-color: #eeeeee !important;
+  color: #212121 !important;
+}
+
+.google-date-calendar .react-datepicker__day--selected {
+  background-color: #757575 !important;
+  color: white !important;
+}
+
+.google-date-calendar .react-datepicker__day--selected:hover {
+  background-color: #616161 !important;
+}
+
+.google-date-calendar .react-datepicker__day--today {
+  background-color: transparent !important;
+  color: #424242 !important;
+  font-weight: 600 !important;
+  border: 1px solid #bdbdbd !important;
+}
+
+.google-date-calendar .react-datepicker__navigation:hover {
+  background-color: #eeeeee !important;
+}
+
+.google-date-calendar .react-datepicker__today-button {
+  background: #f5f5f5 !important;
+  border-top: 1px solid #e0e0e0 !important;
+  color: #616161 !important;
+}
+
+.google-date-calendar .react-datepicker__today-button:hover {
+  background-color: #eeeeee !important;
+}
+
+/* 時間ピッカー */
+.google-time-picker {
+  position: relative;
+  width: 100%;
+}
+
+.google-time-input {
+  display: flex;
+  align-items: center;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #3c4043;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 36px;
+  box-sizing: border-box;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+  width: 100%;
+}
+
+.google-time-input:hover:not(.disabled),
+.google-time-input.editing:not(.disabled) {
+  background: #eeeeee;
+}
+
+.google-time-input:focus-within:not(.disabled) {
+  background: #f5f5f5;
+  outline: none;
+}
+
+.google-time-input.disabled {
+  background-color: #f8f9fa;
+  color: #80868b;
+  cursor: not-allowed;
+  border-color: #e8eaed;
+}
+
+.google-time-value {
+  flex: 1;
+  text-align: left;
+  line-height: 1.4;
+}
+
+.google-time-edit-icon {
+  margin-left: 8px;
+  font-size: 12px;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.google-time-edit-icon:hover {
+  opacity: 1;
+}
+
+/* 時刻直接入力用のテキストフィールド */
+.google-time-text-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #3c4043;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+  box-sizing: border-box;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.google-time-text-input:focus {
+  background: #f5f5f5;
+  border-bottom: 2px solid #60a5fa;
+}
+
+.google-time-text-input::placeholder {
+  color: #80868b;
+  font-style: italic;
+}
+
+/* 時間選択ドロップダウン */
+.google-time-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fafafa;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.06);
+  z-index: 10000;
+  max-height: 300px;
+  overflow: hidden;
+  animation: fadeInScale 0.15s ease-out;
+}
+
+.google-time-options {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.google-time-option {
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #3c4043;
+  transition: background-color 0.15s ease;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+}
+
+.google-time-option:hover {
+  background-color: #eeeeee;
+  color: #212121;
+}
+
+.google-time-option.selected {
+  background-color: #757575;
+  color: white;
+}
+
+.google-time-option.selected:hover {
+  background-color: #616161;
+}
+
+/* スクロールバー */
+.google-time-options::-webkit-scrollbar {
+  width: 8px;
+}
+
+.google-time-options::-webkit-scrollbar-track {
+  background: #f1f3f4;
+  border-radius: 4px;
+}
+
+.google-time-options::-webkit-scrollbar-thumb {
+  background: #bdc1c6;
+  border-radius: 4px;
+}
+
+.google-time-options::-webkit-scrollbar-thumb:hover {
+  background: #80868b;
+}
+
+/* 分離型の日時ピッカーコンテナ */
+.google-separated-datetime {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  width: 100%;
+}
+
+.google-separated-date {
+  flex: 1.1;
+  min-width: 0;
+}
+
+.google-separated-date .google-date-input {
+  border: none;
+  background: #f5f5f5;
+}
+
+/* 分離型日付ピッカーのサイズ統一 */
+.google-separated-date .react-datepicker-wrapper,
+.google-separated-date .react-datepicker__input-container {
+  width: 100% !important;
+  display: block !important;
+}
+
+.google-separated-date .react-datepicker__input-container input {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 10px 14px !important;
+  font-size: 14px !important;
+  border: none !important;
+  background: #f5f5f5 !important;
+  border-radius: 8px !important;
+  color: #3c4043 !important;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif !important;
+}
+
+.google-separated-time {
+  flex: 1;
+  min-width: 0;
+}
+
+.google-separated-time .google-time-input {
+  border: none;
+  background: #f5f5f5;
+}
+
+/* 分離型時間ピッカーのサイズ統一 */
+.google-separated-time .react-datepicker-wrapper,
+.google-separated-time .react-datepicker__input-container {
+  width: 100% !important;
+  display: block !important;
+}
+
+.google-separated-time .react-datepicker__input-container input {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 10px 14px !important;
+  font-size: 14px !important;
+  border: none !important;
+  background: #f5f5f5 !important;
+  border-radius: 8px !important;
+  color: #3c4043 !important;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif !important;
+}
+
+/* モバイル対応 */
+@media (max-width: 768px) {
+  .google-separated-datetime {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .google-separated-date,
+  .google-separated-time {
+    width: 100%;
+    flex: none;
+  }
+  
+  .google-date-calendar {
+    transform: scale(0.9) !important;
+    transform-origin: center !important;
+    max-width: 95vw !important;
+    max-height: 80vh !important;
+  }
+  
+  .google-time-dropdown {
+    max-height: 200px;
+  }
+}
+
+/* 分離型日時範囲ピッカー */
+.google-separated-datetime-range {
+  width: 100%;
+}
+
+.separated-range-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.separated-range-start,
+.separated-range-end {
+  flex: 1;
+  min-width: 0;
+}
+
+.separated-range-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #5f6368;
+  margin-bottom: 8px;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+}
+
+.separated-range-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  margin-top: 28px; /* ラベル分の高さを調整 */
+}
+
+.range-arrow {
+  font-size: 16px;
+  color: #5f6368;
+  font-weight: 500;
+  user-select: none;
+}
+
+.separated-range-display {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e8eaed;
+}
+
+.separated-range-display-text {
+  font-size: 13px;
+  color: #5f6368;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+  line-height: 1.4;
+}
+
+/* 分離型単体ピッカーの表示エリア */
+.google-separated-display {
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: rgba(26, 115, 232, 0.08);
+  border-radius: 6px;
+  border: 1px solid rgba(26, 115, 232, 0.2);
+}
+
+.separated-display-text {
+  font-size: 12px;
+  color: #1a73e8;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+  font-weight: 500;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .separated-range-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .separated-range-separator {
+    transform: rotate(90deg);
+    margin-top: 0;
+    height: 24px;
+  }
+  
+  .range-arrow {
+    font-size: 14px;
+  }
+  
+  .separated-range-start,
+  .separated-range-end {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .separated-range-container {
+    gap: 8px;
+  }
+  
+  .separated-range-display {
+    margin-top: 8px;
+    padding: 6px 10px;
+  }
+  
+  .separated-range-display-text {
+    font-size: 12px;
+  }
+}
+
+/* アニメーション */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.google-date-calendar,
+.google-time-dropdown {
+  animation: fadeInScale 0.15s ease-out;
+}
+
+.separated-range-display,
+.google-separated-display {
+  animation: fadeInUp 0.2s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

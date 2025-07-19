@@ -45,6 +45,9 @@ const TaskDetailDescription: React.FC<TaskDetailDescriptionProps> = ({
     setTimeout(() => {
       if (descriptionInputRef.current) {
         descriptionInputRef.current.focus();
+        // カーソルを末尾に移動（作成モーダルの挙動に統一）
+        const length = descriptionInputRef.current.value.length;
+        descriptionInputRef.current.setSelectionRange(length, length);
       }
     }, 0);
   };
@@ -63,8 +66,9 @@ const TaskDetailDescription: React.FC<TaskDetailDescriptionProps> = ({
     if (isComposing) return;
     
     blurTimeoutRef.current = setTimeout(() => {
-      handleDescriptionSave();
-    }, 100);
+      // 作成モーダルの挙動に統一：blurでは保存しない（Enterキーまたは明示的な保存のみ）
+      return;
+    }, 150);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -81,49 +85,20 @@ const TaskDetailDescription: React.FC<TaskDetailDescriptionProps> = ({
     <div className="task-detail-description">
       <div className="task-detail-field">
         <label className="task-detail-label">説明</label>
-        {isEditingDescription ? (
-          <div className="task-detail-description-edit">
-            <textarea
-              ref={descriptionInputRef}
-              value={editedDescription}
-              onChange={(e) => setEditedDescription(e.target.value)}
-              onBlur={handleDelayedBlur}
-              onKeyDown={handleKeyDown}
-              onCompositionStart={() => setIsComposing(true)}
-              onCompositionEnd={() => setIsComposing(false)}
-              className="task-detail-description-input"
-              placeholder="タスクの説明を入力..."
-              rows={4}
-            />
-            <div className="task-detail-description-actions">
-              <button 
-                type="button" 
-                onClick={handleDescriptionSave}
-                className="btn btn-sm btn-primary"
-              >
-                保存
-              </button>
-              <button 
-                type="button" 
-                onClick={handleDescriptionCancel}
-                className="btn btn-sm btn-secondary"
-              >
-                キャンセル
-              </button>
-            </div>
-            <div className="task-detail-hint">
-              ⌘+Enter で保存、Esc でキャンセル
-            </div>
-          </div>
-        ) : (
-          <div 
-            className="task-detail-description-display"
-            onClick={handleDescriptionEdit}
-            title="クリックして編集"
-          >
-            {optimisticDescription !== null ? optimisticDescription : (task.description || '説明を追加...')}
-          </div>
-        )}
+        <div className="task-detail-description-edit">
+          <textarea
+            ref={descriptionInputRef}
+            value={editedDescription}
+            onChange={(e) => setEditedDescription(e.target.value)}
+            onBlur={handleDelayedBlur}
+            onKeyDown={handleKeyDown}
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={() => setIsComposing(false)}
+            className="task-detail-description-input"
+            placeholder="タスクの説明を入力..."
+            rows={4}
+          />
+        </div>
       </div>
     </div>
   );

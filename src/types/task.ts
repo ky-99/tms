@@ -66,6 +66,8 @@ export interface CreateTaskInput {
   status?: TaskStatus;
   priority?: TaskPriority;
   dueDate?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
   position?: number;
   expanded?: boolean;
   isRoutine?: boolean;
@@ -79,6 +81,8 @@ export interface UpdateTaskInput {
   status?: TaskStatus;
   priority?: TaskPriority;
   dueDate?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
   parentId?: number | null;
   position?: number;
   expanded?: boolean;

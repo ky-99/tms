@@ -7,6 +7,41 @@ import React, { createContext, useContext, useReducer, useEffect, useCallback, R
 import { Task, Tag } from '../types';
 import { taskAPI } from '../services';
 import { workspaceService } from '../services/workspaceService';
+import { validateTaskTime, adjustTaskTime } from '../utils/taskValidation';
+
+// Helper function to validate and adjust task time
+const validateAndAdjustTaskTime = (startDate: string | undefined, endDate: string | undefined) => {
+  if (startDate && endDate) {
+    const validation = validateTaskTime({
+      startDate,
+      endDate,
+      minimumDurationMinutes: 15
+    });
+    
+    if (!validation.isValid) {
+      // 自動調整を試行
+      const adjusted = adjustTaskTime({
+        startDate,
+        endDate,
+        minimumDurationMinutes: 15
+      });
+      
+      if (adjusted.adjusted) {
+        return { startDate: adjusted.startDate, endDate: adjusted.endDate };
+      } else {
+        throw new Error('無効な時間設定です: ' + validation.errors.join(', '));
+      }
+    }
+  }
+  return { startDate, endDate };
+};
+
+// Helper function to handle errors consistently
+const handleError = (dispatch: React.Dispatch<TaskDataAction>, error: unknown, defaultMessage: string): never => {
+  const errorMessage = error instanceof Error ? error.message : defaultMessage;
+  dispatch({ type: 'SET_ERROR', payload: errorMessage });
+  throw error;
+};
 
 // Action types for data operations
 type TaskDataAction =
@@ -138,49 +173,84 @@ export const TaskDataProvider: React.FC<TaskDataProviderProps> = ({ children }) 
 
   const createTask = useCallback(async (taskData: Partial<Task>): Promise<Task> => {
     try {
+      // バリデーション層での最終チェック
+      const validatedTime = validateAndAdjustTaskTime(taskData.startDate, taskData.endDate);
+      taskData.startDate = validatedTime.startDate;
+      taskData.endDate = validatedTime.endDate;
+      
       const newTask = await taskAPI.createTask(taskData);
       const tasks = await taskAPI.loadTasks();
       dispatch({ type: 'SET_TASKS', payload: tasks });
       return newTask;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'タスクの作成に失敗しました';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      throw error;
+      return handleError(dispatch, error, 'タスクの作成に失敗しました');
     }
   }, []);
 
   const createTaskAfter = useCallback(async (taskData: Partial<Task>, afterTaskId: number): Promise<Task> => {
     try {
+      // バリデーション層での最終チェック
+      const validatedTime = validateAndAdjustTaskTime(taskData.startDate, taskData.endDate);
+      taskData.startDate = validatedTime.startDate;
+      taskData.endDate = validatedTime.endDate;
+      
       const newTask = await taskAPI.createTaskAfter(taskData, afterTaskId);
       const tasks = await taskAPI.loadTasks();
       dispatch({ type: 'SET_TASKS', payload: tasks });
       return newTask;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'タスクの作成に失敗しました';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      throw error;
+      return handleError(dispatch, error, 'タスクの作成に失敗しました');
     }
   }, []);
 
   const updateTask = useCallback(async (id: number, updates: Partial<Task>): Promise<Task> => {
     try {
+      // 楽観的UI更新: 即座にUI状態を更新
+      const currentTask = state.tasks.find(task => task.id === id);
+      if (currentTask) {
+        const optimisticTask = { ...currentTask, ...updates };
+        dispatch({ type: 'UPDATE_TASK', payload: optimisticTask });
+      }
+      
+      // バリデーション層での最終チェック
+      if (updates.startDate || updates.endDate) {
+        if (!currentTask) {
+          throw new Error('Task not found');
+        }
+        
+        const startDate = updates.startDate || currentTask.startDate;
+        const endDate = updates.endDate || currentTask.endDate;
+        
+        const validatedTime = validateAndAdjustTaskTime(startDate, endDate);
+        updates.startDate = validatedTime.startDate;
+        updates.endDate = validatedTime.endDate;
+      }
+      
+      // バックグラウンドでデータベース更新
       const updatedTask = await taskAPI.updateTask(id, updates);
       
-      // Important changes require full reload
-      if ('dueDate' in updates || 'due_date' in updates || 'status' in updates || 'isRoutine' in updates) {
+      // Important changes require full reload to ensure data consistency
+      if ('endDate' in updates || 'end_date' in updates || 'status' in updates || 'isRoutine' in updates) {
         const tasks = await taskAPI.loadTasks();
         dispatch({ type: 'SET_TASKS', payload: tasks });
       } else {
+        // 最終的な正確なデータでUI更新
         dispatch({ type: 'UPDATE_TASK', payload: updatedTask });
       }
       
       return updatedTask;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'タスクの更新に失敗しました';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      throw error;
+      // エラー時はデータを再読み込みしてロールバック
+      try {
+        const tasks = await taskAPI.loadTasks();
+        dispatch({ type: 'SET_TASKS', payload: tasks });
+      } catch (reloadError) {
+        console.error('Failed to reload tasks after error:', reloadError);
+      }
+      
+      return handleError(dispatch, error, 'タスクの更新に失敗しました');
     }
-  }, []);
+  }, [state.tasks]);
 
   const deleteTask = useCallback(async (id: number): Promise<void> => {
     try {
@@ -188,9 +258,7 @@ export const TaskDataProvider: React.FC<TaskDataProviderProps> = ({ children }) 
       const tasks = await taskAPI.loadTasks();
       dispatch({ type: 'SET_TASKS', payload: tasks });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'タスクの削除に失敗しました';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      throw error;
+      return handleError(dispatch, error, 'タスクの削除に失敗しました');
     }
   }, []);
 

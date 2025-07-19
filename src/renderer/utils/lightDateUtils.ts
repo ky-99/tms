@@ -2,6 +2,8 @@
  * Lightweight date utility functions
  * Replaces date-fns with minimal, efficient implementations
  * Bundle size: ~1KB vs ~15KB for date-fns
+ * 
+ * Japanese timezone handling utilities included
  */
 
 /**
@@ -163,6 +165,15 @@ export const getDayRange = (date: Date | string) => {
 };
 
 /**
+ * Sets a date to end of day (23:59:59.999)
+ */
+export const setEndOfDay = (date: Date | string): Date => {
+  const targetDate = toDate(date);
+  targetDate.setHours(23, 59, 59, 999);
+  return targetDate;
+};
+
+/**
  * Additional utility functions for common date operations
  */
 
@@ -222,4 +233,270 @@ export const getWeekEnd = (date: Date | string): Date => {
   end.setHours(23, 59, 59, 999);
   
   return end;
+};
+
+/**
+ * Converts a Date to local datetime-local input format (YYYY-MM-DDTHH:MM)
+ * Preserves the local timezone without converting to UTC
+ */
+export const toLocalDateTimeString = (date: Date | string): string => {
+  const targetDate = toDate(date);
+  
+  const year = targetDate.getFullYear();
+  const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+  const day = String(targetDate.getDate()).padStart(2, '0');
+  const hours = String(targetDate.getHours()).padStart(2, '0');
+  const minutes = String(targetDate.getMinutes()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+/**
+ * Converts a local datetime-local input value to ISO string with local timezone
+ * Preserves the local time without timezone conversion
+ */
+export const fromLocalDateTimeString = (dateTimeString: string): string => {
+  if (!dateTimeString) return '';
+  
+  // Parse the local datetime string
+  const date = new Date(dateTimeString);
+  
+  // Return as ISO string but preserve local time
+  return date.toISOString();
+};
+
+/**
+ * Formats datetime for display in Japanese format
+ */
+export const formatDateTime = (dateStr: string): string => {
+  if (!dateStr) return '';
+  
+  const date = new Date(dateStr);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  
+  return `${year}/${month}/${day} ${hours}:${minutes}`;
+};
+
+/**
+ * Converts datetime-local string to JST timestamp for database storage
+ * Input: "YYYY-MM-DDTHH:MM"
+ * Output: "YYYY-MM-DDTHH:MM:00+09:00" (JST timezone)
+ */
+export const localDateTimeToJST = (localDateTimeString: string): string => {
+  if (!localDateTimeString) return '';
+  
+  // 日付のみの場合は時刻を00:00で補完
+  let dateTimeString = localDateTimeString;
+  if (!dateTimeString.includes('T')) {
+    dateTimeString = dateTimeString + 'T00:00';
+  }
+  
+  // 既に秒が含まれているかチェック
+  const timePart = dateTimeString.split('T')[1];
+  if (timePart && !timePart.includes(':00', 5)) { // 最後の:00がない場合
+    dateTimeString = dateTimeString + ':00';
+  }
+  
+  // JST時間として明示的に保存するため、+09:00タイムゾーンを付加
+  return dateTimeString + '+09:00';
+};
+
+/**
+ * Converts datetime-local string to ISO string preserving local time
+ * Input: "YYYY-MM-DDTHH:MM"
+ * Output: "YYYY-MM-DDTHH:MM:00.000Z" (but with local time preserved)
+ * @deprecated Use localDateTimeToJST instead for better timezone handling
+ */
+export const localDateTimeToISO = (localDateTimeString: string): string => {
+  if (!localDateTimeString) return '';
+  
+  // datetime-local形式の文字列をそのまま使ってISOString形式にする
+  // UTC変換を避けるために、手動で文字列を構築
+  return localDateTimeString + ':00.000Z';
+};
+
+/**
+ * Converts JST timestamp from database to datetime-local string for UI
+ * Input: "YYYY-MM-DDTHH:MM:SS+09:00", ISO string, or "YYYY-MM-DD" (date-only)
+ * Output: "YYYY-MM-DDTHH:MM"
+ * 
+ * Note: Date-only strings (e.g., "2024-07-18") are converted to "2024-07-18T00:00"
+ */
+export const jstToLocalDateTime = (jstString: string): string => {
+  if (!jstString) return '';
+  
+  // +09:00 (JST) 形式の場合
+  if (jstString.includes('+09:00')) {
+    // タイムゾーン情報を削除し、そのまま使用（JST時間として扱う）
+    const cleanString = jstString.replace('+09:00', '');
+    const [dateStr, timeStr] = cleanString.split('T');
+    if (!dateStr) return '';
+    
+    // 時刻がない場合は00:00を使用
+    if (!timeStr) {
+      return `${dateStr}T00:00`;
+    }
+    
+    // HH:MM形式に切り詰め
+    const [hours, minutes] = timeStr.split(':');
+    return `${dateStr}T${hours || '00'}:${minutes || '00'}`;
+  }
+  
+  // その他のISO形式の場合はローカル時間に変換
+  if (jstString.includes('Z') || jstString.includes('+')) {
+    try {
+      const date = new Date(jstString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    } catch (error) {
+      console.warn('Invalid date format:', jstString);
+      return '';
+    }
+  }
+  
+  // 日付のみの文字列の場合（例: "2024-07-18"）
+  if (jstString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return `${jstString}T00:00`;
+  }
+  
+  // 既にdatetime-local形式の場合はそのまま返す
+  return jstString.substring(0, 16); // HH:MM形式に切り詰め
+};
+
+/**
+ * Formats datetime-local string for display in Japanese format
+ * Safely handles "YYYY-MM-DDTHH:MM" format without timezone conversion
+ */
+export const formatLocalDateTime = (localDateTimeString: string): string => {
+  if (!localDateTimeString) return '';
+  
+  // まずJST形式から変換
+  const cleanString = jstToLocalDateTime(localDateTimeString);
+  
+  // datetime-local形式を直接解析
+  const [dateStr, timeStr] = cleanString.split('T');
+  if (!dateStr || !timeStr) return '';
+  
+  const [year, month, day] = dateStr.split('-');
+  const [hours, minutes] = timeStr.split(':');
+  
+  return `${year}/${month}/${day} ${hours}:${minutes}`;
+};
+
+/**
+ * Converts ISO datetime string to datetime-local format for input fields
+ * Used for updating datetime input fields after validation adjustments
+ */
+export const formatDateTimeForInput = (isoString: string): string => {
+  if (!isoString) return '';
+  
+  const dateTime = new Date(isoString);
+  const year = dateTime.getFullYear();
+  const month = String(dateTime.getMonth() + 1).padStart(2, '0');
+  const day = String(dateTime.getDate()).padStart(2, '0');
+  const hours = String(dateTime.getHours()).padStart(2, '0');
+  const minutes = String(dateTime.getMinutes()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+/**
+ * Helper function to update datetime input state
+ * Converts ISO string to datetime-local format and updates the setter function
+ */
+export const updateDateTimeInput = (dateTimeString: string | undefined, setterFn: (value: string) => void): void => {
+  if (dateTimeString) {
+    const adjustedDateTime = new Date(dateTimeString);
+    const year = adjustedDateTime.getFullYear();
+    const month = String(adjustedDateTime.getMonth() + 1).padStart(2, '0');
+    const day = String(adjustedDateTime.getDate()).padStart(2, '0');
+    const hours = String(adjustedDateTime.getHours()).padStart(2, '0');
+    const minutes = String(adjustedDateTime.getMinutes()).padStart(2, '0');
+    setterFn(`${year}-${month}-${day}T${hours}:${minutes}`);
+  }
+};
+
+/**
+ * 開始日時と終了日時の整合性をチェックし、必要に応じて調整を行う
+ * @param startDateTime - 開始日時（datetime-local形式）
+ * @param endDateTime - 終了日時（datetime-local形式）
+ * @returns 調整結果 { adjustedStart, adjustedEnd, wasAdjusted, adjustmentType }
+ */
+export const validateAndAdjustDateTimes = (
+  startDateTime: string, 
+  endDateTime: string
+): {
+  adjustedStart: string;
+  adjustedEnd: string;
+  wasAdjusted: boolean;
+  adjustmentType: 'none' | 'end_adjusted' | 'start_adjusted';
+} => {
+  // 空文字や無効な値の場合はそのまま返す
+  if (!startDateTime || !endDateTime) {
+    return {
+      adjustedStart: startDateTime,
+      adjustedEnd: endDateTime,
+      wasAdjusted: false,
+      adjustmentType: 'none'
+    };
+  }
+
+  const startDate = new Date(startDateTime);
+  const endDate = new Date(endDateTime);
+
+  // 無効な日付の場合はそのまま返す
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    return {
+      adjustedStart: startDateTime,
+      adjustedEnd: endDateTime,
+      wasAdjusted: false,
+      adjustmentType: 'none'
+    };
+  }
+
+  // 開始日時が終了日時より後の場合は終了日時を調整
+  if (startDate >= endDate) {
+    // 開始日時の1時間後に終了日時を設定
+    const adjustedEndDate = new Date(startDate);
+    adjustedEndDate.setHours(adjustedEndDate.getHours() + 1);
+    
+    const adjustedEnd = toLocalDateTimeString(adjustedEndDate);
+    
+    return {
+      adjustedStart: startDateTime,
+      adjustedEnd: adjustedEnd,
+      wasAdjusted: true,
+      adjustmentType: 'end_adjusted'
+    };
+  }
+
+  // 整合性に問題がない場合
+  return {
+    adjustedStart: startDateTime,
+    adjustedEnd: endDateTime,
+    wasAdjusted: false,
+    adjustmentType: 'none'
+  };
+};
+
+/**
+ * 日時調整のフィードバックメッセージを生成
+ */
+export const getDateTimeAdjustmentMessage = (adjustmentType: 'none' | 'end_adjusted' | 'start_adjusted'): string => {
+  switch (adjustmentType) {
+    case 'end_adjusted':
+      return '終了日時を開始日時の1時間後に自動調整しました';
+    case 'start_adjusted':
+      return '開始日時を終了日時の1時間前に自動調整しました';
+    default:
+      return '';
+  }
 };

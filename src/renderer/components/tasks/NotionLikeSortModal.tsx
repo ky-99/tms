@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-export type SortField = 'title' | 'status' | 'priority' | 'dueDate' | 'createdAt';
+export type SortField = 'title' | 'status' | 'priority' | 'endDate' | 'createdAt';
 export type SortDirection = 'asc' | 'desc';
 
 export interface SortOption {
@@ -31,7 +31,7 @@ const NotionLikeSortModal: React.FC<NotionLikeSortModalProps> = ({
   const sortOptions = [
     { field: 'status' as SortField, label: 'ステータス' },
     { field: 'priority' as SortField, label: '優先度' },
-    { field: 'dueDate' as SortField, label: '期限' },
+    { field: 'endDate' as SortField, label: '期限' },
     { field: 'createdAt' as SortField, label: '作成日' },
   ];
 

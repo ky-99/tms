@@ -9,12 +9,17 @@ CREATE TABLE IF NOT EXISTS tasks (
     description TEXT,
     status TEXT NOT NULL DEFAULT 'pending',
     priority TEXT NOT NULL DEFAULT 'medium',
-    due_date DATETIME,
+    start_date DATETIME,
+    end_date DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     completed_at DATETIME,
     position INTEGER NOT NULL DEFAULT 0,
     expanded BOOLEAN DEFAULT 1,
+    is_routine BOOLEAN DEFAULT 0,
+    routine_type TEXT DEFAULT NULL,
+    last_generated_at DATETIME DEFAULT NULL,
+    routine_parent_id INTEGER DEFAULT NULL,
     FOREIGN KEY (parent_id) REFERENCES tasks(id) ON DELETE CASCADE,
     CHECK (status IN ('pending', 'in_progress', 'completed')),
     CHECK (priority IN ('low', 'medium', 'high', 'urgent'))
@@ -69,7 +74,8 @@ CREATE TABLE IF NOT EXISTS comments (
 -- インデックスの作成
 CREATE INDEX IF NOT EXISTS idx_tasks_parent_id ON tasks(parent_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
-CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date);
+CREATE INDEX IF NOT EXISTS idx_tasks_start_date ON tasks(start_date);
+CREATE INDEX IF NOT EXISTS idx_tasks_end_date ON tasks(end_date);
 CREATE INDEX IF NOT EXISTS idx_task_tags_task_id ON task_tags(task_id);
 CREATE INDEX IF NOT EXISTS idx_task_tags_tag_id ON task_tags(tag_id);
 CREATE INDEX IF NOT EXISTS idx_attachments_task_id ON attachments(task_id);

@@ -128,8 +128,8 @@ const TaskMergeModal: React.FC<TaskMergeModalProps> = ({ isOpen, onClose, allTas
     
     // 日付フィルター
     if (dateFilterFrom || dateFilterTo) {
-      if (!task.dueDate) return false;
-      const taskDate = new Date(task.dueDate);
+      if (!task.endDate) return false;
+      const taskDate = new Date(task.endDate);
       if (dateFilterFrom && taskDate < new Date(dateFilterFrom)) return false;
       if (dateFilterTo && taskDate > new Date(dateFilterTo)) return false;
     }
@@ -196,8 +196,8 @@ const TaskMergeModal: React.FC<TaskMergeModalProps> = ({ isOpen, onClose, allTas
     
     // 日付フィルター
     if (parentDateFilterFrom || parentDateFilterTo) {
-      if (!task.dueDate) return false;
-      const taskDate = new Date(task.dueDate);
+      if (!task.endDate) return false;
+      const taskDate = new Date(task.endDate);
       if (parentDateFilterFrom && taskDate < new Date(parentDateFilterFrom)) return false;
       if (parentDateFilterTo && taskDate > new Date(parentDateFilterTo)) return false;
     }

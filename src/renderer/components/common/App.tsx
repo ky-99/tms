@@ -7,6 +7,7 @@ import { ErrorBoundary } from '../ui';
 import Header from './Header';
 import HomePage from '../../pages/HomePage';
 import TasksPage from '../../pages/TasksPage';
+import ViewsPage from '../../pages/ViewsPage';
 import AnalyzePage from '../../pages/AnalyzePage';
 import ExportPage from '../../pages/ExportPage';
 import WorkSpacePage from '../../pages/WorkSpacePage';
@@ -24,6 +25,7 @@ const App: React.FC = () => {
                       <Route path="/" component={HomePage} />
                       <Route path="/tasks" component={TasksPage} />
                       <Route path="/tasks/:rootId" component={TasksPage} />
+                      <Route path="/views" component={ViewsPage} />
                       <Route path="/analyze" component={AnalyzePage} />
                       <Route path="/export" component={ExportPage} />
                       <Route path="/workspace" component={WorkSpacePage} />
@@ -63,6 +65,7 @@ const App: React.FC = () => {
                   },
                 },
               }}
+              reverseOrder={false}
             />
         </TaskProvider>
     </ErrorBoundary>

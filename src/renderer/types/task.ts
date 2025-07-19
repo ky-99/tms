@@ -17,7 +17,8 @@ export interface BaseTask {
   description?: string;
   status: TaskStatus;
   priority: TaskPriority;
-  dueDate?: string;
+  startDate?: string; // 開始日時
+  endDate?: string; // 終了日時（期限日として機能）
   createdAt?: string;
   completedAt?: string;
   parentId?: number;
@@ -54,7 +55,8 @@ export interface DatabaseTaskFields {
   description?: string;
   status: TaskStatus;
   priority: TaskPriority;
-  due_date?: string;
+  start_date?: string; // 開始日時
+  end_date?: string; // 終了日時（期限日として機能）
   created_at?: string;
   completed_at?: string;
   parent_id?: number;
@@ -74,7 +76,8 @@ export type ApiTask = BaseTask & {
   children?: ApiTask[];
   expanded?: boolean;
   // Legacy fields for backward compatibility
-  due_date?: string;
+  start_date?: string;
+  end_date?: string;
   created_at?: string;
   completed_at?: string;
   is_routine?: boolean;
@@ -90,7 +93,8 @@ export type ApiTask = BaseTask & {
 export const transformApiTask = (apiTask: ApiTask): Task => {
   const transformed: Task = {
     ...apiTask,
-    dueDate: apiTask.dueDate || apiTask.due_date,
+    startDate: apiTask.startDate || apiTask.start_date,
+    endDate: apiTask.endDate || apiTask.end_date,
     createdAt: apiTask.createdAt || apiTask.created_at,
     completedAt: apiTask.completedAt || apiTask.completed_at,
     isRoutine: apiTask.isRoutine || apiTask.is_routine,
@@ -118,7 +122,8 @@ export const transformToDbTask = (task: Task): DatabaseTaskFields => {
     description: task.description,
     status: task.status,
     priority: task.priority,
-    due_date: task.dueDate,
+    start_date: task.startDate,
+    end_date: task.endDate,
     created_at: task.createdAt,
     completed_at: task.completedAt,
     parent_id: task.parentId,
@@ -137,7 +142,8 @@ export interface CreateTaskPayload {
   description?: string;
   status?: TaskStatus;
   priority?: TaskPriority;
-  dueDate?: string;
+  startDate?: string;
+  endDate?: string; // 期限日として機能
   parentId?: number;
 }
 

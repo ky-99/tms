@@ -139,11 +139,17 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
       }
 
       // グローバルショートカット
-      if (currentContext === 'global' || currentContext === 'taskSelected' || currentContext === 'tasksPage') {
+      if (currentContext === 'global' || currentContext === 'taskSelected' || currentContext === 'tasksPage' || currentContext === 'calendar' || currentContext === 'dashboard') {
         // cmd + n: 新しいタスクを作成
         if (isCmd && key === 'n' && !event.shiftKey) {
           event.preventDefault();
-          handleCreateTask();
+          // カレンダーで日付がホバーされている場合は、その日付でタスクを作成
+          if (currentContext === 'calendar' && hoveredCalendarDate) {
+            const createEvent = new CustomEvent('createTaskWithDate', { detail: { date: hoveredCalendarDate } });
+            window.dispatchEvent(createEvent);
+          } else {
+            handleCreateTask();
+          }
           return;
         }
 
@@ -218,13 +224,6 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
         }
       }
       
-      // カレンダーでホバーされている日付にタスクを作成
-      if (isCmd && key === 'n' && hoveredCalendarDate) {
-        event.preventDefault();
-        const createEvent = new CustomEvent('createTaskWithDate', { detail: { date: hoveredCalendarDate } });
-        window.dispatchEvent(createEvent);
-        return;
-      }
 
       // タスクがホバーされている場合のショートカット（モーダル開いている場合は無効）
       if (hoveredTask && currentContext !== 'modalOpen') {
@@ -355,7 +354,7 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
       description: task.description,
       status: 'pending',
       priority: task.priority,
-      dueDate: task.dueDate,
+      endDate: task.endDate,
       parentId: task.parentId,
     };
     

@@ -5,7 +5,7 @@ import { useShortcut } from '../../contexts/ShortcutContext';
 import { useGlobalAlert } from '../../hooks';
 import { Task } from '../../types';
 import StatusPriorityModal from '../modals/StatusPriorityModal';
-import { isParentTask, isTaskOverdue, getDueDateText } from '../../utils';
+import { isParentTask, isTaskOverdue, getEndDateText, getTaskDateRange } from '../../utils';
 import { TASK_STATUS_LABELS, TASK_PRIORITY_LABELS } from '../../constants/task';
 
 interface TaskCardProps {
@@ -128,7 +128,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskClick, disableSelection
         description: task.description,
         status: 'pending',
         priority: task.priority,
-        dueDate: task.dueDate,
+        endDate: task.endDate,
         parentId: task.parentId,
       };
       
@@ -303,14 +303,14 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskClick, disableSelection
     const isParent = task.children && task.children.length > 0;
     const isCompleted = task.status === 'completed';
     const isOverdue = isTaskOverdue(task);
-    const dueDateText = getDueDateText(task);
+    const dateRangeText = getTaskDateRange(task);
 
     return {
       isRoutine,
       isParent,
       isCompleted,
       isOverdue,
-      dueDateText,
+      dateRangeText,
       statusText: TASK_STATUS_LABELS[task.status],
       priorityText: TASK_PRIORITY_LABELS[task.priority]
     };
@@ -412,9 +412,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskClick, disableSelection
       )}
       
       <div className="dashboard__task-card-footer">
-        {task.dueDate && !taskState.isRoutine && taskState.dueDateText && !(hideTodayText && taskState.dueDateText === '今日') && (
+        {(task.startDate || task.endDate) && !taskState.isRoutine && taskState.dateRangeText && !(hideTodayText && taskState.dateRangeText === '今日') && (
           <span className={`dashboard__due-date ${taskState.isOverdue ? 'dashboard__due-date--overdue' : ''}`}>
-            {taskState.dueDateText}
+            {taskState.dateRangeText}
           </span>
         )}
       </div>
@@ -536,7 +536,8 @@ export default React.memo(TaskCard, (prevProps, nextProps) => {
     prevTask.status === nextTask.status &&
     prevTask.priority === nextTask.priority &&
     prevTask.description === nextTask.description &&
-    prevTask.dueDate === nextTask.dueDate &&
+    prevTask.startDate === nextTask.startDate &&
+    prevTask.endDate === nextTask.endDate &&
     prevTask.isRoutine === nextTask.isRoutine &&
     prevTask.children?.length === nextTask.children?.length &&
     prevProps.onTaskClick === nextProps.onTaskClick &&

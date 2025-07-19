@@ -88,13 +88,13 @@ const TagProgressChart: React.FC<TagProgressChartProps> = ({ tasks }) => {
     const flatTasks = flattenTasks(tasks);
     
     return flatTasks.filter(task => {
-      const dueDateValue = task.dueDate;
-      if (!dueDateValue) return false;
+      const endDateValue = task.endDate;
+      if (!endDateValue) return false;
       
-      const dueDate = new Date(dueDateValue);
-      dueDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(endDateValue);
+      endDate.setHours(0, 0, 0, 0);
       
-      return dueDate >= sunday && dueDate <= saturday;
+      return endDate >= sunday && endDate <= saturday;
     });
   };
 

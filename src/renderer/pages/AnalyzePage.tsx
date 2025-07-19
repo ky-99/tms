@@ -109,13 +109,13 @@ const AnalyzePage: React.FC = () => {
         // タスクが完了していることをチェック
         if (task.status === 'completed') {
           // 期日が今週の範囲内かチェック
-          const dueDateValue = task.dueDate || task.dueDate;
-          if (dueDateValue) {
-            const dueDate = new Date(dueDateValue);
-            dueDate.setHours(0, 0, 0, 0);
+          const endDateValue = task.endDate || task.endDate;
+          if (endDateValue) {
+            const endDate = new Date(endDateValue);
+            endDate.setHours(0, 0, 0, 0);
             
             // 期日が今週の範囲内の場合のみ追加
-            if (dueDate >= monday && dueDate <= sunday) {
+            if (endDate >= monday && endDate <= sunday) {
               completed.push(task);
             }
           }
@@ -188,22 +188,22 @@ const AnalyzePage: React.FC = () => {
     // 期日タスクの処理用に全タスクを平坦化
     const allTasks = flattenTasks(allTasksFromRoot);
     
-    const tasksWithDueDate = allTasks.filter(task => task.dueDate || task.dueDate);
+    const tasksWithEndDate = allTasks.filter(task => task.endDate || task.endDate);
     
     // 今週期日のタスクのうち完了済みタスクをカウント
     // （完了日は関係なく、その日時点で完了しているかどうかで判定）
-    const weeklyDueTasks = allTasks.filter(task => {
-      const dueDateValue = task.dueDate || task.dueDate;
-      if (!dueDateValue) return false;
+    const weeklyEndTasks = allTasks.filter(task => {
+      const endDateValue = task.endDate || task.endDate;
+      if (!endDateValue) return false;
       
-      const dueDate = new Date(dueDateValue);
-      dueDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(endDateValue);
+      endDate.setHours(0, 0, 0, 0);
       
       const saturday = new Date(sunday);
       saturday.setDate(sunday.getDate() + 6);
       saturday.setHours(23, 59, 59, 999);
       
-      return dueDate >= sunday && dueDate <= saturday;
+      return endDate >= sunday && endDate <= saturday;
     });
     
     // 各日付において、その時点で完了済みの今週期日タスクをカウント
@@ -211,7 +211,7 @@ const AnalyzePage: React.FC = () => {
       const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
       let completedCount = 0;
       
-      weeklyDueTasks.forEach(task => {
+      weeklyEndTasks.forEach(task => {
         if (task.status === 'completed') {
           const completedAt = task.completedAt || task.completedAt;
           if (completedAt) {
@@ -266,11 +266,11 @@ const AnalyzePage: React.FC = () => {
       
       // 今週分の期日タスクの累積数を計算
       const cumulativePlanned = allTasks.filter(task => {
-        const dueDateValue = task.dueDate || task.dueDate;
-        if (!dueDateValue) return false;
+        const endDateValue = task.endDate || task.endDate;
+        if (!endDateValue) return false;
         
-        const dueDate = new Date(dueDateValue);
-        dueDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(endDateValue);
+        endDate.setHours(0, 0, 0, 0);
         
         const targetDate = new Date(date);
         targetDate.setHours(0, 0, 0, 0);
@@ -280,7 +280,7 @@ const AnalyzePage: React.FC = () => {
         saturday.setDate(sunday.getDate() + 6);
         saturday.setHours(23, 59, 59, 999);
         
-        return dueDate >= sunday && dueDate <= targetDate;
+        return endDate >= sunday && endDate <= targetDate;
       }).length;
       
       result.push({ 

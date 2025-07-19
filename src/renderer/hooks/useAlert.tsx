@@ -98,21 +98,20 @@ const ConfirmationDialog: React.FC<{
       if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
-        toast.dismiss(toastId);
+        console.log('[DEBUG] Keyboard Enter pressed - dismissing toast:', toastId);
+        toast.remove(toastId);
+        console.log('[DEBUG] Toast removed, unblocking external actions');
         unblockExternalActions();
-        setTimeout(() => {
-          onConfirm();
-        }, 200);
+        console.log('[DEBUG] Executing onConfirm callback immediately');
+        onConfirm();
       } else if (e.key === 'q' || e.key === 'Q') {
         e.preventDefault();
         e.stopPropagation();
-        toast.dismiss(toastId);
+        toast.remove(toastId);
         unblockExternalActions();
-        setTimeout(() => {
-          if (onCancel) {
-            onCancel();
-          }
-        }, 200);
+        if (onCancel) {
+          onCancel();
+        }
       }
     };
 
@@ -148,11 +147,9 @@ const ConfirmationDialog: React.FC<{
       <div className="toast-actions">
         <button
           onClick={() => {
-            toast.dismiss(toastId);
+            toast.remove(toastId);
             unblockExternalActions();
-            setTimeout(() => {
-              onCancel?.();
-            }, 200);
+            onCancel?.();
           }}
           className="toast-btn toast-btn-cancel"
         >
@@ -160,11 +157,12 @@ const ConfirmationDialog: React.FC<{
         </button>
         <button
           onClick={() => {
-            toast.dismiss(toastId);
+            console.log('[DEBUG] Confirm button clicked - dismissing toast:', toastId);
+            toast.remove(toastId);
+            console.log('[DEBUG] Toast removed, unblocking external actions');
             unblockExternalActions();
-            setTimeout(() => {
-              onConfirm();
-            }, 200);
+            console.log('[DEBUG] Executing onConfirm callback immediately');
+            onConfirm();
           }}
           className={`toast-btn toast-btn-confirm ${
             type === 'danger' || type === 'error' ? 'danger' : 'primary'
@@ -183,6 +181,7 @@ export const useGlobalAlert = () => {
     const { type = 'info', title, onConfirm, onCancel, showCancel, confirmText = 'OK', cancelText = 'キャンセル' } = options;
     
     const displayMessage = title ? `${title}: ${message}` : message;
+    console.log('[DEBUG] showAlert called with:', { message, type, showCancel, hasOnConfirm: !!onConfirm });
     
     // For simple messages without confirmation
     if (!showCancel && !onConfirm) {
@@ -262,11 +261,12 @@ export const useGlobalAlert = () => {
             <div className="toast-actions">
               <button
                 onClick={() => {
-                  toast.dismiss(t.id);
+                  console.log('[DEBUG] Simple confirm button clicked - dismissing toast:', t.id);
+                  toast.remove(t.id);
+                  console.log('[DEBUG] Toast removed, unblocking external actions');
                   unblockExternalActions();
-                  setTimeout(() => {
-                    onConfirm();
-                  }, 200); // Wait for animation to complete
+                  console.log('[DEBUG] Executing onConfirm callback immediately');
+                  onConfirm();
                 }}
                 className={`toast-btn toast-btn-confirm ${
                   type === 'danger' || type === 'error' ? 'danger' : 'primary'

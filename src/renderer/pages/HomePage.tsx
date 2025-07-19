@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import TaskDetailModal from '../components/modals/TaskDetailModal';
 import TodayTasksSection from '../components/dashboard/TodayTasksSection';
 import OverdueTasksSection from '../components/dashboard/OverdueTasksSection';
-import CalendarSection from '../components/dashboard/CalendarSection';
 import { useTaskContext } from '../contexts/TaskContext';
 import { useShortcut } from '../contexts/ShortcutContext';
 import { useScrollManager, useDateManager } from '../hooks';
@@ -10,15 +9,14 @@ import { Task } from '../types';
 
 
 const HomePage: React.FC = () => {
-  const { tasks, loading, initialized, error, loadTasks } = useTaskContext();
+  const { tasks, loading, initialized, error, loadTasks, updateTask } = useTaskContext();
   const { setCurrentContext } = useShortcut();
   const { 
     mainContentRef, 
-    calendarSectionRef, 
     saveScrollPosition, 
     restoreScrollPosition 
   } = useScrollManager();
-  const { flatTasks, todayTasks, overdueTasks } = useDateManager(tasks);
+  const { todayTasks, overdueTasks } = useDateManager(tasks);
   
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -33,18 +31,6 @@ const HomePage: React.FC = () => {
     setIsTaskModalOpen(true);
   }, []);
 
-  const handleCreateTaskWithDate = useCallback((dueDate: string) => {
-    // タスク作成前にスクロール位置を保存
-    saveScrollPosition();
-    
-    setSelectedTask(null);
-    setStableSelectedTask(null);
-    setIsCreatingTask(true);
-    setIsTaskModalOpen(true);
-    // 日付をstateで管理
-    setCreateTaskDate(dueDate);
-  }, [saveScrollPosition]);
-  
   const [createTaskDate, setCreateTaskDate] = useState<string | undefined>(undefined);
   const [showTodayTasks, setShowTodayTasks] = useState(() => {
     const saved = localStorage.getItem('showTodayTasks');
@@ -109,17 +95,32 @@ const HomePage: React.FC = () => {
             handleTaskClick(event.detail.task);
           }
           break;
+        case 'openTaskCreateModal':
+          // parentId パラメータは無視（ホームページではルートレベルのタスクを作成）
+          openCreateModal();
+          break;
+        case 'createTaskWithDate':
+          // カレンダーから日付付きタスクを作成
+          if (event.detail?.date) {
+            setCreateTaskDate(event.detail.date);
+            openCreateModal();
+          }
+          break;
       }
     };
 
     // イベントリスナーを追加
     window.addEventListener('openTaskEditModal', handleShortcutEvents as EventListener);
+    window.addEventListener('openTaskCreateModal', handleShortcutEvents as EventListener);
+    window.addEventListener('createTaskWithDate', handleShortcutEvents as EventListener);
     
     // クリーンアップ
     return () => {
       window.removeEventListener('openTaskEditModal', handleShortcutEvents as EventListener);
+      window.removeEventListener('openTaskCreateModal', handleShortcutEvents as EventListener);
+      window.removeEventListener('createTaskWithDate', handleShortcutEvents as EventListener);
     };
-  }, [handleTaskClick]);
+  }, [handleTaskClick, openCreateModal]);
 
 
   useEffect(() => {
@@ -235,8 +236,8 @@ const HomePage: React.FC = () => {
             {/* 初期化中は何も表示しない */}
           </div>
         ) : tasks.length === 0 ? (
-          <div className="empty-state">
-            <h2>タスクが登録されていません</h2>
+          <div className="dashboard__empty-state">
+            <h2 className="dashboard__empty-state-title">タスクが登録されていません</h2>
           </div>
         ) : (
           <>
@@ -253,14 +254,6 @@ const HomePage: React.FC = () => {
               onToggle={toggleTodayTasks}
               onTaskClick={handleTaskClick}
             />
-
-            <div ref={calendarSectionRef}>
-              <CalendarSection
-                tasks={flatTasks}
-                onTaskClick={handleTaskClick}
-                onCreateTask={handleCreateTaskWithDate}
-              />
-            </div>
 
             {/* タスクツリー概要 - 今後の開発用に一時的に非表示
             <div className="dashboard-section tree-overview-section">
@@ -279,7 +272,7 @@ const HomePage: React.FC = () => {
           onClose={handleCloseTaskModal}
           isCreating={isCreatingTask}
           onStatusChange={() => setIsStatusChanging(true)}
-          defaultDueDate={createTaskDate}
+          defaultEndDate={createTaskDate}
         />
       )}
     </div>

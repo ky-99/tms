@@ -152,6 +152,93 @@ function applyMigrations(db: Database.Database): void {
     if (!hasRoutineParentId) {
       db.exec("ALTER TABLE tasks ADD COLUMN routine_parent_id INTEGER DEFAULT NULL");
     }
+
+    // Check if new date columns exist
+    const hasStartDate = taskTableInfo.some((col: any) => col.name === 'start_date');
+    const hasEndDate = taskTableInfo.some((col: any) => col.name === 'end_date');
+
+    console.log('Database migration check: hasStartDate =', hasStartDate, 'hasEndDate =', hasEndDate);
+
+    if (!hasStartDate) {
+      console.log('Adding start_date column to tasks table');
+      db.exec("ALTER TABLE tasks ADD COLUMN start_date TIMESTAMP DEFAULT NULL");
+    }
+
+    if (!hasEndDate) {
+      console.log('Adding end_date column to tasks table');
+      db.exec("ALTER TABLE tasks ADD COLUMN end_date TIMESTAMP DEFAULT NULL");
+    }
+
+    // Add indexes for new date columns if they don't exist
+    try {
+      db.exec("CREATE INDEX IF NOT EXISTS idx_tasks_start_date ON tasks(start_date)");
+      db.exec("CREATE INDEX IF NOT EXISTS idx_tasks_end_date ON tasks(end_date)");
+      console.log('Added indexes for new date columns');
+    } catch (indexErr) {
+      console.log('Index creation skipped or failed:', indexErr);
+    }
+
+    // Remove due_date column if it exists (SQLite doesn't support DROP COLUMN directly)
+    try {
+      const hasDueDate = taskTableInfo.some((col: any) => col.name === 'due_date');
+      
+      if (hasDueDate) {
+        console.log('Migrating due_date data to end_date and removing due_date column');
+        
+        // Step 1: Copy data from due_date to end_date for tasks that don't have end_date set
+        db.exec(`
+          UPDATE tasks 
+          SET end_date = due_date 
+          WHERE due_date IS NOT NULL AND (end_date IS NULL OR end_date = '')
+        `);
+        
+        // Step 2: Get current table structure without due_date
+        const currentColumns = taskTableInfo.filter((col: any) => col.name !== 'due_date') as Array<{ name: string; type: string; pk: number; notnull: number; dflt_value: any }>;
+        const columnDefs = currentColumns.map((col) => {
+          let def = `${col.name} ${col.type}`;
+          if (col.pk) def += ' PRIMARY KEY';
+          if (col.notnull && !col.pk) def += ' NOT NULL';
+          if (col.dflt_value !== null) def += ` DEFAULT ${col.dflt_value}`;
+          return def;
+        }).join(', ');
+        
+        // Step 3: Create new table without due_date
+        db.exec(`
+          BEGIN TRANSACTION;
+          
+          CREATE TABLE tasks_new (
+            ${columnDefs},
+            FOREIGN KEY (parent_id) REFERENCES tasks(id) ON DELETE CASCADE,
+            CHECK (status IN ('pending', 'in_progress', 'completed')),
+            CHECK (priority IN ('low', 'medium', 'high', 'urgent'))
+          );
+          
+          INSERT INTO tasks_new SELECT ${currentColumns.map(col => col.name).join(', ')} FROM tasks;
+          
+          DROP TABLE tasks;
+          ALTER TABLE tasks_new RENAME TO tasks;
+          
+          -- Recreate indexes
+          CREATE INDEX IF NOT EXISTS idx_tasks_parent_id ON tasks(parent_id);
+          CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+          CREATE INDEX IF NOT EXISTS idx_tasks_start_date ON tasks(start_date);
+          CREATE INDEX IF NOT EXISTS idx_tasks_end_date ON tasks(end_date);
+          
+          -- Recreate trigger
+          CREATE TRIGGER IF NOT EXISTS update_tasks_updated_at
+          AFTER UPDATE ON tasks
+          BEGIN
+              UPDATE tasks SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+          END;
+          
+          COMMIT;
+        `);
+        
+        console.log('Successfully removed due_date column and migrated data to end_date');
+      }
+    } catch (migrationErr) {
+      console.log('Due date migration failed or skipped:', migrationErr);
+    }
   } catch (err) {
   }
 }

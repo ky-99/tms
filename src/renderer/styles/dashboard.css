@@ -155,6 +155,13 @@
     }
 }
 
+.dashboard__section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-4);
+}
+
 .dashboard__section-title {
     font-size: var(--font-size-md);
     margin: 0;
@@ -269,11 +276,10 @@
     padding: var(--space-4);
     cursor: pointer;
     position: relative;
-    transition: var(--transition-base);
     /* 強制的にborder-radiusを維持 */
     border-radius: var(--radius-sm) !important;
-    /* 固定高さでタスクカードのサイズを統一 */
-    height: var(--height-task-card);
+    /* 最小高さに変更して説明文が入るようにする */
+    min-height: 90px;
     display: flex;
     flex-direction: column;
     /* 操作モードボタンが切れないようにoverflow visibleに */
@@ -287,6 +293,7 @@
 }
 
 
+
 .dashboard__task-card--completed-today {
     background: var(--color-success-light) !important;
     border-color: var(--color-success-dark) !important;
@@ -296,7 +303,6 @@
 
 .dashboard__task-card--completed:not(.dashboard__task-card--completed-today) {
     opacity: 0.7;
-    transition: var(--transition-base);
 }
 
 .dashboard__task-card--routine {
@@ -452,11 +458,11 @@
     border-radius: var(--radius-sm);
     padding: var(--space-1) var(--space-2);
     margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-2));
-    transition: background-color var(--transition-base);
+    transition: color 0.2s ease;
 }
 
 .dashboard__task-title-text:hover {
-    background-color: var(--color-background-subtle);
+    color: #3b82f6;
 }
 
 .dashboard__task-title-input {
@@ -481,20 +487,71 @@
 
 .dashboard__status {
     cursor: pointer;
-    transition: opacity var(--transition-base);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .dashboard__status:hover {
     opacity: 0.8;
 }
 
+.dashboard__status--completed {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.dashboard__status--in_progress {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.dashboard__status--pending {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+
+.dashboard__status--parent {
+    background-color: #e5e7eb;
+    color: #6b7280;
+    cursor: default;
+}
+
 .dashboard__priority {
     cursor: pointer;
-    transition: opacity var(--transition-base);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .dashboard__priority:hover {
     opacity: 0.8;
+}
+
+.dashboard__priority--high {
+    background-color: #fff3e0;
+    color: #ef6c00;
+}
+
+.dashboard__priority--medium {
+    background-color: #e1f5fe;
+    color: #0277bd;
+}
+
+.dashboard__priority--low {
+    background-color: #f5f5f5;
+    color: #666;
+}
+
+.dashboard__priority--urgent {
+    background-color: #ffebee;
+    color: #c62828;
 }
 
 .dashboard__status-select, .dashboard__priority-select {
@@ -544,7 +601,6 @@
 
 .dashboard__no-tasks {
     color: var(--color-text-light);
-    font-style: italic;
     text-align: center;
     padding: var(--space-4);
     margin: 0;
@@ -580,4 +636,44 @@
     border-radius: 0;
     margin: 0;
     box-shadow: none;
+}
+
+/* View toggle buttons */
+.dashboard__view-toggle {
+    display: flex;
+    gap: 0;
+    background: var(--color-background-subtle);
+    border-radius: var(--radius-sm);
+    padding: var(--space-1);
+}
+
+.dashboard__view-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    border-radius: var(--radius-xs);
+    transition: all var(--transition-fast);
+}
+
+.dashboard__view-toggle-btn:hover {
+    color: var(--color-text-primary);
+    background: var(--color-background-hover);
+}
+
+.dashboard__view-toggle-btn--active {
+    background: var(--color-background-card);
+    color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.dashboard__view-toggle-btn--active:hover {
+    background: var(--color-background-card);
+    color: var(--color-primary);
 }

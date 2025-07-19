@@ -1,0 +1,396 @@
+/* Timeline View Styles */
+.timeline-view {
+  background: white;
+  border-radius: 8px;
+  border: none;
+  padding: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+}
+
+/* Header */
+.timeline-header {
+  display: flex;
+  background: white;
+  border-bottom: 1px solid var(--color-border-light);
+  height: 60px;
+  flex-shrink: 0;
+}
+
+.timeline-corner {
+  border-right: 1px solid var(--color-border-light);
+}
+
+.timeline-day-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--color-border-light);
+  padding: var(--space-2);
+}
+
+.timeline-day-name {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  margin-bottom: var(--space-1);
+}
+
+.timeline-day-number {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+/* Body */
+.timeline-body {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+.timeline-grid {
+  display: flex;
+  position: relative;
+  min-height: 960px; /* 24 hours * 40px */
+}
+
+/* Time column */
+.timeline-times {
+  background: white;
+  border-right: 1px solid var(--color-border-light);
+  position: sticky;
+  left: 0;
+  z-index: 10;
+}
+
+.timeline-hour {
+  border-bottom: 1px solid var(--color-border-light);
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  padding: var(--space-2);
+}
+
+.timeline-hour-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  line-height: 1;
+}
+
+/* Day columns */
+.timeline-day-column {
+  position: relative;
+  border-right: 1px solid var(--color-border-light);
+}
+
+.timeline-day-column--today {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.timeline-grid-cell {
+  border-bottom: 1px solid var(--color-border-light);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  position: relative;
+}
+
+/* 15分単位のグリッドライン */
+.timeline-hour-section {
+  border-bottom: 1px solid var(--color-border-light);
+  height: 40px;
+}
+
+.timeline-hour-section .timeline-grid-cell {
+  border-bottom: 1px dotted var(--color-border-light);
+}
+
+.timeline-hour-section .timeline-grid-cell:last-child {
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.timeline-grid-cell:hover {
+  background: var(--color-background-hover);
+}
+
+.timeline-grid-cell--over {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px dashed rgba(59, 130, 246, 0.5);
+}
+
+.timeline-grid-cell-inner {
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+/* Task wrapper */
+.timeline-task-wrapper {
+  width: 100%;
+  position: relative;
+  transition: opacity 0.05s ease; /* 高速アニメーション */
+}
+
+.timeline-task-wrapper--dragging {
+  z-index: 1000;
+}
+
+/* Task */
+.timeline-task {
+  background: #039be5; /* Google Calendar blue */
+  border: none;
+  border-radius: 4px;
+  cursor: default;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  transition: all 0.1s ease; /* 高速アニメーション */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  color: white;
+  width: 100%;
+  user-select: none;
+  position: relative;
+}
+
+
+.timeline-task:active {
+  cursor: grabbing;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ドラッグ中のタスクスタイル */
+.timeline-task--dragging-active {
+  /* transformは削除 - dnd-kitのtransformと競合するため */
+  box-shadow: 0 8px 24px rgba(3, 155, 229, 0.4);
+  border: 2px solid rgba(3, 155, 229, 0.8);
+  z-index: 1000 !important;
+  opacity: 0.9;
+  filter: brightness(1.1);
+  transition: box-shadow 0.1s ease, border 0.1s ease, opacity 0.1s ease; /* transformは除外 */
+}
+
+.timeline-task--dragging {
+  transition: none; /* ドラッグ中はトランジションを無効化 */
+}
+
+/* ゴーストタスク用スタイル */
+.timeline-task--ghost {
+  cursor: grabbing;
+  box-shadow: 0 8px 24px rgba(3, 155, 229, 0.4);
+  border: 2px solid rgba(3, 155, 229, 0.8);
+  transform: scale(1.05);
+  z-index: 1000 !important;
+}
+
+/* ゴーストプレースホルダー用スタイル */
+.timeline-task--ghost-placeholder {
+  background: #039be5;
+  border: 2px dashed rgba(3, 155, 229, 0.5);
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Task content - this is the drag handle area */
+.timeline-task-content {
+  padding: 4px 8px;
+  flex: 1;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.timeline-task-content:active {
+  cursor: grabbing;
+}
+
+.timeline-task-time {
+  font-weight: 600;
+  color: white;
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+
+.timeline-task-title {
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+/* Resize zone - invisible bottom area */
+.timeline-task-resize-zone {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  cursor: ns-resize;
+  z-index: 10;
+}
+
+/* Change cursor to resize when hovering over bottom area */
+.timeline-task:hover .timeline-task-resize-zone {
+  cursor: ns-resize;
+}
+
+/* Resize handles */
+.timeline-task-resize-handle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6px;
+  cursor: ns-resize;
+  z-index: 20;
+  background: transparent;
+  user-select: none;
+  pointer-events: auto;
+}
+
+.timeline-task-resize-handle--top {
+  top: -3px;
+}
+
+.timeline-task-resize-handle--bottom {
+  bottom: -3px;
+}
+
+
+.timeline-task--resizing {
+  opacity: 0.9;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000 !important;
+  cursor: ns-resize !important;
+}
+
+/* タスクコンテンツ領域でリサイズ中はドラッグを無効化 */
+.timeline-task--resizing .timeline-task-content {
+  pointer-events: none;
+  cursor: ns-resize !important;
+}
+
+/* ドラッグ中はリサイズハンドルを無効化 */
+.timeline-task--dragging .timeline-task-resize-handle {
+  pointer-events: none;
+  cursor: default !important;
+}
+
+/* Task status colors - all use Google Calendar blue */
+.timeline-task--completed {
+  background: #039be5;
+  opacity: 0.7;
+}
+
+.timeline-task--in_progress {
+  background: #039be5;
+}
+
+.timeline-task--pending {
+  background: #039be5;
+}
+
+/* Priority modifiers - shown with left border */
+.timeline-task--priority-urgent {
+  border-left: 3px solid #ff0000;
+  padding-left: 5px;
+}
+
+.timeline-task--priority-high {
+  border-left: 3px solid #ff9800;
+  padding-left: 5px;
+}
+
+/* Current time indicator */
+.timeline-current-time {
+  height: 2px;
+  background: var(--color-error);
+  position: relative;
+  z-index: 30;
+}
+
+.timeline-current-time::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-error);
+}
+
+/* Ghost task during drag */
+.timeline-ghost-task {
+  background: rgba(3, 155, 229, 0.3); /* Google Calendar blue with transparency */
+  border: 2px dashed rgba(3, 155, 229, 0.6);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  color: rgba(3, 155, 229, 0.8);
+  width: calc(100% - 4px); /* 境界線の幅を考慮して幅を調整 */
+  user-select: none;
+  pointer-events: none;
+  animation: ghost-fade-in 0.2s ease-in-out;
+  box-sizing: border-box;
+  /* 境界線の分だけ左にオフセットして中央に配置 */
+  margin-left: -2px;
+}
+
+.timeline-ghost-task-content {
+  padding: 4px 8px;
+  flex: 1;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.timeline-ghost-task-time {
+  font-weight: 600;
+  font-size: 11px;
+  margin-bottom: 2px;
+  opacity: 0.8;
+}
+
+.timeline-ghost-task-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+@keyframes ghost-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Scrollbar styles */
+.timeline-body::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.timeline-body::-webkit-scrollbar-track {
+  background: var(--color-background-subtle);
+}
+
+.timeline-body::-webkit-scrollbar-thumb {
+  background: var(--color-border-medium);
+  border-radius: var(--radius-xs);
+}
+
+.timeline-body::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-dark);
+}
