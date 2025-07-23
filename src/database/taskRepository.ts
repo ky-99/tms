@@ -89,12 +89,26 @@ export class TaskRepository {
     const columnNames = (tableInfo as any[]).map(col => col.name);
     const hasRoutineColumns = columnNames.includes('is_routine');
     const hasNewDateColumns = columnNames.includes('start_date') && columnNames.includes('end_date');
+    const hasTimeColumns = columnNames.includes('start_time') && columnNames.includes('end_time');
     
     let query;
-    if (hasRoutineColumns && hasNewDateColumns) {
+    if (hasRoutineColumns && hasNewDateColumns && hasTimeColumns) {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               start_date as startDate, start_time as startTime,
+               end_date as endDate, end_time as endTime,
+               created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               is_routine as isRoutine, routine_type as routineType,
+               last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
+        FROM tasks
+        ORDER BY COALESCE(parent_id, -1), position, id
+      `;
+    } else if (hasRoutineColumns && hasNewDateColumns) {
       query = `
         SELECT id, parent_id as parentId, title, description, status, priority,
                start_date as startDate, end_date as endDate,
+               NULL as startTime, NULL as endTime,
                created_at as createdAt, updated_at as updatedAt,
                completed_at as completedAt, position, expanded,
                is_routine as isRoutine, routine_type as routineType,
@@ -140,11 +154,15 @@ export class TaskRepository {
     const tasks = db.prepare(query).all() as Task[];
 
     // 各タスクにタグ情報を追加し、NULLを空文字列に正規化
-    const tasksWithTags = tasks.map(task => ({
-      ...task,
-      description: task.description || '',
-      tags: this.getTagsByTaskId(task.id)
-    }));
+    const tasksWithTags = tasks.map(task => {
+      const tags = this.getTagsByTaskId(task.id);
+      return {
+        ...task,
+        description: task.description || '',
+        tags: tags,
+        tagIds: tags.map(tag => tag.id)
+      };
+    });
 
     const treeStructure = this.buildTree(tasksWithTags);
     
@@ -157,7 +175,9 @@ export class TaskRepository {
     if (!task) return null;
 
     task.children = this.getChildrenByParentId(taskId);
-    task.tags = this.getTagsByTaskId(taskId);
+    const tags = this.getTagsByTaskId(taskId);
+    task.tags = tags;
+    task.tagIds = tags.map(tag => tag.id);
     task.attachments = this.getAttachmentsByTaskId(taskId);
     task.comments = this.getCommentsByTaskId(taskId);
 
@@ -173,12 +193,36 @@ export class TaskRepository {
     const columnNames = (tableInfo as any[]).map(col => col.name);
     const hasRoutineColumns = columnNames.includes('is_routine');
     const hasNewDateColumns = columnNames.includes('start_date') && columnNames.includes('end_date');
+    const hasTimeColumns = columnNames.includes('start_time') && columnNames.includes('end_time');
     
     let query;
-    if (hasRoutineColumns && hasNewDateColumns) {
+    if (hasRoutineColumns && hasNewDateColumns && hasTimeColumns) {
       query = `
         SELECT id, parent_id as parentId, title, description, status, priority,
                start_date as startDate, end_date as endDate,
+               start_time as startTime, end_time as endTime,
+               created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               is_routine as isRoutine, routine_type as routineType,
+               last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
+        FROM tasks WHERE id = ?
+      `;
+    } else if (hasRoutineColumns && hasNewDateColumns) {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               start_date as startDate, end_date as endDate,
+               NULL as startTime, NULL as endTime,
+               created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               is_routine as isRoutine, routine_type as routineType,
+               last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
+        FROM tasks WHERE id = ?
+      `;
+    } else if (hasRoutineColumns && hasTimeColumns) {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               NULL as startDate, NULL as endDate,
+               start_time as startTime, end_time as endTime,
                created_at as createdAt, updated_at as updatedAt,
                completed_at as completedAt, position, expanded,
                is_routine as isRoutine, routine_type as routineType,
@@ -192,13 +236,25 @@ export class TaskRepository {
                completed_at as completedAt, position, expanded,
                is_routine as isRoutine, routine_type as routineType,
                last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId,
-               NULL as startDate, NULL as endDate
+               NULL as startDate, NULL as endDate, NULL as startTime, NULL as endTime
+        FROM tasks WHERE id = ?
+      `;
+    } else if (hasNewDateColumns && hasTimeColumns) {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               start_date as startDate, end_date as endDate,
+               start_time as startTime, end_time as endTime,
+               created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               0 as isRoutine, NULL as routineType,
+               NULL as lastGeneratedAt, NULL as routineParentId
         FROM tasks WHERE id = ?
       `;
     } else if (hasNewDateColumns) {
       query = `
         SELECT id, parent_id as parentId, title, description, status, priority,
                start_date as startDate, end_date as endDate,
+               NULL as startTime, NULL as endTime,
                created_at as createdAt, updated_at as updatedAt,
                completed_at as completedAt, position, expanded,
                0 as isRoutine, NULL as routineType,
@@ -212,16 +268,19 @@ export class TaskRepository {
                completed_at as completedAt, position, expanded,
                0 as isRoutine, NULL as routineType,
                NULL as lastGeneratedAt, NULL as routineParentId,
-               NULL as startDate, NULL as endDate
+               NULL as startDate, NULL as endDate, NULL as startTime, NULL as endTime
         FROM tasks WHERE id = ?
       `;
     }
     
     const task = db.prepare(query).get(id) as Task | undefined;
 
-    // データベースのNULLを空文字列に正規化
+    // データベースのNULLを空文字列に正規化、タグ情報を追加
     if (task) {
       task.description = task.description || '';
+      const tags = this.getTagsByTaskId(task.id);
+      task.tags = tags;
+      task.tagIds = tags.map(tag => tag.id);
     }
 
     return task || null;
@@ -231,19 +290,82 @@ export class TaskRepository {
   getChildrenByParentId(parentId: number): Task[] {
     const db = this.getDb();
     
-    // Check if routine columns exist
+    // Check if routine columns and date/time columns exist
     const tableInfo = db.prepare("PRAGMA table_info(tasks)").all();
     const columnNames = (tableInfo as any[]).map(col => col.name);
     const hasRoutineColumns = columnNames.includes('is_routine');
+    const hasNewDateColumns = columnNames.includes('start_date') && columnNames.includes('end_date');
+    const hasTimeColumns = columnNames.includes('start_time') && columnNames.includes('end_time');
     
     let query;
-    if (hasRoutineColumns) {
+    if (hasRoutineColumns && hasNewDateColumns && hasTimeColumns) {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               start_date as startDate, end_date as endDate,
+               start_time as startTime, end_time as endTime,
+               created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               is_routine as isRoutine, routine_type as routineType,
+               last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
+        FROM tasks WHERE parent_id = ?
+        ORDER BY position, id
+      `;
+    } else if (hasRoutineColumns && hasNewDateColumns) {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               start_date as startDate, end_date as endDate,
+               NULL as startTime, NULL as endTime,
+               created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               is_routine as isRoutine, routine_type as routineType,
+               last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
+        FROM tasks WHERE parent_id = ?
+        ORDER BY position, id
+      `;
+    } else if (hasRoutineColumns && hasTimeColumns) {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               NULL as startDate, NULL as endDate,
+               start_time as startTime, end_time as endTime,
+               created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               is_routine as isRoutine, routine_type as routineType,
+               last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
+        FROM tasks WHERE parent_id = ?
+        ORDER BY position, id
+      `;
+    } else if (hasRoutineColumns) {
       query = `
         SELECT id, parent_id as parentId, title, description, status, priority,
                created_at as createdAt, updated_at as updatedAt,
                completed_at as completedAt, position, expanded,
                is_routine as isRoutine, routine_type as routineType,
-               last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId
+               last_generated_at as lastGeneratedAt, routine_parent_id as routineParentId,
+               NULL as startDate, NULL as endDate, NULL as startTime, NULL as endTime
+        FROM tasks WHERE parent_id = ?
+        ORDER BY position, id
+      `;
+    } else if (hasNewDateColumns && hasTimeColumns) {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               start_date as startDate, end_date as endDate,
+               start_time as startTime, end_time as endTime,
+               created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               0 as isRoutine, NULL as routineType,
+               NULL as lastGeneratedAt, NULL as routineParentId
+        FROM tasks WHERE parent_id = ?
+        ORDER BY position, id
+      `;
+    } else if (hasNewDateColumns) {
+      query = `
+        SELECT id, parent_id as parentId, title, description, status, priority,
+               start_date as startDate, end_date as endDate,
+               NULL as startTime, NULL as endTime,
+               created_at as createdAt, updated_at as updatedAt,
+               completed_at as completedAt, position, expanded,
+               0 as isRoutine, NULL as routineType,
+               NULL as lastGeneratedAt, NULL as routineParentId
         FROM tasks WHERE parent_id = ?
         ORDER BY position, id
       `;
@@ -253,7 +375,8 @@ export class TaskRepository {
                created_at as createdAt, updated_at as updatedAt,
                completed_at as completedAt, position, expanded,
                0 as isRoutine, NULL as routineType,
-               NULL as lastGeneratedAt, NULL as routineParentId
+               NULL as lastGeneratedAt, NULL as routineParentId,
+               NULL as startDate, NULL as endDate, NULL as startTime, NULL as endTime
         FROM tasks WHERE parent_id = ?
         ORDER BY position, id
       `;
@@ -261,12 +384,17 @@ export class TaskRepository {
     
     const children = db.prepare(query).all(parentId) as Task[];
 
-    // 再帰的に子タスクを取得し、NULLを空文字列に正規化
-    return children.map(child => ({
-      ...child,
-      description: child.description || '',
-      children: this.getChildrenByParentId(child.id)
-    }));
+    // 再帰的に子タスクを取得し、NULLを空文字列に正規化、タグ情報を追加
+    return children.map(child => {
+      const tags = this.getTagsByTaskId(child.id);
+      return {
+        ...child,
+        description: child.description || '',
+        tags: tags,
+        tagIds: tags.map(tag => tag.id),
+        children: this.getChildrenByParentId(child.id)
+      };
+    });
   }
 
   // タスクを作成
@@ -278,9 +406,17 @@ export class TaskRepository {
     const columnNames = (tableInfo as any[]).map(col => col.name);
     const hasRoutineColumns = columnNames.includes('is_routine');
     const hasNewDateColumns = columnNames.includes('start_date') && columnNames.includes('end_date');
+    const hasTimeColumns = columnNames.includes('start_time') && columnNames.includes('end_time');
     
     let stmt;
-    if (hasRoutineColumns && hasNewDateColumns) {
+    if (hasRoutineColumns && hasNewDateColumns && hasTimeColumns) {
+      stmt = db.prepare(`
+        INSERT INTO tasks (parent_id, title, description, status, priority, start_date, start_time, end_date, end_time, position, expanded, 
+                          is_routine, routine_type, routine_parent_id)
+        VALUES (@parentId, @title, @description, @status, @priority, @startDate, @startTime, @endDate, @endTime, @position, @expanded,
+                @isRoutine, @routineType, @routineParentId)
+      `);
+    } else if (hasRoutineColumns && hasNewDateColumns) {
       stmt = db.prepare(`
         INSERT INTO tasks (parent_id, title, description, status, priority, start_date, end_date, position, expanded, 
                           is_routine, routine_type, routine_parent_id)
@@ -293,6 +429,11 @@ export class TaskRepository {
                           is_routine, routine_type, routine_parent_id)
         VALUES (@parentId, @title, @description, @status, @priority, @position, @expanded,
                 @isRoutine, @routineType, @routineParentId)
+      `);
+    } else if (hasNewDateColumns && hasTimeColumns) {
+      stmt = db.prepare(`
+        INSERT INTO tasks (parent_id, title, description, status, priority, start_date, start_time, end_date, end_time, position, expanded)
+        VALUES (@parentId, @title, @description, @status, @priority, @startDate, @startTime, @endDate, @endTime, @position, @expanded)
       `);
     } else if (hasNewDateColumns) {
       stmt = db.prepare(`
@@ -345,6 +486,11 @@ export class TaskRepository {
       params.endDate = input.endDate || null;
     }
     
+    if (hasTimeColumns) {
+      params.startTime = input.startTime || null;
+      params.endTime = input.endTime || null;
+    }
+    
     if (hasRoutineColumns) {
       params.isRoutine = input.isRoutine ? 1 : 0;
       params.routineType = input.routineType || null;
@@ -354,12 +500,19 @@ export class TaskRepository {
     const result = stmt.run(params);
     const newTaskId = result.lastInsertRowid as number;
     
+    // タグの関連付け
+    if (input.tagIds && input.tagIds.length > 0) {
+      for (const tagId of input.tagIds) {
+        this.addTagToTask(newTaskId, tagId);
+      }
+    }
+    
     // 新しいタスクが作成されたら、親タスクのステータスを自動更新
     if (input.parentId) {
       this.updateParentTaskStatuses(newTaskId);
     }
     
-    return this.getTaskById(newTaskId)!;
+    return this.getTaskWithChildren(newTaskId)!;
   }
 
   // 特定のタスクの後に新しいタスクを挿入
@@ -486,14 +639,6 @@ export class TaskRepository {
       updates.push('priority = @priority');
       params.priority = input.priority;
     }
-    if (input.startDate !== undefined) {
-      updates.push('start_date = @startDate');
-      params.startDate = input.startDate;
-    }
-    if (input.endDate !== undefined) {
-      updates.push('end_date = @endDate');
-      params.endDate = input.endDate;
-    }
     if (input.parentId !== undefined) {
       updates.push('parent_id = @parentId');
       params.parentId = input.parentId;
@@ -506,11 +651,31 @@ export class TaskRepository {
       updates.push('expanded = @expanded');
       params.expanded = input.expanded ? 1 : 0;
     }
-    // Check if routine columns exist before trying to update them
+    // Check if routine columns and time columns exist before trying to update them
     const db = this.getDb();
     const tableInfo = db.prepare("PRAGMA table_info(tasks)").all();
     const columnNames = (tableInfo as any[]).map(col => col.name);
     const hasRoutineColumns = columnNames.includes('is_routine');
+    const hasNewDateColumns = columnNames.includes('start_date') && columnNames.includes('end_date');
+    const hasTimeColumns = columnNames.includes('start_time') && columnNames.includes('end_time');
+    
+    // Handle date and time updates - only if columns exist
+    if (hasNewDateColumns && 'startDate' in input) {
+      updates.push('start_date = @startDate');
+      params.startDate = input.startDate || null;
+    }
+    if (hasTimeColumns && 'startTime' in input) {
+      updates.push('start_time = @startTime');
+      params.startTime = input.startTime || null;
+    }
+    if (hasNewDateColumns && 'endDate' in input) {
+      updates.push('end_date = @endDate');
+      params.endDate = input.endDate || null;
+    }
+    if (hasTimeColumns && 'endTime' in input) {
+      updates.push('end_time = @endTime');
+      params.endTime = input.endTime || null;
+    }
     
     if (hasRoutineColumns && input.isRoutine !== undefined) {
       updates.push('is_routine = @isRoutine');
@@ -527,6 +692,20 @@ export class TaskRepository {
     `);
 
     stmt.run(params);
+
+    // タグの更新
+    if (input.tagIds !== undefined) {
+      // 現在のタグを全て削除
+      const db = this.getDb();
+      db.prepare('DELETE FROM task_tags WHERE task_id = ?').run(id);
+      
+      // 新しいタグを追加
+      if (input.tagIds.length > 0) {
+        for (const tagId of input.tagIds) {
+          this.addTagToTask(id, tagId);
+        }
+      }
+    }
 
     // ステータスが更新された場合、親タスクのステータスを自動更新
     if (input.status !== undefined) {

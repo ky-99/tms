@@ -21,7 +21,7 @@
   --color-background-subtle: #f9fafb;
   --color-background-card: #ffffff;
   --color-background-overlay: rgba(0, 0, 0, 0.3);
-  --color-background-modal: rgba(0, 0, 0, 0.5);
+  --color-background-modal: rgba(0, 0, 0, 0.08);
 
   /* Text Colors */
   --color-text-primary: #111827;

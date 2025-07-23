@@ -9,29 +9,25 @@ export interface Task {
   description: string | null;
   status: TaskStatus;
   priority: TaskPriority;
-  dueDate?: string | null;
-  due_date?: string | null;
+  startDate?: string | null;
+  startTime?: string | null;
+  endDate?: string | null;
+  endTime?: string | null;
   createdAt?: string;
-  created_at?: string;
   updatedAt?: string;
-  updated_at?: string;
   completedAt?: string | null;
-  completed_at?: string | null;
   position: number;
   expanded: boolean;
   children?: Task[];
   tags?: Tag[];
+  tagIds?: number[];
   attachments?: Attachment[];
   comments?: Comment[];
   // Routine task fields
   isRoutine?: boolean;
-  is_routine?: boolean;
   routineType?: RoutineType | null;
-  routine_type?: RoutineType | null;
   lastGeneratedAt?: string | null;
-  last_generated_at?: string | null;
   routineParentId?: number | null;
-  routine_parent_id?: number | null;
 }
 
 export interface Tag {
@@ -65,14 +61,16 @@ export interface CreateTaskInput {
   description?: string;
   status?: TaskStatus;
   priority?: TaskPriority;
-  dueDate?: string | null;
   startDate?: string | null;
+  startTime?: string | null;
   endDate?: string | null;
+  endTime?: string | null;
   position?: number;
   expanded?: boolean;
   isRoutine?: boolean;
   routineType?: RoutineType | null;
   routineParentId?: number | null;
+  tagIds?: number[];
 }
 
 export interface UpdateTaskInput {
@@ -80,14 +78,16 @@ export interface UpdateTaskInput {
   description?: string | null;
   status?: TaskStatus;
   priority?: TaskPriority;
-  dueDate?: string | null;
   startDate?: string | null;
+  startTime?: string | null;
   endDate?: string | null;
+  endTime?: string | null;
   parentId?: number | null;
   position?: number;
   expanded?: boolean;
   isRoutine?: boolean;
   routineType?: RoutineType | null;
+  tagIds?: number[];
 }
 
 export interface TaskTag {

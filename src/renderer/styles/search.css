@@ -147,7 +147,8 @@
 
 .create-task-icon,
 .merge-task-icon,
-.search-sort-icon {
+.search-sort-icon,
+.tag-pool-trigger {
     background: none;
     border: none;
     color: #6b7280;

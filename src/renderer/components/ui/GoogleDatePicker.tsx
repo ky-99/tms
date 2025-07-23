@@ -1,6 +1,10 @@
 import React, { useState, forwardRef } from 'react';
-import DatePicker from 'react-datepicker';
+import DatePicker, { registerLocale } from 'react-datepicker';
+import { ja } from 'date-fns/locale';
 import 'react-datepicker/dist/react-datepicker.css';
+
+// 日本語ロケールを登録
+registerLocale('ja', ja);
 
 interface GoogleDatePickerProps {
   value?: string;

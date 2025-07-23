@@ -119,12 +119,24 @@ const GoogleTimePicker: React.FC<GoogleTimePickerProps> = ({
   };
 
   const handleInputSubmit = () => {
+    // 空文字の場合は時刻をクリア
+    if (!inputValue || inputValue.trim() === '') {
+      setSelectedTime('');
+      onChange('');
+      setIsEditing(false);
+      return;
+    }
+    
     const normalizedTime = normalizeTimeInput(inputValue);
     if (normalizedTime) {
       setSelectedTime(normalizedTime);
       onChange(normalizedTime);
+      setIsEditing(false);
+    } else {
+      // 無効な入力の場合は元の値に戻して編集モードを終了
+      setInputValue(selectedTime || '');
+      setIsEditing(false);
     }
-    setIsEditing(false);
   };
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -134,6 +146,9 @@ const GoogleTimePicker: React.FC<GoogleTimePickerProps> = ({
     } else if (e.key === 'Escape') {
       setIsEditing(false);
       setInputValue('');
+    } else if (e.key === 'Delete' || e.key === 'Backspace') {
+      // Delete/Backspaceキーのイベント伝播を止める
+      e.stopPropagation();
     }
   };
 

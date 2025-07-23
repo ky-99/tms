@@ -15,6 +15,8 @@ import {
   DragOverlay,
 } from '@dnd-kit/core';
 import { adjustTaskTime } from '../../utils/taskValidation';
+import { getTaskStartDateTime, getTaskEndDateTime } from '../../utils/taskUtils';
+import { separateDateAndTime, combineDateAndTime, toLocalDateTimeString } from '../../utils/lightDateUtils';
 
 interface TimelineViewProps {
   tasks: Task[];
@@ -28,16 +30,29 @@ const HOUR_HEIGHT = 40; // 1時間あたりの高さ（px）
 const TIME_COLUMN_WIDTH = 60; // 時間列の幅
 // 各日付列の幅を動的に計算（残りの幅を7日で分割）
 
+// タスクセグメント情報の型定義
+interface TaskSegment {
+  task: Task;
+  column: number;
+  segmentStart: Date;
+  segmentEnd: Date;
+  isFirstSegment: boolean;
+  isLastSegment: boolean;
+  totalSegments: number;
+  segmentIndex: number;
+}
+
 // ドラッグ可能なタスクコンポーネント
 const DraggableTask: React.FC<{
   task: Task;
   column: number;
   position: { top: number; height: number };
   onTaskClick: (task: Task) => void;
-  onTaskResize: (taskId: number, newStartTime: string, newEndTime: string) => void;
-}> = ({ task, column, position, onTaskClick, onTaskResize }) => {
-  const displayStartTime = task.startDate ? parseISO(task.startDate) : null;
-  const displayEndTime = task.endDate ? parseISO(task.endDate) : (task.completedAt ? parseISO(task.completedAt) : null);
+  onTaskResize: (taskId: number, updates: { startDate?: string | null, startTime?: string | null, endDate?: string | null, endTime?: string | null }) => void;
+  segment?: TaskSegment;
+}> = ({ task, column, position, onTaskClick, onTaskResize, segment }) => {
+  const displayStartTime = getTaskStartDateTime(task);
+  const displayEndTime = getTaskEndDateTime(task) || (task.completedAt ? parseISO(task.completedAt) : null);
   const [isResizing, setIsResizing] = useState(false);
   const [resizeMode, setResizeMode] = useState<'top' | 'bottom' | null>(null);
   const [startY, setStartY] = useState(0);
@@ -93,7 +108,16 @@ const DraggableTask: React.FC<{
       }
     }
 
-    onTaskResize(task.id, newStartTime.toISOString(), newEndTime.toISOString());
+    // 新スキーマ形式で更新（ローカル時刻として保持）
+    const startSeparated = separateDateAndTime(toLocalDateTimeString(newStartTime));
+    const endSeparated = separateDateAndTime(toLocalDateTimeString(newEndTime));
+    
+    onTaskResize(task.id, {
+      startDate: startSeparated.date,
+      startTime: startSeparated.time,
+      endDate: endSeparated.date,
+      endTime: endSeparated.time
+    });
   }, [isResizing, resizeMode, originalStartTime, originalEndTime, startY, task.id, onTaskResize]);
 
   const handleMouseUp = useCallback(() => {
@@ -117,6 +141,33 @@ const DraggableTask: React.FC<{
       };
     }
   }, [isResizing, handleMouseMove, handleMouseUp]);
+
+  // セグメント用の時間表示を計算
+  const getSegmentTimeDisplay = () => {
+    if (!segment) {
+      // 通常のタスク表示
+      if (displayStartTime && displayEndTime) {
+        return `${format(displayStartTime, 'HH:mm')} - ${format(displayEndTime, 'HH:mm')}`;
+      }
+      if (!displayStartTime && displayEndTime) {
+        return format(displayEndTime, 'HH:mm');
+      }
+      return '';
+    }
+
+    // セグメントの時間表示（統一されたシンプルな表示）
+    const segmentStartTime = format(segment.segmentStart, 'HH:mm');
+    const segmentEndTime = format(segment.segmentEnd, 'HH:mm');
+    
+    if (segment.isFirstSegment) {
+      return `${segmentStartTime} -`;
+    } else if (segment.isLastSegment) {
+      return `- ${segmentEndTime}`;
+    } else {
+      // 中間セグメントは全日表示
+      return '全日';
+    }
+  };
 
   return (
     <div
@@ -148,12 +199,7 @@ const DraggableTask: React.FC<{
       
       <div className="timeline-task-content">
         <div className="timeline-task-time">
-          {displayStartTime && displayEndTime && (
-            <>
-              {format(displayStartTime, 'HH:mm')} - {format(displayEndTime, 'HH:mm')}
-            </>
-          )}
-          {!displayStartTime && displayEndTime && format(displayEndTime, 'HH:mm')}
+          {getSegmentTimeDisplay()}
         </div>
         <div className="timeline-task-title">{task.title}</div>
       </div>
@@ -186,7 +232,7 @@ const DroppableTimeSlot: React.FC<{
       const dateTime = new Date(year, month - 1, day);
       const minutes = quarter * 15;
       dateTime.setHours(hour, minutes, 0, 0);
-      onCreateTask(dateTime.toISOString());
+      onCreateTask(toLocalDateTimeString(dateTime));
     }
   };
 
@@ -278,24 +324,34 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     newDateTime.setHours(hour, minutes, 0, 0);
     
     try {
-      // タスクの期間を計算
-      const originalStartTime = task.startDate ? parseISO(task.startDate) : null;
-      const originalEndTime = task.endDate ? parseISO(task.endDate) : (task.completedAt ? parseISO(task.completedAt) : null);
+      // タスクの期間を計算（新スキーマ対応）
+      const originalStartTime = getTaskStartDateTime(task);
+      const originalEndTime = getTaskEndDateTime(task) || (task.completedAt ? parseISO(task.completedAt) : null);
       
       if (originalStartTime && originalEndTime) {
         const duration = originalEndTime.getTime() - originalStartTime.getTime();
         const newStartTime = newDateTime;
         const newEndTime = new Date(newDateTime.getTime() + duration);
         
+        // 新スキーマ形式で更新（ローカル時刻として保持）
+        const startSeparated = separateDateAndTime(toLocalDateTimeString(newStartTime));
+        const endSeparated = separateDateAndTime(toLocalDateTimeString(newEndTime));
+        
         onUpdateTask(task.id, {
-          startDate: newStartTime.toISOString(),
-          endDate: newEndTime.toISOString(),
+          startDate: startSeparated.date || undefined,
+          startTime: startSeparated.time || undefined,
+          endDate: endSeparated.date || undefined,
+          endTime: endSeparated.time || undefined
         }).catch((error) => {
           console.error('Failed to update task:', error);
         });
       } else if (originalEndTime) {
+        // 新スキーマ形式で更新（ローカル時刻として保持）
+        const endSeparated = separateDateAndTime(toLocalDateTimeString(newDateTime));
+        
         onUpdateTask(task.id, {
-          endDate: newDateTime.toISOString(),
+          endDate: endSeparated.date || undefined,
+          endTime: endSeparated.time || undefined
         }).catch((error) => {
           console.error('Failed to update task:', error);
         });
@@ -305,31 +361,84 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     }
   };
   
-  const handleTaskResize = (taskId: number, newStartTime: string, newEndTime: string) => {
+  const handleTaskResize = (taskId: number, updates: { startDate?: string | null, startTime?: string | null, endDate?: string | null, endTime?: string | null }) => {
     if (!onUpdateTask) return;
     
-    // バリデーションを実行し、必要に応じて自動調整
-    try {
-      const adjusted = adjustTaskTime({
-        startDate: newStartTime,
-        endDate: newEndTime,
-        minimumDurationMinutes: 15
-      });
-      
-      onUpdateTask(taskId, {
-        startDate: adjusted.startDate,
-        endDate: adjusted.endDate,
-      });
-    } catch (error) {
-      // エラーが発生した場合は何もしない（無効な時間設定）
-      console.warn('Invalid time adjustment:', error);
-    }
+    // 新スキーマでタスクを更新（null値をundefinedに変換）
+    const convertedUpdates = {
+      ...updates,
+      startDate: updates.startDate || undefined,
+      startTime: updates.startTime || undefined,
+      endDate: updates.endDate || undefined,
+      endTime: updates.endTime || undefined
+    };
+    onUpdateTask(taskId, convertedUpdates);
   };
   
   // 週の開始日と終了日を計算
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 }); // 日曜始まり
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+  // タスクを日跨ぎセグメントに分割する関数
+  const createTaskSegments = useCallback((task: Task): TaskSegment[] => {
+    const startDateTime = getTaskStartDateTime(task);
+    const endDateTime = getTaskEndDateTime(task);
+    
+    if (!startDateTime || !endDateTime) {
+      return [];
+    }
+
+    const segments: TaskSegment[] = [];
+    const taskStart = new Date(Math.max(startDateTime.getTime(), weekStart.getTime()));
+    const taskEnd = new Date(Math.min(endDateTime.getTime(), weekEnd.getTime()));
+
+    // 週内にタスクが含まれない場合は空配列を返す
+    if (taskStart > weekEnd || taskEnd < weekStart) {
+      return [];
+    }
+
+    // 日ごとにセグメントを作成
+    let currentDate = new Date(taskStart);
+    let segmentIndex = 0;
+
+    while (currentDate <= taskEnd) {
+      const dayStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+      const dayEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 23, 59, 59, 999);
+
+      const segmentStart = new Date(Math.max(taskStart.getTime(), dayStart.getTime()));
+      const segmentEnd = new Date(Math.min(taskEnd.getTime(), dayEnd.getTime()));
+
+      // セグメントが有効な場合のみ追加
+      if (segmentStart <= segmentEnd) {
+        segments.push({
+          task,
+          column: 0, // 後で割り当て
+          segmentStart,
+          segmentEnd,
+          isFirstSegment: segmentIndex === 0,
+          isLastSegment: false, // 後で更新
+          totalSegments: 0, // 後で更新
+          segmentIndex
+        });
+        segmentIndex++;
+      }
+
+      // 次の日に移動
+      currentDate.setDate(currentDate.getDate() + 1);
+      currentDate.setHours(0, 0, 0, 0);
+    }
+
+    // 最後のセグメントとトータル数を更新
+    if (segments.length > 0) {
+      segments[segments.length - 1].isLastSegment = true;
+      segments.forEach(segment => {
+        segment.totalSegments = segments.length;
+      });
+    }
+
+    return segments;
+  }, [weekStart, weekEnd]);
 
   // 現在時刻にスクロール
   useEffect(() => {
@@ -340,41 +449,37 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     }
   }, []);
 
-  // タスクの時間間隔を取得
+  // タスクの時間間隔を取得（新スキーマ対応）
   const getTaskInterval = useCallback((task: Task) => {
-    const dateToUse = task.endDate || task.completedAt;
-    if (!dateToUse) return null;
-    
-    try {
-      const endDate = parseISO(dateToUse);
-      if (isNaN(endDate.getTime())) {
-        console.warn(`Invalid endDate in task ${task.id}: ${dateToUse}`);
-        return null;
-      }
-      
-      let startDate = endDate;
-      
-      if (task.startDate) {
-        startDate = parseISO(task.startDate);
-        if (isNaN(startDate.getTime())) {
-          console.warn(`Invalid startDate in task ${task.id}: ${task.startDate}`);
-          startDate = new Date(endDate.getTime() - 30 * 60 * 1000);
+    const endDateTime = getTaskEndDateTime(task);
+    if (!endDateTime) {
+      // completedAtをフォールバックとして使用
+      if (task.completedAt) {
+        try {
+          const endDate = parseISO(task.completedAt);
+          if (!isNaN(endDate.getTime())) {
+            const startDate = new Date(endDate.getTime() - 30 * 60 * 1000);
+            return { start: startDate, end: endDate };
+          }
+        } catch (error) {
+          console.warn(`Error parsing completedAt for task ${task.id}:`, error);
         }
-      } else {
-        // startDateがない場合は30分前を開始時間とする
-        startDate = new Date(endDate.getTime() - 30 * 60 * 1000);
       }
-      
-      return { start: startDate, end: endDate };
-    } catch (error) {
-      console.warn(`Error parsing dates for task ${task.id}:`, error);
       return null;
     }
+    
+    let startDateTime = getTaskStartDateTime(task);
+    if (!startDateTime) {
+      // startDateがない場合は30分前を開始時間とする
+      startDateTime = new Date(endDateTime.getTime() - 30 * 60 * 1000);
+    }
+    
+    return { start: startDateTime, end: endDateTime };
   }, []);
 
-  // タスクを日付ごとにグループ化し、重なりを処理
+  // タスクを日付ごとにグループ化し、重なりを処理（セグメント対応）
   const tasksByDay = useMemo(() => {
-    const grouped: Record<string, { task: Task; column: number }[]> = {};
+    const grouped: Record<string, TaskSegment[]> = {};
     
     weekDays.forEach(day => {
       const dayKey = format(day, 'yyyy-MM-dd');
@@ -382,61 +487,67 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     });
 
     tasks.forEach(task => {
-      const dateToUse = task.endDate || task.completedAt;
-      if (dateToUse) {
+      const segments = createTaskSegments(task);
+      
+      segments.forEach(segment => {
+        const dayKey = format(segment.segmentStart, 'yyyy-MM-dd');
+        if (grouped[dayKey]) {
+          grouped[dayKey].push(segment);
+        }
+      });
+
+      // 完了タスクのフォールバック（セグメント化できない場合）
+      if (segments.length === 0 && task.completedAt) {
         try {
-          const taskDate = parseISO(dateToUse);
-          if (isNaN(taskDate.getTime())) {
-            console.warn(`Invalid date in task ${task.id}: ${dateToUse}`);
-            return;
-          }
-          const dayKey = format(taskDate, 'yyyy-MM-dd');
-        
-          // 週内のタスクのみ追加
-          if (isWithinInterval(taskDate, { start: weekStart, end: weekEnd })) {
-            if (!grouped[dayKey]) {
-              grouped[dayKey] = [];
+          const taskDate = parseISO(task.completedAt);
+          if (!isNaN(taskDate.getTime())) {
+            const dayKey = format(taskDate, 'yyyy-MM-dd');
+            
+            if (isWithinInterval(taskDate, { start: weekStart, end: weekEnd }) && grouped[dayKey]) {
+              // 単一セグメントとして追加
+              grouped[dayKey].push({
+                task,
+                column: 0,
+                segmentStart: taskDate,
+                segmentEnd: new Date(taskDate.getTime() + 30 * 60 * 1000), // 30分のデフォルト期間
+                isFirstSegment: true,
+                isLastSegment: true,
+                totalSegments: 1,
+                segmentIndex: 0
+              });
             }
-            grouped[dayKey].push({ task, column: 0 });
           }
         } catch (error) {
-          console.warn(`Error parsing date for task ${task.id}: ${dateToUse}`, error);
+          console.warn(`Error parsing completedAt for task ${task.id}: ${task.completedAt}`, error);
         }
       }
     });
 
-    // 各日のタスクを時間順にソートし、重なりを検出してカラムを割り当て
+    // 各日のセグメントを時間順にソートし、重なりを検出してカラムを割り当て
     Object.keys(grouped).forEach(dayKey => {
-      // まず時間順にソート
+      // セグメント開始時間でソート
       grouped[dayKey].sort((a, b) => {
-        const aDateStr = a.task.endDate || a.task.completedAt;
-        const bDateStr = b.task.endDate || b.task.completedAt;
-        const aTime = aDateStr ? parseISO(aDateStr).getTime() : 0;
-        const bTime = bDateStr ? parseISO(bDateStr).getTime() : 0;
-        return aTime - bTime;
+        return a.segmentStart.getTime() - b.segmentStart.getTime();
       });
 
       // 重なりを検出してカラムを割り当て
-      grouped[dayKey].forEach((taskItem, index) => {
-        const task = taskItem.task;
-        const taskInterval = getTaskInterval(task);
-        if (!taskInterval) return;
+      grouped[dayKey].forEach((segment, index) => {
+        const segmentInterval = { start: segment.segmentStart, end: segment.segmentEnd };
 
         // 使用可能な最小のカラムを見つける
         let column = 0;
         const columnsInUse: Set<number>[] = [];
 
-        // それ以前のタスクとの重なりをチェック
+        // それ以前のセグメントとの重なりをチェック
         for (let i = 0; i < index; i++) {
-          const otherTaskItem = grouped[dayKey][i];
-          const otherTask = otherTaskItem.task;
-          const otherInterval = getTaskInterval(otherTask);
+          const otherSegment = grouped[dayKey][i];
+          const otherInterval = { start: otherSegment.segmentStart, end: otherSegment.segmentEnd };
           
-          if (otherInterval && areIntervalsOverlapping(taskInterval, otherInterval)) {
-            if (!columnsInUse[otherTaskItem.column]) {
-              columnsInUse[otherTaskItem.column] = new Set();
+          if (areIntervalsOverlapping(segmentInterval, otherInterval)) {
+            if (!columnsInUse[otherSegment.column]) {
+              columnsInUse[otherSegment.column] = new Set();
             }
-            columnsInUse[otherTaskItem.column].add(i);
+            columnsInUse[otherSegment.column].add(i);
           }
         }
 
@@ -445,14 +556,14 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           column++;
         }
 
-        taskItem.column = column;
+        segment.column = column;
       });
     });
 
     return grouped;
-  }, [tasks, weekStart, weekEnd, weekDays, getTaskInterval, JSON.stringify(tasks.map(t => ({id: t.id, startDate: t.startDate, endDate: t.endDate})))]);
+  }, [tasks, weekStart, weekEnd, weekDays, createTaskSegments, JSON.stringify(tasks.map(t => ({id: t.id, startDate: t.startDate, startTime: t.startTime, endDate: t.endDate, endTime: t.endTime, completedAt: t.completedAt})))]);
 
-  // タスクの位置とサイズを計算
+  // タスクの位置とサイズを計算（セグメント対応）
   const getTaskPosition = useCallback((task: Task) => {
     const interval = getTaskInterval(task);
     if (!interval) return null;
@@ -471,6 +582,24 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     
     return { top, height };
   }, [getTaskInterval]);
+
+  // セグメントの位置とサイズを計算
+  const getSegmentPosition = useCallback((segment: TaskSegment) => {
+    const startHours = getHours(segment.segmentStart);
+    const startMinutes = getMinutes(segment.segmentStart);
+    const endHours = getHours(segment.segmentEnd);
+    const endMinutes = getMinutes(segment.segmentEnd);
+    
+    // 開始位置と高さを計算
+    const top = startHours * HOUR_HEIGHT + (startMinutes / 60) * HOUR_HEIGHT;
+    const endTop = endHours * HOUR_HEIGHT + (endMinutes / 60) * HOUR_HEIGHT;
+    
+    // 最小高さは15分（HOUR_HEIGHT / 4）
+    const height = Math.max(endTop - top, HOUR_HEIGHT / 4);
+    
+    return { top, height };
+  }, []);
+
 
   // 現在時刻のライン位置を計算
   const getCurrentTimePosition = () => {
@@ -563,29 +692,29 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                   </div>
                 ))}
                 
-                {/* タスク */}
-                {dayTasks.map((taskItem) => {
-                  const { task, column } = taskItem;
-                  const position = getTaskPosition(task);
+                {/* セグメント */}
+                {dayTasks.map((segment, index) => {
+                  const position = getSegmentPosition(segment);
                   if (!position) return null;
                   
-                  const isBeingDragged = activeId === `task-${task.id}`;
+                  const isBeingDragged = activeId === `task-${segment.task.id}`;
+                  const uniqueKey = `${segment.task.id}-${segment.segmentIndex}`;
                   
                   return (
                     <div
-                      key={task.id}
+                      key={uniqueKey}
                       style={{
                         position: 'absolute',
-                        top: `${position.top + column * 20}px`,
+                        top: `${position.top + segment.column * 20}px`,
                         height: `${position.height}px`,
                         left: '4px',
                         right: '4px',
-                        zIndex: 20 + column,
+                        zIndex: 20 + segment.column,
                       }}
                     >
                       {isBeingDragged ? (
                         <div
-                          className={`timeline-task timeline-task--${task.status} timeline-task--priority-${task.priority} timeline-task--ghost-placeholder`}
+                          className={`timeline-task timeline-task--${segment.task.status} timeline-task--priority-${segment.task.priority} timeline-task--ghost-placeholder`}
                           style={{
                             height: `${position.height}px`,
                             opacity: 0.3,
@@ -593,23 +722,27 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                         >
                           <div className="timeline-task-content">
                             <div className="timeline-task-time">
-                              {task.startDate && task.endDate && (
-                                <>
-                                  {format(parseISO(task.startDate), 'HH:mm')} - {format(parseISO(task.endDate), 'HH:mm')}
-                                </>
-                              )}
-                              {!task.startDate && task.endDate && format(parseISO(task.endDate), 'HH:mm')}
+                              {(() => {
+                                if (segment.isFirstSegment) {
+                                  return `${format(segment.segmentStart, 'HH:mm')} -`;
+                                } else if (segment.isLastSegment) {
+                                  return `- ${format(segment.segmentEnd, 'HH:mm')}`;
+                                } else {
+                                  return '全日';
+                                }
+                              })()} 
                             </div>
-                            <div className="timeline-task-title">{task.title}</div>
+                            <div className="timeline-task-title">{segment.task.title}</div>
                           </div>
                         </div>
                       ) : (
                         <DraggableTask
-                          task={task}
-                          column={column}
+                          task={segment.task}
+                          column={segment.column}
                           position={position}
                           onTaskClick={onTaskClick}
                           onTaskResize={handleTaskResize}
+                          segment={segment}
                         />
                       )}
                     </div>
@@ -633,12 +766,16 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           >
             <div className="timeline-task-content">
               <div className="timeline-task-time">
-                {activeTask.startDate && activeTask.endDate && (
-                  <>
-                    {format(parseISO(activeTask.startDate), 'HH:mm')} - {format(parseISO(activeTask.endDate), 'HH:mm')}
-                  </>
-                )}
-                {!activeTask.startDate && activeTask.endDate && format(parseISO(activeTask.endDate), 'HH:mm')}
+                {(() => {
+                  const startTime = getTaskStartDateTime(activeTask);
+                  const endTime = getTaskEndDateTime(activeTask);
+                  if (startTime && endTime) {
+                    return `${format(startTime, 'HH:mm')} - ${format(endTime, 'HH:mm')}`;
+                  } else if (endTime) {
+                    return format(endTime, 'HH:mm');
+                  }
+                  return '';
+                })()} 
               </div>
               <div className="timeline-task-title">{activeTask.title}</div>
             </div>

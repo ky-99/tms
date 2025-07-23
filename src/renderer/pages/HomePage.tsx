@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import TaskDetailModal from '../components/modals/TaskDetailModal';
+import CalendarTaskCreateModal from '../components/modals/CalendarTaskCreateModal';
+import CalendarTaskEditModal from '../components/modals/CalendarTaskEditModal';
 import TodayTasksSection from '../components/dashboard/TodayTasksSection';
 import OverdueTasksSection from '../components/dashboard/OverdueTasksSection';
 import { useTaskContext } from '../contexts/TaskContext';
@@ -60,6 +61,7 @@ const HomePage: React.FC = () => {
     setStableSelectedTask(null);
     setIsCreatingTask(true);
     setIsTaskModalOpen(true);
+    // createTaskDateはリセットしない - カレンダーから渡された日付を保持
   }, [saveScrollPosition]);
 
   // トグル状態の変更関数
@@ -266,14 +268,22 @@ const HomePage: React.FC = () => {
 
       {/* タスク詳細モーダル */}
       {(stableSelectedTask || isCreatingTask) && (
-        <TaskDetailModal
-          task={currentSelectedTask || stableSelectedTask || undefined}
-          isOpen={isTaskModalOpen}
-          onClose={handleCloseTaskModal}
-          isCreating={isCreatingTask}
-          onStatusChange={() => setIsStatusChanging(true)}
-          defaultEndDate={createTaskDate}
-        />
+        isCreatingTask ? (
+          <CalendarTaskCreateModal
+            isOpen={isTaskModalOpen}
+            onClose={handleCloseTaskModal}
+            defaultValues={{
+              endDate: createTaskDate
+            }}
+          />
+        ) : (
+          <CalendarTaskEditModal
+            isOpen={isTaskModalOpen}
+            onClose={handleCloseTaskModal}
+            task={currentSelectedTask || stableSelectedTask || undefined}
+            onStatusChange={() => setIsStatusChanging(true)}
+          />
+        )
       )}
     </div>
   );

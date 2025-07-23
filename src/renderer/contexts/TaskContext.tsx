@@ -30,6 +30,9 @@ interface TaskContextType {
   updateTask: (id: number, updates: Partial<Task>) => Promise<Task>;
   deleteTask: (id: number) => Promise<void>;
   loadTags: () => Promise<void>;
+  createTag: (name: string, color: string, textColor?: string) => Promise<Tag>;
+  updateTag: (id: number, updates: Partial<Tag>) => Promise<Tag>;
+  deleteTag: (id: number) => Promise<void>;
   clearError: () => void;
   
   // UI operations
@@ -92,6 +95,9 @@ const TaskContextProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     updateTask: dataContext.updateTask,
     deleteTask: dataContext.deleteTask,
     loadTags: dataContext.loadTags,
+    createTag: dataContext.createTag,
+    updateTag: dataContext.updateTag,
+    deleteTag: dataContext.deleteTag,
     clearError: dataContext.clearError,
     
     // UI operations

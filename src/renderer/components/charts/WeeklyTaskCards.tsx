@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useLocation } from 'wouter';
 import { Task } from '../../types';
 import { TASK_PRIORITY_LABELS } from '../../constants/task';
-// Removed unused import: TASK_PRIORITY_COLORS
+import { flattenTasks, getTaskEndDateTime } from '../../utils/taskUtils';
 
 interface WeeklyTaskCardsProps {
   tasks: Task[];
@@ -11,24 +11,9 @@ interface WeeklyTaskCardsProps {
 
 const WeeklyTaskCards: React.FC<WeeklyTaskCardsProps> = ({ tasks, onTaskClick }) => {
   const [, setLocation] = useLocation();
-  // 全タスクを平坦化
-  const flattenTasks = (taskList: Task[]): Task[] => {
-    const result: Task[] = [];
-    
-    const addTask = (task: Task) => {
-      result.push(task);
-      if (task.children) {
-        task.children.forEach(addTask);
-      }
-    };
-    
-    taskList.forEach(addTask);
-    return result;
-  };
 
   // 今週のタスクのみをフィルタリング（メモ化）
   const { completedTasks, inProgressTasks, pendingTasks } = useMemo(() => {
-    // Removed unused destructuring: weeklyTasks
     const today = new Date();
     const sunday = new Date(today);
     // 今週の日曜日を取得（週始まり）
@@ -41,10 +26,9 @@ const WeeklyTaskCards: React.FC<WeeklyTaskCardsProps> = ({ tasks, onTaskClick })
 
     const flatTasks = flattenTasks(tasks);
     const weeklyFiltered = flatTasks.filter(task => {
-      const endDateValue = task.endDate;
-      if (!endDateValue) return false;
-      const endDate = new Date(endDateValue);
-      return endDate >= sunday && endDate <= saturday;
+      const endDateTime = getTaskEndDateTime(task);
+      if (!endDateTime) return false;
+      return endDateTime >= sunday && endDateTime <= saturday;
     });
 
     return {

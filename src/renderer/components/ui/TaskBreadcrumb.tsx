@@ -102,22 +102,24 @@ const TaskBreadcrumb: React.FC<TaskBreadcrumbProps> = ({
           </button>
         </li>
         
-        {getTaskHierarchy.map((hierarchyTask, index) => (
-          <React.Fragment key={hierarchyTask.id}>
-            <li className="task-breadcrumb-separator">
-              <span>/</span>
-            </li>
-            <li className="task-breadcrumb-item">
-              <button 
-                className={`task-breadcrumb-task clickable ${index === getTaskHierarchy.length - 1 && !isCreating ? 'current' : ''}`}
-                onClick={() => handleTaskClick(hierarchyTask.id)}
-                title={`${hierarchyTask.title} に移動`}
-              >
-                {hierarchyTask.title}
-              </button>
-            </li>
-          </React.Fragment>
-        ))}
+        {getTaskHierarchy
+          .filter(hierarchyTask => hierarchyTask.title && hierarchyTask.title.trim() !== '')
+          .map((hierarchyTask, index, filteredArray) => (
+            <React.Fragment key={hierarchyTask.id}>
+              <li className="task-breadcrumb-separator">
+                <span>/</span>
+              </li>
+              <li className="task-breadcrumb-item">
+                <button 
+                  className={`task-breadcrumb-task clickable ${index === filteredArray.length - 1 && !isCreating ? 'current' : ''}`}
+                  onClick={() => handleTaskClick(hierarchyTask.id)}
+                  title={`${hierarchyTask.title} に移動`}
+                >
+                  {hierarchyTask.title}
+                </button>
+              </li>
+            </React.Fragment>
+          ))}
         
         {isCreating && (
           <>

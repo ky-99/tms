@@ -9,3 +9,4 @@ export { TextInput, TextArea, Select } from './Input';
 export { Modal } from './Modal';
 export { ErrorBoundary } from './ErrorBoundary';
 export { LoadingSpinner, LoadingOverlay } from './LoadingSpinner';
+export { default as TagPool } from './TagPool';

@@ -4,6 +4,7 @@
  */
 
 import { Task, TaskStatus, ApiTask, transformApiTask } from '../types';
+import { combineDateAndTime } from './lightDateUtils';
 
 /**
  * Flattens a hierarchical task tree into a flat array
@@ -32,33 +33,71 @@ export const normalizeTasks = (apiTasks: ApiTask[]): Task[] => {
   return apiTasks.map(transformApiTask);
 };
 
+/**
+ * 分離スキーマからの日時取得ヘルパー関数
+ */
+export const getTaskStartDateTime = (task: Task): Date | null => {
+  if (task.startDate) {
+    const combinedDateTime = combineDateAndTime(task.startDate, task.startTime || null);
+    return combinedDateTime ? new Date(combinedDateTime) : new Date(task.startDate);
+  }
+  return null;
+};
+
+export const getTaskEndDateTime = (task: Task): Date | null => {
+  if (task.endDate) {
+    const combinedDateTime = combineDateAndTime(task.endDate, task.endTime || null);
+    return combinedDateTime ? new Date(combinedDateTime) : new Date(task.endDate);
+  }
+  return null;
+};
 
 /**
- * Checks if a task is overdue
+ * タスクに時刻情報があるかチェック
+ */
+export const hasTaskTime = (task: Task): boolean => {
+  return !!(task.startTime || task.endTime);
+};
+
+
+/**
+ * Checks if a task is overdue (新スキーマ対応)
  */
 export const isTaskOverdue = (task: Task): boolean => {
   if (!task.endDate || task.status === 'completed') return false;
   
   const today = new Date();
-  const endDate = new Date(task.endDate);
-  today.setHours(0, 0, 0, 0);
-  endDate.setHours(0, 0, 0, 0);
+  const endDateTime = getTaskEndDateTime(task);
   
-  return endDate < today;
+  if (!endDateTime) return false;
+  
+  // 時刻情報がある場合は詳細比較、ない場合は日付のみ比較
+  if (hasTaskTime(task)) {
+    return endDateTime < today;
+  } else {
+    // 日付のみの場合は日付で比較
+    today.setHours(0, 0, 0, 0);
+    endDateTime.setHours(0, 0, 0, 0);
+    return endDateTime < today;
+  }
 };
 
 /**
- * Gets relative end date text (e.g., "明日", "2日後")
+ * Gets relative end date text (e.g., "明日", "2日後") - 新スキーマ対応
  */
 export const getEndDateText = (task: Task): string | null => {
   if (!task.endDate) return null;
   
   const today = new Date();
-  const endDate = new Date(task.endDate);
-  today.setHours(0, 0, 0, 0);
-  endDate.setHours(0, 0, 0, 0);
+  const endDateTime = getTaskEndDateTime(task);
   
-  const diffTime = endDate.getTime() - today.getTime();
+  if (!endDateTime) return null;
+  
+  // 日付比較用に時刻をリセット
+  today.setHours(0, 0, 0, 0);
+  endDateTime.setHours(0, 0, 0, 0);
+  
+  const diffTime = endDateTime.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   
   if (diffDays === 0) return '今日';
@@ -279,49 +318,47 @@ export const getRootTask = (task: Task, allTasks: Task[]): Task => {
  * タスクの統計情報を計算
  */
 /**
- * タスクの期間を取得（開始日〜終了日の表示用）
+ * タスクの期間を取得（開始日〜終了日の表示用）- 新スキーマ対応
  */
 export const getTaskDateRange = (task: Task): string | null => {
-  const { startDate, endDate } = task;
+  const startDateTime = getTaskStartDateTime(task);
+  const endDateTime = getTaskEndDateTime(task);
   
-  // 日時フォーマット関数
-  const formatDateTime = (dateStr: string): string => {
-    if (!dateStr) return '未定';
+  // 日時フォーマット関数（新スキーマ対応）
+  const formatDateTime = (dateTime: Date | null, hasTime: boolean): string => {
+    if (!dateTime) return '未定';
     
-    const date = new Date(dateStr);
+    const year = dateTime.getFullYear();
+    const month = String(dateTime.getMonth() + 1).padStart(2, '0');
+    const day = String(dateTime.getDate()).padStart(2, '0');
+    const hours = String(dateTime.getHours()).padStart(2, '0');
+    const minutes = String(dateTime.getMinutes()).padStart(2, '0');
     
-    // Invalid Dateの場合は「未定」を返す
-    if (isNaN(date.getTime())) {
-      return '未定';
-    }
-    
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    
-    // 時刻が00:00の場合は時刻部分を「未定」と表示
-    if (hours === '00' && minutes === '00') {
+    // 時刻情報がない場合は時刻部分を「未定」と表示
+    if (!hasTime) {
       return `${year}/${month}/${day} 未定`;
     }
     
     return `${year}/${month}/${day} ${hours}:${minutes}`;
   };
   
+  // タスクに時刻情報があるかチェック
+  const hasStartTime = !!(task.startTime);
+  const hasEndTime = !!(task.endTime);
+  
   // 終了日のみの場合
-  if (endDate && !startDate) {
-    return `〜${formatDateTime(endDate)}`;
+  if (endDateTime && !startDateTime) {
+    return `〜${formatDateTime(endDateTime, hasEndTime)}`;
   }
   
   // 開始日のみの場合
-  if (startDate && !endDate) {
-    return `${formatDateTime(startDate)}〜`;
+  if (startDateTime && !endDateTime) {
+    return `${formatDateTime(startDateTime, hasStartTime)}〜`;
   }
   
   // 開始日と終了日両方の場合
-  if (startDate && endDate) {
-    return `${formatDateTime(startDate)} ~ ${formatDateTime(endDate)}`;
+  if (startDateTime && endDateTime) {
+    return `${formatDateTime(startDateTime, hasStartTime)} ~ ${formatDateTime(endDateTime, hasEndTime)}`;
   }
   
   return null;
@@ -336,10 +373,8 @@ export const calculateTaskStats = (tasks: Task[]) => {
     inProgress: flatTasks.filter(t => t.status === 'in_progress').length,
     pending: flatTasks.filter(t => t.status === 'pending').length,
     overdue: flatTasks.filter(t => {
-      if (!t.endDate) return false;
-      const endDate = new Date(t.endDate);
-      const now = new Date();
-      return endDate < now && t.status !== 'completed';
+      // 新スキーマ対応の期限切れ判定
+      return isTaskOverdue(t);
     }).length
   };
   

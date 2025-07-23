@@ -7,33 +7,13 @@ import React, { createContext, useContext, useReducer, useEffect, useCallback, R
 import { Task, Tag } from '../types';
 import { taskAPI } from '../services';
 import { workspaceService } from '../services/workspaceService';
-import { validateTaskTime, adjustTaskTime } from '../utils/taskValidation';
+// validateTaskTime, adjustTaskTime は新スキーマでは不要
 
-// Helper function to validate and adjust task time
-const validateAndAdjustTaskTime = (startDate: string | undefined, endDate: string | undefined) => {
-  if (startDate && endDate) {
-    const validation = validateTaskTime({
-      startDate,
-      endDate,
-      minimumDurationMinutes: 15
-    });
-    
-    if (!validation.isValid) {
-      // 自動調整を試行
-      const adjusted = adjustTaskTime({
-        startDate,
-        endDate,
-        minimumDurationMinutes: 15
-      });
-      
-      if (adjusted.adjusted) {
-        return { startDate: adjusted.startDate, endDate: adjusted.endDate };
-      } else {
-        throw new Error('無効な時間設定です: ' + validation.errors.join(', '));
-      }
-    }
-  }
-  return { startDate, endDate };
+// Helper function to validate and adjust task time (updated for separated schema)
+const validateAndAdjustTaskTime = (taskData: Partial<Task>) => {
+  // 新スキーマでは分離された日付・時刻フィールドを使用するため、
+  // 旧形式の結合されたdatetimeフィールドのバリデーションは不要
+  return taskData;
 };
 
 // Helper function to handle errors consistently
@@ -52,7 +32,10 @@ type TaskDataAction =
   | { type: 'SET_TAGS'; payload: Tag[] }
   | { type: 'ADD_TASK'; payload: Task }
   | { type: 'UPDATE_TASK'; payload: Task }
-  | { type: 'DELETE_TASK'; payload: number };
+  | { type: 'DELETE_TASK'; payload: number }
+  | { type: 'ADD_TAG'; payload: Tag }
+  | { type: 'UPDATE_TAG'; payload: Tag }
+  | { type: 'DELETE_TAG'; payload: number };
 
 // Data state interface
 interface TaskDataState {
@@ -74,6 +57,9 @@ interface TaskDataContextType extends TaskDataState {
   
   // Tag operations
   loadTags: () => Promise<void>;
+  createTag: (name: string, color: string, textColor?: string) => Promise<Tag>;
+  updateTag: (id: number, updates: Partial<Tag>) => Promise<Tag>;
+  deleteTag: (id: number) => Promise<void>;
   
   // Error handling
   clearError: () => void;
@@ -142,6 +128,29 @@ const taskDataReducer = (state: TaskDataState, action: TaskDataAction): TaskData
         error: null
       };
     
+    case 'ADD_TAG':
+      return {
+        ...state,
+        tags: [...state.tags, action.payload],
+        error: null
+      };
+    
+    case 'UPDATE_TAG':
+      return {
+        ...state,
+        tags: state.tags.map(tag => 
+          tag.id === action.payload.id ? action.payload : tag
+        ),
+        error: null
+      };
+    
+    case 'DELETE_TAG':
+      return {
+        ...state,
+        tags: state.tags.filter(tag => tag.id !== action.payload),
+        error: null
+      };
+    
     default:
       return state;
   }
@@ -173,12 +182,11 @@ export const TaskDataProvider: React.FC<TaskDataProviderProps> = ({ children }) 
 
   const createTask = useCallback(async (taskData: Partial<Task>): Promise<Task> => {
     try {
-      // バリデーション層での最終チェック
-      const validatedTime = validateAndAdjustTaskTime(taskData.startDate, taskData.endDate);
-      taskData.startDate = validatedTime.startDate;
-      taskData.endDate = validatedTime.endDate;
+      // バリデーション層での最終チェック（分離スキーマに対応）
+      const validatedTaskData = validateAndAdjustTaskTime(taskData);
       
-      const newTask = await taskAPI.createTask(taskData);
+      
+      const newTask = await taskAPI.createTask(validatedTaskData);
       const tasks = await taskAPI.loadTasks();
       dispatch({ type: 'SET_TASKS', payload: tasks });
       return newTask;
@@ -189,12 +197,10 @@ export const TaskDataProvider: React.FC<TaskDataProviderProps> = ({ children }) 
 
   const createTaskAfter = useCallback(async (taskData: Partial<Task>, afterTaskId: number): Promise<Task> => {
     try {
-      // バリデーション層での最終チェック
-      const validatedTime = validateAndAdjustTaskTime(taskData.startDate, taskData.endDate);
-      taskData.startDate = validatedTime.startDate;
-      taskData.endDate = validatedTime.endDate;
+      // バリデーション層での最終チェック（分離スキーマに対応）
+      const validatedTaskData = validateAndAdjustTaskTime(taskData);
       
-      const newTask = await taskAPI.createTaskAfter(taskData, afterTaskId);
+      const newTask = await taskAPI.createTaskAfter(validatedTaskData, afterTaskId);
       const tasks = await taskAPI.loadTasks();
       dispatch({ type: 'SET_TASKS', payload: tasks });
       return newTask;
@@ -205,6 +211,7 @@ export const TaskDataProvider: React.FC<TaskDataProviderProps> = ({ children }) 
 
   const updateTask = useCallback(async (id: number, updates: Partial<Task>): Promise<Task> => {
     try {
+      
       // 楽観的UI更新: 即座にUI状態を更新
       const currentTask = state.tasks.find(task => task.id === id);
       if (currentTask) {
@@ -212,29 +219,18 @@ export const TaskDataProvider: React.FC<TaskDataProviderProps> = ({ children }) 
         dispatch({ type: 'UPDATE_TASK', payload: optimisticTask });
       }
       
-      // バリデーション層での最終チェック
-      if (updates.startDate || updates.endDate) {
-        if (!currentTask) {
-          throw new Error('Task not found');
-        }
-        
-        const startDate = updates.startDate || currentTask.startDate;
-        const endDate = updates.endDate || currentTask.endDate;
-        
-        const validatedTime = validateAndAdjustTaskTime(startDate, endDate);
-        updates.startDate = validatedTime.startDate;
-        updates.endDate = validatedTime.endDate;
-      }
+      // 新スキーマでは分離された日付・時刻フィールドを使用するため、
+      // 旧形式の結合されたdatetimeフィールドのバリデーションは不要
       
       // バックグラウンドでデータベース更新
       const updatedTask = await taskAPI.updateTask(id, updates);
       
-      // Important changes require full reload to ensure data consistency
-      if ('endDate' in updates || 'end_date' in updates || 'status' in updates || 'isRoutine' in updates) {
+      // 親子関係の変更など、本当に必要な場合のみ全リロード
+      if ('parentId' in updates || 'isRoutine' in updates) {
         const tasks = await taskAPI.loadTasks();
         dispatch({ type: 'SET_TASKS', payload: tasks });
       } else {
-        // 最終的な正確なデータでUI更新
+        // 最終的な正確なデータでUI更新（個別更新）
         dispatch({ type: 'UPDATE_TASK', payload: updatedTask });
       }
       
@@ -269,6 +265,35 @@ export const TaskDataProvider: React.FC<TaskDataProviderProps> = ({ children }) 
       dispatch({ type: 'SET_TAGS', payload: tags });
     } catch (error) {
       // Don't set error for tags as it's not critical
+    }
+  }, []);
+
+  const createTag = useCallback(async (name: string, color: string, textColor?: string): Promise<Tag> => {
+    try {
+      const newTag = await window.taskAPI.createTag(name, color, textColor);
+      dispatch({ type: 'ADD_TAG', payload: newTag });
+      return newTag;
+    } catch (error) {
+      throw handleError(dispatch, error, 'タグの作成に失敗しました');
+    }
+  }, []);
+
+  const updateTag = useCallback(async (id: number, updates: Partial<Tag>): Promise<Tag> => {
+    try {
+      const updatedTag = await window.taskAPI.updateTag(id, updates.name || '', updates.color || '', updates.textColor || '');
+      dispatch({ type: 'UPDATE_TAG', payload: updatedTag });
+      return updatedTag;
+    } catch (error) {
+      throw handleError(dispatch, error, 'タグの更新に失敗しました');
+    }
+  }, []);
+
+  const deleteTag = useCallback(async (id: number): Promise<void> => {
+    try {
+      await window.taskAPI.deleteTag(id);
+      dispatch({ type: 'DELETE_TAG', payload: id });
+    } catch (error) {
+      handleError(dispatch, error, 'タグの削除に失敗しました');
     }
   }, []);
 
@@ -336,6 +361,9 @@ export const TaskDataProvider: React.FC<TaskDataProviderProps> = ({ children }) 
     updateTask,
     deleteTask,
     loadTags,
+    createTag,
+    updateTag,
+    deleteTag,
     clearError,
   };
 

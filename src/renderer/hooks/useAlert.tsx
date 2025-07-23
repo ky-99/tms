@@ -98,11 +98,8 @@ const ConfirmationDialog: React.FC<{
       if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
-        console.log('[DEBUG] Keyboard Enter pressed - dismissing toast:', toastId);
         toast.remove(toastId);
-        console.log('[DEBUG] Toast removed, unblocking external actions');
         unblockExternalActions();
-        console.log('[DEBUG] Executing onConfirm callback immediately');
         onConfirm();
       } else if (e.key === 'q' || e.key === 'Q') {
         e.preventDefault();
@@ -157,11 +154,8 @@ const ConfirmationDialog: React.FC<{
         </button>
         <button
           onClick={() => {
-            console.log('[DEBUG] Confirm button clicked - dismissing toast:', toastId);
             toast.remove(toastId);
-            console.log('[DEBUG] Toast removed, unblocking external actions');
             unblockExternalActions();
-            console.log('[DEBUG] Executing onConfirm callback immediately');
             onConfirm();
           }}
           className={`toast-btn toast-btn-confirm ${
@@ -181,7 +175,6 @@ export const useGlobalAlert = () => {
     const { type = 'info', title, onConfirm, onCancel, showCancel, confirmText = 'OK', cancelText = 'キャンセル' } = options;
     
     const displayMessage = title ? `${title}: ${message}` : message;
-    console.log('[DEBUG] showAlert called with:', { message, type, showCancel, hasOnConfirm: !!onConfirm });
     
     // For simple messages without confirmation
     if (!showCancel && !onConfirm) {
@@ -261,11 +254,8 @@ export const useGlobalAlert = () => {
             <div className="toast-actions">
               <button
                 onClick={() => {
-                  console.log('[DEBUG] Simple confirm button clicked - dismissing toast:', t.id);
                   toast.remove(t.id);
-                  console.log('[DEBUG] Toast removed, unblocking external actions');
                   unblockExternalActions();
-                  console.log('[DEBUG] Executing onConfirm callback immediately');
                   onConfirm();
                 }}
                 className={`toast-btn toast-btn-confirm ${

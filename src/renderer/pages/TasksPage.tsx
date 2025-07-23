@@ -11,11 +11,12 @@ import { useTaskContext, useShortcut } from '../contexts';
 import { useLocalStorage, useDebounce } from '../hooks';
 import { flattenTasks, isParentTask } from '../utils/taskUtils';
 import { sortTasksMultiple } from '../utils/sortUtils';
-import { Button, TextInput, Modal } from '../components/ui';
+import { Button, TextInput, Modal, TagPool } from '../components/ui';
 import NotionLikeFilterModal from '../components/tasks/NotionLikeFilterModal';
 import NotionLikeSortModal, { SortOption } from '../components/tasks/NotionLikeSortModal';
 import TaskList from '../components/tasks/TaskList';
-import TaskDetailModal from '../components/modals/TaskDetailModal';
+import TaskCreateModal from '../components/modals/TaskCreateModal';
+import TaskEditModal from '../components/modals/TaskEditModal';
 import TaskMergeModal from '../components/modals/TaskMergeModal';
 import TaskItem from '../components/tasks/TaskItem';
 
@@ -51,7 +52,7 @@ const TasksPage: React.FC = () => {
     setCurrentContext('tasksPage');
   }, [setCurrentContext]);
 
-  // TaskDetailModal state (統一)
+  // Task Modal state
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [createParentId, setCreateParentId] = useState<number | undefined>(undefined);
@@ -75,13 +76,18 @@ const TasksPage: React.FC = () => {
   // UI state
   const [showTagFilter, setShowTagFilter] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
+  const [showTagPool, setShowTagPool] = useState(false);
   const [isClearingFilters, setIsClearingFilters] = useState(false);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const sortButtonRef = useRef<HTMLButtonElement>(null);
+  const tagPoolButtonRef = useRef<HTMLButtonElement>(null);
   
 
   // Debounced search - shorter delay for better responsiveness
   const debouncedSearch = useDebounce(searchQuery, 150);
+
+  // タグプールから選択されたタグをタスクに追加する状態
+  const [selectedTaskForTagging, setSelectedTaskForTagging] = useState<Task | null>(null);
 
   // 共通のタスク検索関数（メモ化）
   const findTaskById = useCallback((taskList: Task[], targetId: number): Task | null => {
@@ -359,7 +365,7 @@ const TasksPage: React.FC = () => {
     return foundTask || stableSelectedTask;
   }, [stableSelectedTask, isDetailModalOpen, tasks, isStatusChanging, findTaskById]);
 
-  // TaskDetailModal handlers (統一)
+  // Task Modal handlers
   const openDetailModal = (task: Task) => {
     setStableSelectedTask(task);
     setIsCreatingTask(false);
@@ -427,6 +433,38 @@ const TasksPage: React.FC = () => {
       setMaintainHierarchy(false);
     });
   }, [setSearchQuery, setSelectedTagIds, setSelectedStatuses, setSelectedPriorities, setDateFilterFrom, setDateFilterTo, setIncludeParentTasks, setMaintainHierarchy]);
+
+  // タグプールからタグを選択した際のハンドラー
+  const handleTagPoolSelect = async (tag: Tag) => {
+    if (selectedTaskForTagging) {
+      try {
+        // タスクの現在のタグIDを取得
+        const currentTagIds = selectedTaskForTagging.tagIds || [];
+        
+        // タグが既に追加されているかチェック
+        if (!currentTagIds.includes(tag.id)) {
+          const updatedTagIds = [...currentTagIds, tag.id];
+          
+          // タスクを更新
+          await window.taskAPI.updateTask(selectedTaskForTagging.id, {
+            tagIds: updatedTagIds
+          });
+          
+          // タスク一覧を再読み込み
+          loadTasks();
+        }
+        
+        // 選択状態をリセット
+        setSelectedTaskForTagging(null);
+        setShowTagPool(false);
+      } catch (error) {
+        console.error('Failed to add tag to task:', error);
+      }
+    } else {
+      // タスクが選択されていない場合は、モーダルを開いたまま（何もしない）
+      // setShowTagPool(false); // 新規作成時はモーダルを開いたまま
+    }
+  };
 
   // Sort handlers
   const handleSortChange = useCallback((newSortOptions: SortOption[]) => {
@@ -532,6 +570,35 @@ const TasksPage: React.FC = () => {
     }
   };
 
+  // タスクの順序変更処理
+  const handleTaskReorder = async (taskId: number, newParentId: number | null, newPosition: number) => {
+    try {
+      console.log('Task reorder:', { taskId, newParentId, newPosition });
+      
+      // タスクの親IDと位置を更新
+      const updateData: { parentId?: number | null; position?: number } = {};
+      
+      if (newParentId !== null) {
+        // 親タスクへの移動
+        updateData.parentId = newParentId;
+        updateData.position = newPosition;
+      } else {
+        // 同じレベルでの順序変更
+        updateData.position = newPosition;
+      }
+      
+      await window.taskAPI.updateTask(taskId, updateData);
+      
+      // タスクリストを再読み込み
+      await loadTasks();
+      
+      console.log('Task reorder completed successfully');
+    } catch (error) {
+      console.error('Failed to reorder task:', error);
+      throw error;
+    }
+  };
+
 
   return (
     <div className="tasks-page">
@@ -579,6 +646,32 @@ const TasksPage: React.FC = () => {
           </svg>
         </button>
         
+        <div style={{ position: 'relative' }}>
+          <button
+            ref={tagPoolButtonRef}
+            className={`tag-pool-trigger ${showTagPool ? 'active' : ''}`}
+            onClick={() => setShowTagPool(!showTagPool)}
+            title="タグプール"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5.5,7A1.5,1.5 0 0,1 4,5.5A1.5,1.5 0 0,1 5.5,4A1.5,1.5 0 0,1 7,5.5A1.5,1.5 0 0,1 5.5,7M21.41,11.58L12.41,2.58C12.05,2.22 11.55,2 11,2H4C2.89,2 2,2.89 2,4V11C2,11.55 2.22,12.05 2.59,12.41L11.58,21.41C11.95,21.78 12.45,22 13,22C13.55,22 14.05,21.78 14.41,21.41L21.41,14.41C21.78,14.05 22,13.55 22,13C22,12.45 21.78,11.95 21.41,11.58Z"/>
+            </svg>
+          </button>
+          
+          {showTagPool && (
+            <TagPool
+              isOpen={showTagPool}
+              onClose={() => {
+                setShowTagPool(false);
+                setSelectedTaskForTagging(null);
+              }}
+              onTagSelect={handleTagPoolSelect}
+              triggerRef={tagPoolButtonRef}
+              selectedTaskForTagging={selectedTaskForTagging}
+            />
+          )}
+        </div>
+        
         <button
           className="create-task-icon"
           onClick={() => openCreateModal(rootId ? parseInt(rootId) : undefined)}
@@ -612,6 +705,7 @@ const TasksPage: React.FC = () => {
         onMaintainHierarchyChange={setMaintainHierarchy}
         onClearFilters={handleClearFilters}
       />
+
 
       {/* Sort Modal */}
       <NotionLikeSortModal
@@ -730,21 +824,34 @@ const TasksPage: React.FC = () => {
             onEditTask={openDetailModal}
             onDeleteTask={handleDeleteTask}
             onToggleExpand={toggleTaskExpansion}
+            onTaskSelectForTagging={(task) => {
+              setSelectedTaskForTagging(task);
+              setShowTagPool(true);
+            }}
             isDetailView={!!rootId}
+            onTaskReorder={handleTaskReorder}
           />
         )}
       </div>
 
       {/* Task Detail Modal (統一) */}
       {(stableSelectedTask || isCreatingTask) && (
-        <TaskDetailModal
-          task={currentSelectedTask || stableSelectedTask || undefined}
-          isOpen={isDetailModalOpen}
-          onClose={closeDetailModal}
-          defaultParentId={createParentId}
-          isCreating={isCreatingTask}
-          onStatusChange={() => setIsStatusChanging(true)}
-        />
+        isCreatingTask ? (
+          <TaskCreateModal
+            isOpen={isDetailModalOpen}
+            onClose={closeDetailModal}
+            defaultValues={{
+              parentId: createParentId
+            }}
+          />
+        ) : (
+          <TaskEditModal
+            isOpen={isDetailModalOpen}
+            onClose={closeDetailModal}
+            task={currentSelectedTask || stableSelectedTask || undefined}
+            onStatusChange={() => setIsStatusChanging(true)}
+          />
+        )
       )}
 
       {/* Task Merge Modal */}

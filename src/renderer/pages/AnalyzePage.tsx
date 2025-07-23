@@ -6,9 +6,10 @@ import TagProgressChart from '../components/charts/TagProgressChart';
 import TaskTrendChart from '../components/charts/TaskTrendChart';
 import WeeklyTaskCards from '../components/charts/WeeklyTaskCards';
 import WeeklyCompletionChart from '../components/charts/WeeklyCompletionChart';
-import TaskDetailModal from '../components/modals/TaskDetailModal';
+import TaskEditModal from '../components/modals/TaskEditModal';
 import { useTaskContext } from '../contexts/TaskContext';
 import { TaskWithChildren } from '../types';
+import { flattenTasks, getTaskEndDateTime } from '../utils/taskUtils';
 
 const AnalyzePage: React.FC = () => {
   const { tasks: contextTasks, loading } = useTaskContext();
@@ -171,39 +172,22 @@ const AnalyzePage: React.FC = () => {
     const weekStart = new Date(sunday);
     
     // ダッシュボードと同じロジックで全タスクを平坦化
-    const flattenTasks = (taskList: TaskWithChildren[]): TaskWithChildren[] => {
-      const result: TaskWithChildren[] = [];
-      
-      const addTask = (task: TaskWithChildren) => {
-        result.push(task);
-        if (task.children) {
-          task.children.forEach(addTask);
-        }
-      };
-      
-      taskList.forEach(addTask);
-      return result;
-    };
-    
     // 期日タスクの処理用に全タスクを平坦化
     const allTasks = flattenTasks(allTasksFromRoot);
     
-    const tasksWithEndDate = allTasks.filter(task => task.endDate || task.endDate);
+    const tasksWithEndDate = allTasks.filter(task => getTaskEndDateTime(task) !== null);
     
     // 今週期日のタスクのうち完了済みタスクをカウント
     // （完了日は関係なく、その日時点で完了しているかどうかで判定）
     const weeklyEndTasks = allTasks.filter(task => {
-      const endDateValue = task.endDate || task.endDate;
-      if (!endDateValue) return false;
-      
-      const endDate = new Date(endDateValue);
-      endDate.setHours(0, 0, 0, 0);
+      const endDateTime = getTaskEndDateTime(task);
+      if (!endDateTime) return false;
       
       const saturday = new Date(sunday);
       saturday.setDate(sunday.getDate() + 6);
       saturday.setHours(23, 59, 59, 999);
       
-      return endDate >= sunday && endDate <= saturday;
+      return endDateTime >= sunday && endDateTime <= saturday;
     });
     
     // 各日付において、その時点で完了済みの今週期日タスクをカウント
@@ -213,7 +197,7 @@ const AnalyzePage: React.FC = () => {
       
       weeklyEndTasks.forEach(task => {
         if (task.status === 'completed') {
-          const completedAt = task.completedAt || task.completedAt;
+          const completedAt = task.completedAt;
           if (completedAt) {
             // UTC時刻として解釈されているデータをローカル時刻として扱う
             let completedDate: Date;
@@ -367,7 +351,7 @@ const AnalyzePage: React.FC = () => {
       
       {/* タスク詳細モーダル */}
       {stableSelectedTask && (
-        <TaskDetailModal
+        <TaskEditModal
           task={currentSelectedTask || stableSelectedTask}
           isOpen={isTaskModalOpen}
           onClose={handleCloseTaskModal}

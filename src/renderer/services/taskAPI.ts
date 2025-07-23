@@ -5,33 +5,13 @@
 
 import { Task, ApiTask, TaskStatus, TaskPriority } from '../types';
 import { normalizeTask, normalizeTasks } from '../utils/taskUtils';
-import { validateTaskTime, adjustTaskTime } from '../utils/taskValidation';
+// validateTaskTime, adjustTaskTime は新スキーマでは不要
 
-// Helper function to validate and adjust task time
-const validateAndAdjustTaskTime = (startDate: string | undefined, endDate: string | undefined) => {
-  if (startDate && endDate) {
-    const validation = validateTaskTime({
-      startDate,
-      endDate,
-      minimumDurationMinutes: 15
-    });
-    
-    if (!validation.isValid) {
-      // 自動調整を試行
-      const adjusted = adjustTaskTime({
-        startDate,
-        endDate,
-        minimumDurationMinutes: 15
-      });
-      
-      if (adjusted.adjusted) {
-        return { startDate: adjusted.startDate, endDate: adjusted.endDate };
-      } else {
-        throw new Error('無効な時間設定です: ' + validation.errors.join(', '));
-      }
-    }
-  }
-  return { startDate, endDate };
+// Helper function to validate and adjust task time (updated for separated schema)
+const validateAndAdjustTaskTime = (taskData: Partial<Task>) => {
+  // 新スキーマでは分離された日付・時刻フィールドを使用するため、
+  // 旧形式の結合されたdatetimeフィールドのバリデーションは不要
+  return taskData;
 };
 
 /**
@@ -47,7 +27,10 @@ class TaskAPIService {
   async loadTasks(): Promise<Task[]> {
     try {
       const apiTasks = await this.api.getAllTasks();
-      return normalizeTasks(apiTasks);
+      
+      const normalizedTasks = normalizeTasks(apiTasks);
+      
+      return normalizedTasks;
     } catch (error) {
       throw new Error('タスクの読み込みに失敗しました');
     }
@@ -70,25 +53,23 @@ class TaskAPIService {
    */
   async createTask(taskData: Partial<Task>): Promise<Task> {
     try {
-      let startDate = taskData.startDate || undefined;
-      let endDate = taskData.endDate || undefined;
+      // 時間バリデーションを実行（分離スキーマに対応）
+      const validatedTaskData = validateAndAdjustTaskTime(taskData);
       
-      // 時間バリデーションを実行
-      const validatedTime = validateAndAdjustTaskTime(startDate, endDate);
-      startDate = validatedTime.startDate;
-      endDate = validatedTime.endDate;
       
       const createData = {
-        title: taskData.title || '',
-        description: taskData.description || '',
-        status: taskData.status || 'pending',
-        priority: taskData.priority || 'medium',
-        startDate,
-        endDate,
-        parentId: taskData.parentId || undefined,
-        tagIds: taskData.tagIds || [],
-        isRoutine: taskData.isRoutine || false,
-        routineType: taskData.isRoutine ? 'daily' : null
+        title: validatedTaskData.title || '',
+        description: validatedTaskData.description || '',
+        status: validatedTaskData.status || 'pending',
+        priority: validatedTaskData.priority || 'medium',
+        startDate: validatedTaskData.startDate,
+        startTime: validatedTaskData.startTime,
+        endDate: validatedTaskData.endDate,
+        endTime: validatedTaskData.endTime,
+        parentId: validatedTaskData.parentId || undefined,
+        tagIds: validatedTaskData.tagIds || [],
+        isRoutine: validatedTaskData.isRoutine || false,
+        routineType: validatedTaskData.isRoutine ? 'daily' : null
       };
       
       // Use the real IPC communication instead of in-memory manipulation
@@ -105,25 +86,22 @@ class TaskAPIService {
    */
   async createTaskAfter(taskData: Partial<Task>, afterTaskId: number): Promise<Task> {
     try {
-      let startDate = taskData.startDate || undefined;
-      let endDate = taskData.endDate || undefined;
-      
-      // 時間バリデーションを実行
-      const validatedTime = validateAndAdjustTaskTime(startDate, endDate);
-      startDate = validatedTime.startDate;
-      endDate = validatedTime.endDate;
+      // 時間バリデーションを実行（分離スキーマに対応）
+      const validatedTaskData = validateAndAdjustTaskTime(taskData);
       
       const createData = {
-        title: taskData.title || '',
-        description: taskData.description || '',
-        status: taskData.status || 'pending',
-        priority: taskData.priority || 'medium',
-        startDate,
-        endDate,
-        parentId: taskData.parentId || undefined,
-        tagIds: taskData.tagIds || [],
-        isRoutine: taskData.isRoutine || false,
-        routineType: taskData.isRoutine ? 'daily' : null
+        title: validatedTaskData.title || '',
+        description: validatedTaskData.description || '',
+        status: validatedTaskData.status || 'pending',
+        priority: validatedTaskData.priority || 'medium',
+        startDate: validatedTaskData.startDate,
+        startTime: validatedTaskData.startTime,
+        endDate: validatedTaskData.endDate,
+        endTime: validatedTaskData.endTime,
+        parentId: validatedTaskData.parentId || undefined,
+        tagIds: validatedTaskData.tagIds || [],
+        isRoutine: validatedTaskData.isRoutine || false,
+        routineType: validatedTaskData.isRoutine ? 'daily' : null
       };
       
       // Use the real IPC communication for positioned task creation
@@ -140,46 +118,17 @@ class TaskAPIService {
    */
   async updateTask(id: number, updates: Partial<Task>): Promise<Task> {
     try {
-      // 時間関連の更新の場合はバリデーションを実行
-      if (updates.startDate || updates.endDate) {
-        // 現在のタスクデータを取得
-        const currentTask = await this.getTask(id);
-        if (!currentTask) {
-          throw new Error('Task not found');
-        }
-        
-        const startDate = updates.startDate || currentTask.startDate;
-        const endDate = updates.endDate || currentTask.endDate;
-        
-        if (startDate && endDate) {
-          const validation = validateTaskTime({
-            startDate,
-            endDate,
-            minimumDurationMinutes: 15
-          });
-          
-          if (!validation.isValid) {
-            // 自動調整を試行
-            const adjusted = adjustTaskTime({
-              startDate,
-              endDate,
-              minimumDurationMinutes: 15
-            });
-            
-            if (adjusted.adjusted) {
-              updates.startDate = adjusted.startDate;
-              updates.endDate = adjusted.endDate;
-            } else {
-              throw new Error('無効な時間設定です: ' + validation.errors.join(', '));
-            }
-          }
-        }
-      }
+      // 新スキーマでは分離された日付・時刻フィールドを使用するため、
+      // 旧形式の結合されたdatetimeフィールドのバリデーションは不要
       
       // Use the real IPC communication instead of in-memory manipulation
       const updatedTask = await this.api.updateTask(id, updates);
-      return normalizeTask(updatedTask);
+      
+      const normalizedTask = normalizeTask(updatedTask);
+      
+      return normalizedTask;
     } catch (error) {
+      console.error('❌ TaskAPI updateTask Error:', error);
       throw new Error('タスクの更新に失敗しました');
     }
   }

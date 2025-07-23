@@ -30,7 +30,8 @@
       "Bash(sed:*)",
       "WebFetch(domain:github.com)",
       "Bash(git checkout:*)",
-      "mcp__ide__executeCode"
+      "mcp__ide__executeCode",
+      "Bash(true)"
     ],
     "deny": []
   }

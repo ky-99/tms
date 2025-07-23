@@ -590,3 +590,98 @@
   color: #3b82f6;
   font-weight: 500;
 }
+
+/* ドラッグアンドドロップスタイル */
+.task-list__drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: #9ca3af;
+  cursor: grab;
+  margin-right: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  opacity: 0;
+}
+
+.task-list__drag-handle:hover {
+  color: #6b7280;
+  background-color: #f3f4f6;
+  opacity: 1;
+}
+
+.task-list__drag-handle:active {
+  cursor: grabbing;
+}
+
+.task-list__item--draggable {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.task-list__item--draggable:hover .task-list__drag-handle {
+  opacity: 1;
+}
+
+/* ドラッグ中のスタイル */
+.task-list__item[data-sortable-id]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 展開コンテナにドラッグハンドルがある場合の調整 */
+.task-list__expand-container {
+  display: flex;
+  align-items: center;
+}
+
+/* 親タスクへのドラッグオーバー時のハイライト */
+.task-list__item--drag-over {
+  background-color: #fef3c7 !important;
+  border: 2px dashed #f59e0b !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2) !important;
+  transition: all 0.2s ease;
+}
+
+/* ゴーストタスク（ドラッグ中の元の位置表示） */
+.task-list__item--ghost {
+  background-color: #f8fafc !important;
+  border: 1px dashed #cbd5e1 !important;
+  opacity: 0.4 !important;
+  pointer-events: none !important;
+  transform: none !important;
+  transition: opacity 0.2s ease;
+}
+
+.task-list__item--ghost .task-list__title {
+  color: #94a3b8 !important;
+}
+
+.task-list__item--ghost .task-list__description {
+  color: #cbd5e1 !important;
+}
+
+.task-list__item--ghost .task-list__tag {
+  opacity: 0.6 !important;
+}
+
+.task-list__item--ghost .task-list__drag-handle {
+  opacity: 0 !important;
+}
+
+/* ドラッグ中のタスクスタイル */
+.task-list__item--draggable[data-sortable-id] {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.task-list__item--draggable[data-sortable-id]:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ドラッグ中のタスクが親タスクの上にある時の表示 */
+.task-list__item[style*="opacity: 0.8"] {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid #3b82f6 !important;
+  background-color: rgba(59, 130, 246, 0.05) !important;
+}

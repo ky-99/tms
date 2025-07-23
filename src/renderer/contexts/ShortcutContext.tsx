@@ -11,11 +11,9 @@ interface ShortcutContextValue {
   currentContext: string;
   hoveredTask: Task | null;
   hoveredCalendarTaskId: number | null;
-  hoveredCalendarDate: string | null;
   setCurrentContext: (context: string) => void;
   setHoveredTask: (task: Task | null) => void;
   setHoveredCalendarTaskId: (taskId: number | null) => void;
-  setHoveredCalendarDate: (date: string | null) => void;
   clearSelection: () => void;
 }
 
@@ -37,7 +35,6 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
   const [currentContext, setCurrentContext] = React.useState<string>('global');
   const [hoveredTask, setHoveredTask] = React.useState<Task | null>(null);
   const [hoveredCalendarTaskId, setHoveredCalendarTaskId] = React.useState<number | null>(null);
-  const [hoveredCalendarDate, setHoveredCalendarDate] = React.useState<string | null>(null);
   const [isDuplicating, setIsDuplicating] = React.useState(false);
   const [location, setLocation] = useLocation();
   const { showAlert } = useGlobalAlert();
@@ -47,7 +44,6 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
   const clearSelection = () => {
     setHoveredTask(null);
     setHoveredCalendarTaskId(null);
-    setHoveredCalendarDate(null);
     setCurrentContext('global');
     setIsDuplicating(false); // 複製状態もリセット
   };
@@ -91,6 +87,11 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
         return;
       }
       
+      // カレンダー関連要素をクリックした場合もクリアしない
+      if (target.closest('.calendar-day') || target.closest('.calendar-view') || target.closest('.views-page')) {
+        return;
+      }
+      
       // それ以外の場合は選択状態をクリア
       clearSelection();
     };
@@ -110,9 +111,13 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
       const isCmd = event.metaKey || event.ctrlKey;
       const key = event.key.toLowerCase();
       
-      // モーダルが開いている場合のESCキー処理
-      if (key === 'escape' && currentContext === 'modalOpen') {
-        // モーダルを閉じる処理（各コンポーネントで実装）
+      // モーダルが開いている場合は、ESCキー以外のショートカットを無効にする
+      if (currentContext === 'modalOpen') {
+        if (key === 'escape') {
+          // モーダルを閉じる処理（各コンポーネントで実装）
+          return;
+        }
+        // モーダルが開いている時は他のショートカットは無効
         return;
       }
 
@@ -142,12 +147,10 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
       if (currentContext === 'global' || currentContext === 'taskSelected' || currentContext === 'tasksPage' || currentContext === 'calendar' || currentContext === 'dashboard') {
         // cmd + n: 新しいタスクを作成
         if (isCmd && key === 'n' && !event.shiftKey) {
-          event.preventDefault();
-          // カレンダーで日付がホバーされている場合は、その日付でタスクを作成
-          if (currentContext === 'calendar' && hoveredCalendarDate) {
-            const createEvent = new CustomEvent('createTaskWithDate', { detail: { date: hoveredCalendarDate } });
-            window.dispatchEvent(createEvent);
-          } else {
+          // カレンダー内でのCmd+Nは CalendarView で直接処理される
+          // カレンダーコンテキスト以外でのみ処理
+          if (currentContext !== 'calendar') {
+            event.preventDefault();
             handleCreateTask();
           }
           return;
@@ -187,8 +190,8 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
       }
 
       // カレンダー固有の処理（ホバー状態があるときに動作）
-      // カレンダーでホバーされているタスクの削除
-      if ((key === 'delete' || key === 'backspace') && hoveredCalendarTaskId) {
+      // カレンダーでホバーされているタスクの削除（モーダルが開いている時は無効）
+      if ((key === 'delete' || key === 'backspace') && hoveredCalendarTaskId && currentContext !== 'modalOpen') {
         // カレンダーでは平坦化されたタスクリストから検索
         const hoveredCalendarTask = memoizedFindTaskById(tasks, hoveredCalendarTaskId);
         if (hoveredCalendarTask) {
@@ -321,7 +324,7 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
     return () => {
       document.removeEventListener('keydown', handleKeyDown, { capture: true });
     };
-  }, [currentContext, hoveredTask, hoveredCalendarTaskId, hoveredCalendarDate, setLocation, tasks, memoizedFindTaskById, showAlert, deleteTask, setHoveredTask]);
+  }, [currentContext, hoveredTask, hoveredCalendarTaskId, setLocation, tasks, memoizedFindTaskById, showAlert, deleteTask, setHoveredTask]);
 
   // ショートカットハンドラー関数をメモ化
   const handleCreateTask = useCallback(() => {
@@ -338,7 +341,7 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
 
   const handleEditTask = useCallback((task: Task) => {
     // タスク編集モーダルを開く処理
-    // 実装はTaskDetailModalで行う
+    // 実装は各モーダルで行う
     const event = new CustomEvent('openTaskEditModal', { detail: { task } });
     window.dispatchEvent(event);
   }, []);
@@ -511,25 +514,30 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
     window.dispatchEvent(event);
   }, []);
 
-  // ページが変わったときに状態をリセット
+  // ページが変わったときに状態をリセット（ただしViewsPageのカレンダーコンテキストは保持）
   React.useEffect(() => {
+    // ViewsPageの場合はコンテキストをリセットしない（ViewsPageが自身でコンテキストを管理）
+    if (location === '/views') {
+      setIsDuplicating(false);
+      return;
+    }
+    
+    // その他のページでは状態をリセット
     setCurrentContext('global');
-    setIsDuplicating(false); // ページ変更時に複製状態もリセット
+    setIsDuplicating(false);
   }, [location]);
 
   const setCurrentContextWithLog = useCallback((context: string) => {
     setCurrentContext(context);
-  }, [currentContext]);
+  }, []);
 
   const value: ShortcutContextValue = {
     currentContext,
     hoveredTask,
     hoveredCalendarTaskId,
-    hoveredCalendarDate,
     setCurrentContext: setCurrentContextWithLog,
     setHoveredTask,
     setHoveredCalendarTaskId,
-    setHoveredCalendarDate,
     clearSelection,
   };
 

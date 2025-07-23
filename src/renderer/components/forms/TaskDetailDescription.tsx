@@ -10,6 +10,8 @@ interface TaskDetailDescriptionProps {
   onDescriptionSave: (description: string) => Promise<void>;
   onDescriptionCancel: () => void;
   optimisticDescription?: string | null;
+  editedDescription: string;
+  onDescriptionChange: (description: string) => void;
 }
 
 const TaskDetailDescription: React.FC<TaskDetailDescriptionProps> = ({
@@ -19,19 +21,14 @@ const TaskDetailDescription: React.FC<TaskDetailDescriptionProps> = ({
   setIsEditingDescription,
   onDescriptionSave,
   onDescriptionCancel,
-  optimisticDescription
+  optimisticDescription,
+  editedDescription,
+  onDescriptionChange
 }) => {
-  const [editedDescription, setEditedDescription] = useState(() => task.description || '');
   const [isComposing, setIsComposing] = useState(false);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { showAlert } = useGlobalAlert();
-
-  // タスクが変更されたときに説明を更新
-  useEffect(() => {
-    const desc = optimisticDescription ?? task.description ?? '';
-    setEditedDescription(desc);
-  }, [task.description, optimisticDescription]);
 
   const handleDescriptionEdit = () => {
     if (blurTimeoutRef.current) {
@@ -39,8 +36,6 @@ const TaskDetailDescription: React.FC<TaskDetailDescriptionProps> = ({
       blurTimeoutRef.current = null;
     }
     setIsEditingDescription(true);
-    const desc = optimisticDescription ?? task.description ?? '';
-    setEditedDescription(desc);
     
     setTimeout(() => {
       if (descriptionInputRef.current) {
@@ -57,8 +52,6 @@ const TaskDetailDescription: React.FC<TaskDetailDescriptionProps> = ({
   };
 
   const handleDescriptionCancel = () => {
-    const desc = optimisticDescription ?? task.description ?? '';
-    setEditedDescription(desc);
     onDescriptionCancel();
   };
 
@@ -89,7 +82,7 @@ const TaskDetailDescription: React.FC<TaskDetailDescriptionProps> = ({
           <textarea
             ref={descriptionInputRef}
             value={editedDescription}
-            onChange={(e) => setEditedDescription(e.target.value)}
+            onChange={(e) => onDescriptionChange(e.target.value)}
             onBlur={handleDelayedBlur}
             onKeyDown={handleKeyDown}
             onCompositionStart={() => setIsComposing(true)}

@@ -9,8 +9,10 @@ CREATE TABLE IF NOT EXISTS tasks (
     description TEXT,
     status TEXT NOT NULL DEFAULT 'pending',
     priority TEXT NOT NULL DEFAULT 'medium',
-    start_date DATETIME,
-    end_date DATETIME,
+    start_date DATE,
+    start_time TIME,
+    end_date DATE,
+    end_time TIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     completed_at DATETIME,
@@ -76,6 +78,8 @@ CREATE INDEX IF NOT EXISTS idx_tasks_parent_id ON tasks(parent_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
 CREATE INDEX IF NOT EXISTS idx_tasks_start_date ON tasks(start_date);
 CREATE INDEX IF NOT EXISTS idx_tasks_end_date ON tasks(end_date);
+CREATE INDEX IF NOT EXISTS idx_tasks_start_time ON tasks(start_time);
+CREATE INDEX IF NOT EXISTS idx_tasks_end_time ON tasks(end_time);
 CREATE INDEX IF NOT EXISTS idx_task_tags_task_id ON task_tags(task_id);
 CREATE INDEX IF NOT EXISTS idx_task_tags_tag_id ON task_tags(tag_id);
 CREATE INDEX IF NOT EXISTS idx_attachments_task_id ON attachments(task_id);

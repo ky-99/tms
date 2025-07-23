@@ -10,6 +10,7 @@ interface GoogleSeparatedDateTimePickerProps {
   disabled?: boolean;
   showTime?: boolean;
   timeInterval?: number;
+  hideTimeWhenDateOnly?: boolean; // 日付のみの場合に時刻フィールドを非表示
 }
 
 const GoogleSeparatedDateTimePicker: React.FC<GoogleSeparatedDateTimePickerProps> = ({
@@ -19,11 +20,20 @@ const GoogleSeparatedDateTimePicker: React.FC<GoogleSeparatedDateTimePickerProps
   className = '',
   disabled = false,
   showTime = true,
-  timeInterval = 15
+  timeInterval = 15,
+  hideTimeWhenDateOnly = false
 }) => {
   // datetime-local形式の文字列から日付と時間を分離
   const parseDateTime = (datetimeString: string) => {
     if (!datetimeString) return { date: '', time: '' };
+    
+    // 時刻のみの形式 "THH:MM" をチェック
+    if (datetimeString.startsWith('T') && !datetimeString.includes('-')) {
+      return { 
+        date: '', 
+        time: datetimeString.substring(1, 6) // "THH:MM" から "HH:MM" を抽出
+      };
+    }
     
     // datetime-local形式 "YYYY-MM-DDTHH:MM" または ISO形式を処理
     let cleanString = datetimeString;
@@ -62,13 +72,24 @@ const GoogleSeparatedDateTimePicker: React.FC<GoogleSeparatedDateTimePickerProps
   };
 
   const handleTimeChange = (newTime: string) => {
+    // 空文字や無効な時刻の場合は時刻を削除
+    if (!newTime || newTime.trim() === '') {
+      if (date) {
+        // 日付のみを保持（分離スキーマでは日付のみの形式で通知）
+        onChange(date);
+      } else {
+        // 日付も時刻もない場合は空文字
+        onChange('');
+      }
+      return;
+    }
+    
+    // 日付が未設定の場合は時刻のみを設定（日付は自動補完しない）
     if (!date) {
-      // 日付が未設定の場合は今日の日付を使用
-      const today = new Date();
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      const newDateTime = combineDateTime(todayStr, newTime);
-      onChange(newDateTime);
+      // 時刻のみの変更として通知（疎結合対応）
+      onChange(`T${newTime}`);
     } else {
+      // 日付と時刻の両方がある場合は結合
       const newDateTime = combineDateTime(date, newTime);
       onChange(newDateTime);
     }
@@ -79,13 +100,26 @@ const GoogleSeparatedDateTimePicker: React.FC<GoogleSeparatedDateTimePickerProps
     if (!value) return placeholder;
     
     const { date: dateStr, time: timeStr } = parseDateTime(value);
-    if (!dateStr) return placeholder;
     
-    // 日付を手動でフォーマット
+    // 日付も時刻もない場合
+    if (!dateStr && !timeStr) return placeholder;
+    
+    // 時刻のみの場合
+    if (!dateStr && timeStr) {
+      return showTime ? timeStr : placeholder;
+    }
+    
+    // 日付のみの場合
+    if (dateStr && !timeStr) {
+      const [year, month, day] = dateStr.split('-');
+      return `${year}/${month}/${day}`;
+    }
+    
+    // 日付と時刻両方ある場合
     const [year, month, day] = dateStr.split('-');
     const formattedDate = `${year}/${month}/${day}`;
     
-    if (!showTime || !timeStr) return formattedDate;
+    if (!showTime) return formattedDate;
     
     return `${formattedDate} ${timeStr}`;
   };
@@ -101,7 +135,7 @@ const GoogleSeparatedDateTimePicker: React.FC<GoogleSeparatedDateTimePickerProps
         />
       </div>
       
-      {showTime && (
+      {showTime && (!hideTimeWhenDateOnly || (value && value.includes('T'))) && (
         <div className="google-separated-time">
           <GoogleTimePicker
             value={time}

@@ -107,11 +107,13 @@ export class WorkspaceManager {
           defaultWorkspace.dbPath
         );
       
-      // Initialize the task database for this workspace if it doesn't exist
-      if (!fs.existsSync(defaultDbPath)) {
-        this.initializeTaskDatabase(defaultDbPath);
-      }
+      // Initialize the task database for this workspace (always run to ensure migrations)
+      this.initializeTaskDatabase(defaultDbPath);
     }
+    
+    // Always ensure the default workspace database is properly initialized
+    const defaultDbPath = path.join(this.workspacesDir, 'default.db');
+    this.initializeTaskDatabase(defaultDbPath);
   }
 
   private migrateExistingDatabase(targetPath: string): void {
@@ -159,34 +161,31 @@ export class WorkspaceManager {
   }
 
   private initializeTaskDatabase(dbPath: string): void {
-    // Create a new task database using the existing initialization logic
-    const tempDb = new Database(dbPath);
-    tempDb.pragma('foreign_keys = ON');
-    
-    // Read and execute schema
-    let schemaPath: string;
-    if (app.isPackaged) {
-      // In packaged app, schema.sql is in the app's Resources folder
-      schemaPath = path.join(app.getAppPath(), '..', 'schema.sql');
-    } else {
-      // In development
-      schemaPath = path.join(__dirname, '../../schema.sql');
+    try {
+      // Temporarily set the database path for initialization
+      const originalGetPath = app.getPath;
+      app.getPath = (name: 'home' | 'appData' | 'userData' | 'sessionData' | 'temp' | 'exe' | 'module' | 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos' | 'recent' | 'logs' | 'crashDumps') => {
+        if (name === 'userData') {
+          return path.dirname(dbPath);
+        }
+        return originalGetPath.call(app, name);
+      };
+      
+      // Call the proper initialization function
+      const db = initializeDatabase();
+      db.close();
+      
+      // Restore original getPath
+      app.getPath = originalGetPath;
+    } catch (error) {
+      this.createMinimalSchemaWithNewColumns(dbPath);
     }
-    
-    
-    if (fs.existsSync(schemaPath)) {
-      const schema = fs.readFileSync(schemaPath, 'utf-8');
-      this.executeSchema(tempDb, schema);
-    } else {
-      // Create minimal schema if schema.sql is not found
-      this.createMinimalSchema(tempDb);
-    }
-    
-    tempDb.close();
   }
 
-  private createMinimalSchema(db: Database.Database): void {
-    // Create minimal schema for task database - matching schema.sql
+  private createMinimalSchemaWithNewColumns(dbPath: string): void {
+    const db = new Database(dbPath);
+    db.pragma('foreign_keys = ON');
+    
     const minimalSchema = `
       CREATE TABLE IF NOT EXISTS tasks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -195,7 +194,10 @@ export class WorkspaceManager {
         description TEXT,
         status TEXT NOT NULL DEFAULT 'pending',
         priority TEXT NOT NULL DEFAULT 'medium',
-        due_date DATETIME,
+        start_date DATE,
+        start_time TIME,
+        end_date DATE,
+        end_time TIME,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         completed_at DATETIME,
@@ -255,7 +257,10 @@ export class WorkspaceManager {
       CREATE INDEX IF NOT EXISTS idx_tasks_parent_id ON tasks(parent_id);
       CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
       CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority);
-      CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date);
+      CREATE INDEX IF NOT EXISTS idx_tasks_start_date ON tasks(start_date);
+      CREATE INDEX IF NOT EXISTS idx_tasks_end_date ON tasks(end_date);
+      CREATE INDEX IF NOT EXISTS idx_tasks_start_time ON tasks(start_time);
+      CREATE INDEX IF NOT EXISTS idx_tasks_end_time ON tasks(end_time);
       CREATE INDEX IF NOT EXISTS idx_tasks_is_routine ON tasks(is_routine);
       CREATE INDEX IF NOT EXISTS idx_task_tags_task_id ON task_tags(task_id);
       CREATE INDEX IF NOT EXISTS idx_task_tags_tag_id ON task_tags(tag_id);
@@ -265,6 +270,8 @@ export class WorkspaceManager {
       db.exec(minimalSchema);
     } catch (error) {
       throw error;
+    } finally {
+      db.close();
     }
   }
 
@@ -490,6 +497,35 @@ export class WorkspaceManager {
 
       if (!columnNames.includes('routine_parent_id')) {
         db.exec("ALTER TABLE tasks ADD COLUMN routine_parent_id INTEGER DEFAULT NULL");
+      }
+
+      // Check if date/time columns exist
+      const hasStartDate = columnNames.includes('start_date');
+      const hasEndDate = columnNames.includes('end_date');
+      const hasStartTime = columnNames.includes('start_time');
+      const hasEndTime = columnNames.includes('end_time');
+      
+      // Add missing columns
+      if (!hasStartDate) {
+        db.exec("ALTER TABLE tasks ADD COLUMN start_date DATE DEFAULT NULL");
+      }
+      if (!hasEndDate) {
+        db.exec("ALTER TABLE tasks ADD COLUMN end_date DATE DEFAULT NULL");
+      }
+      if (!hasStartTime) {
+        db.exec("ALTER TABLE tasks ADD COLUMN start_time TIME DEFAULT NULL");
+      }
+      if (!hasEndTime) {
+        db.exec("ALTER TABLE tasks ADD COLUMN end_time TIME DEFAULT NULL");
+      }
+
+      // Add indexes for new date/time columns if they don't exist
+      try {
+        db.exec("CREATE INDEX IF NOT EXISTS idx_tasks_start_date ON tasks(start_date)");
+        db.exec("CREATE INDEX IF NOT EXISTS idx_tasks_end_date ON tasks(end_date)");
+        db.exec("CREATE INDEX IF NOT EXISTS idx_tasks_start_time ON tasks(start_time)");
+        db.exec("CREATE INDEX IF NOT EXISTS idx_tasks_end_time ON tasks(end_time)");
+      } catch (indexErr) {
       }
 
       // Check if text_color column exists in tags table

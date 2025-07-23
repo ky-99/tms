@@ -9,11 +9,14 @@
 /* Layout components */
 @import './sidebar.css';
 @import './breadcrumb.css';
+@import './task-breadcrumb.css';
 
 /* Form components */
 @import './modal.css';
 @import './forms.css';
 @import './buttons.css';
+@import './tag-selector.css';
+@import './tag-pool.css';
 
 /* Task components */
 @import './task-list.css';
@@ -37,7 +40,7 @@
 
 /* Modal specific styles - loaded after base modal */
 @import './status-priority-modal.css';
-@import './task-detail-modal.css';
+@import './base-task-modal.css';
 @import './task-merge-modal.css';
 
 /* Filter modal - loaded last to ensure highest priority */

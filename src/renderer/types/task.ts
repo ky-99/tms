@@ -17,11 +17,14 @@ export interface BaseTask {
   description?: string;
   status: TaskStatus;
   priority: TaskPriority;
-  startDate?: string; // 開始日時
-  endDate?: string; // 終了日時（期限日として機能）
+  startDate?: string; // 開始日（YYYY-MM-DD）
+  startTime?: string; // 開始時刻（HH:MM）
+  endDate?: string; // 終了日（YYYY-MM-DD）
+  endTime?: string; // 終了時刻（HH:MM）
   createdAt?: string;
   completedAt?: string;
   parentId?: number;
+  position?: number; // Task position for ordering
   tagIds?: number[];
   // Routine task fields
   isRoutine?: boolean;
@@ -55,11 +58,14 @@ export interface DatabaseTaskFields {
   description?: string;
   status: TaskStatus;
   priority: TaskPriority;
-  start_date?: string; // 開始日時
-  end_date?: string; // 終了日時（期限日として機能）
+  start_date?: string; // 開始日（YYYY-MM-DD）
+  start_time?: string; // 開始時刻（HH:MM）
+  end_date?: string; // 終了日（YYYY-MM-DD）
+  end_time?: string; // 終了時刻（HH:MM）
   created_at?: string;
   completed_at?: string;
   parent_id?: number;
+  position?: number;
   tag_ids?: number[];
   is_routine?: boolean;
   routine_type?: RoutineType | null;
@@ -77,7 +83,9 @@ export type ApiTask = BaseTask & {
   expanded?: boolean;
   // Legacy fields for backward compatibility
   start_date?: string;
+  start_time?: string;
   end_date?: string;
+  end_time?: string;
   created_at?: string;
   completed_at?: string;
   is_routine?: boolean;
@@ -93,14 +101,16 @@ export type ApiTask = BaseTask & {
 export const transformApiTask = (apiTask: ApiTask): Task => {
   const transformed: Task = {
     ...apiTask,
-    startDate: apiTask.startDate || apiTask.start_date,
-    endDate: apiTask.endDate || apiTask.end_date,
-    createdAt: apiTask.createdAt || apiTask.created_at,
-    completedAt: apiTask.completedAt || apiTask.completed_at,
-    isRoutine: apiTask.isRoutine || apiTask.is_routine,
-    routineType: apiTask.routineType || apiTask.routine_type,
-    lastGeneratedAt: apiTask.lastGeneratedAt || apiTask.last_generated_at,
-    routineParentId: apiTask.routineParentId || apiTask.routine_parent_id,
+    startDate: apiTask.startDate ?? apiTask.start_date,
+    startTime: apiTask.startTime ?? apiTask.start_time,
+    endDate: apiTask.endDate ?? apiTask.end_date,
+    endTime: apiTask.endTime ?? apiTask.end_time,
+    createdAt: apiTask.createdAt ?? apiTask.created_at,
+    completedAt: apiTask.completedAt ?? apiTask.completed_at,
+    isRoutine: apiTask.isRoutine ?? apiTask.is_routine,
+    routineType: apiTask.routineType ?? apiTask.routine_type,
+    lastGeneratedAt: apiTask.lastGeneratedAt ?? apiTask.last_generated_at,
+    routineParentId: apiTask.routineParentId ?? apiTask.routine_parent_id,
   };
 
   // Recursively transform children
@@ -123,10 +133,13 @@ export const transformToDbTask = (task: Task): DatabaseTaskFields => {
     status: task.status,
     priority: task.priority,
     start_date: task.startDate,
+    start_time: task.startTime,
     end_date: task.endDate,
+    end_time: task.endTime,
     created_at: task.createdAt,
     completed_at: task.completedAt,
     parent_id: task.parentId,
+    position: task.position,
     tag_ids: task.tagIds,
     is_routine: task.isRoutine,
     routine_type: task.routineType,
@@ -142,9 +155,12 @@ export interface CreateTaskPayload {
   description?: string;
   status?: TaskStatus;
   priority?: TaskPriority;
-  startDate?: string;
-  endDate?: string; // 期限日として機能
+  startDate?: string; // YYYY-MM-DD
+  startTime?: string; // HH:MM
+  endDate?: string; // YYYY-MM-DD
+  endTime?: string; // HH:MM
   parentId?: number;
+  position?: number;
 }
 
 // Task update payload

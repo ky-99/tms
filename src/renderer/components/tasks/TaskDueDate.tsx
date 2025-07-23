@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Task } from '../../types';
-import { getEndDateText, isTaskOverdue } from '../../utils/taskUtils';
+import { getEndDateText, isTaskOverdue, getTaskEndDateTime, hasTaskTime } from '../../utils/taskUtils';
 import { formatDate } from '../../utils';
 
 interface TaskDueDateProps {
@@ -27,7 +27,8 @@ export const TaskDueDate: React.FC<TaskDueDateProps> = ({
   
   const isOverdue = isTaskOverdue(task);
   const relativeText = getEndDateText(task);
-  const absoluteDate = formatDate(task.endDate, 'medium');
+  const endDateTime = getTaskEndDateTime(task);
+  const absoluteDate = endDateTime ? formatDate(endDateTime, 'medium') : formatDate(task.endDate, 'medium');
   
   const baseClasses = 'task-due-date';
   const statusClasses = isOverdue 

@@ -449,6 +449,20 @@ export const validateAndAdjustDateTimes = (
     };
   }
 
+  // 日付のみの形式（時刻なし）の場合は検証をスキップ
+  // YYYY-MM-DD形式または時刻が含まれていない場合
+  const isDateOnlyStart = startDateTime.match(/^\d{4}-\d{2}-\d{2}$/) || !startDateTime.includes('T');
+  const isDateOnlyEnd = endDateTime.match(/^\d{4}-\d{2}-\d{2}$/) || !endDateTime.includes('T');
+  
+  if (isDateOnlyStart || isDateOnlyEnd) {
+    return {
+      adjustedStart: startDateTime,
+      adjustedEnd: endDateTime,
+      wasAdjusted: false,
+      adjustmentType: 'none'
+    };
+  }
+
   const startDate = new Date(startDateTime);
   const endDate = new Date(endDateTime);
 
@@ -464,9 +478,9 @@ export const validateAndAdjustDateTimes = (
 
   // 開始日時が終了日時より後の場合は終了日時を調整
   if (startDate >= endDate) {
-    // 開始日時の1時間後に終了日時を設定
+    // 開始日時の15分後に終了日時を設定
     const adjustedEndDate = new Date(startDate);
-    adjustedEndDate.setHours(adjustedEndDate.getHours() + 1);
+    adjustedEndDate.setMinutes(adjustedEndDate.getMinutes() + 15);
     
     const adjustedEnd = toLocalDateTimeString(adjustedEndDate);
     
@@ -493,10 +507,109 @@ export const validateAndAdjustDateTimes = (
 export const getDateTimeAdjustmentMessage = (adjustmentType: 'none' | 'end_adjusted' | 'start_adjusted'): string => {
   switch (adjustmentType) {
     case 'end_adjusted':
-      return '終了日時を開始日時の1時間後に自動調整しました';
+      return '終了日時を開始日時の15分後に自動調整しました';
     case 'start_adjusted':
-      return '開始日時を終了日時の1時間前に自動調整しました';
+      return '開始日時を終了日時の15分前に自動調整しました';
     default:
       return '';
   }
+};
+
+/**
+ * 日付文字列（YYYY-MM-DD）を指定日の23:59のdatetime-local形式に変換
+ * カレンダーからの日付指定でタスクを作成する際に使用
+ */
+export const dateToEndOfDayLocal = (dateString: string): string => {
+  if (!dateString) return '';
+  
+  // YYYY-MM-DD 形式の日付文字列をチェック
+  if (!dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return '';
+  }
+  
+  // 23:59を追加してdatetime-local形式にする
+  return `${dateString}T23:59`;
+};
+
+/**
+ * datetime-local文字列を日付と時刻に分離する
+ * Input: "2025-07-23T10:00" または "THH:MM" （時刻のみ）
+ * Output: { date: "2025-07-23", time: "10:00" }
+ */
+export const separateDateAndTime = (dateTimeString: string): { date: string | null, time: string | null } => {
+  if (!dateTimeString) {
+    return { date: null, time: null };
+  }
+  
+  // 時刻のみの形式 "THH:MM" をチェック（疎結合対応）
+  if (dateTimeString.startsWith('T') && !dateTimeString.includes('-')) {
+    const timePart = dateTimeString.substring(1); // "T" を除去
+    
+    // 時刻形式の検証を強化
+    if (!timePart || !timePart.includes(':')) {
+      return { date: null, time: null };
+    }
+    
+    const [hours, minutes] = timePart.split(':');
+    if (hours && minutes && hours.length <= 2 && minutes.length <= 2) {
+      const normalizedHours = parseInt(hours, 10);
+      const normalizedMinutes = parseInt(minutes, 10);
+      
+      // 時刻の有効性検証
+      if (normalizedHours >= 0 && normalizedHours <= 23 && 
+          normalizedMinutes >= 0 && normalizedMinutes <= 59) {
+        return { 
+          date: null, 
+          time: `${normalizedHours.toString().padStart(2, '0')}:${normalizedMinutes.toString().padStart(2, '0')}` 
+        };
+      }
+    }
+    return { date: null, time: null };
+  }
+  
+  // datetime-local形式をチェック
+  if (!dateTimeString.includes('T')) {
+    // 日付のみの場合
+    if (dateTimeString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return { date: dateTimeString, time: null };
+    }
+    return { date: null, time: null };
+  }
+  
+  const [datePart, timePart] = dateTimeString.split('T');
+  
+  // 日付部分の検証
+  if (!datePart || !datePart.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return { date: null, time: null };
+  }
+  
+  // 時刻部分の検証と正規化
+  if (!timePart) {
+    return { date: datePart, time: null };
+  }
+  
+  // HH:MM形式に正規化
+  const [hours, minutes] = timePart.split(':');
+  if (!hours || !minutes) {
+    return { date: datePart, time: null };
+  }
+  
+  return {
+    date: datePart,
+    time: `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`
+  };
+};
+
+/**
+ * 分離された日付と時刻をdatetime-local形式に結合する
+ * Input: date: "2025-07-23", time: "10:00"
+ * Output: "2025-07-23T10:00"
+ */
+export const combineDateAndTime = (date: string | null, time: string | null): string => {
+  if (!date) return '';
+  
+  // 日付のみの場合
+  if (!time) return date;
+  
+  return `${date}T${time}`;
 };
