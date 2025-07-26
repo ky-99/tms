@@ -625,136 +625,165 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       onDragEnd={handleDragEnd}
     >
       <div className="timeline-view">
-      <div className="timeline-header">
-        <div className="timeline-corner" style={{ width: TIME_COLUMN_WIDTH }}></div>
-        {weekDays.map(day => {
-          const dayOfWeek = day.getDay(); // 0=日曜, 6=土曜
-          const dayNameColor = dayOfWeek === 0 ? '#dc2626' : dayOfWeek === 6 ? '#2563eb' : '';
-          
-          return (
-            <div 
-              key={day.toISOString()} 
-              className="timeline-day-header"
-              style={{ flex: 1 }}
-            >
-              <div 
-                className="timeline-day-name"
-                style={{ color: dayNameColor }}
-              >
-                {format(day, 'E', { locale: ja })}
-              </div>
-              <div className="timeline-day-number">{format(day, 'd')}</div>
-            </div>
-          );
-        })}
-      </div>
-      
-      <div className="timeline-body" ref={scrollContainerRef}>
         <div className="timeline-grid">
-          {/* 時間軸 */}
-          <div className="timeline-times" style={{ width: TIME_COLUMN_WIDTH }}>
-            {hours.map(hour => (
-              <div key={hour} className="timeline-hour" style={{ height: HOUR_HEIGHT }}>
-                <span className="timeline-hour-label">{hour}:00</span>
-              </div>
-            ))}
-          </div>
+          {/* 時刻列のヘッダー */}
+          <div className="timeline-times-header" />
           
-          {/* 各日の列 */}
+          {/* 各日のヘッダー */}
           {weekDays.map(day => {
-            const dayKey = format(day, 'yyyy-MM-dd');
-            const dayTasks = tasksByDay[dayKey] || [];
             const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+            const dayName = format(day, 'EEE', { locale: ja });
+            const dayNumber = format(day, 'd');
             
             return (
-              <div 
-                key={day.toISOString()} 
-                className={`timeline-day-column ${isToday ? 'timeline-day-column--today' : ''}`}
-                style={{ flex: 1 }}
+              <div
+                key={format(day, 'yyyy-MM-dd')}
+                className={`timeline-day-column-header ${isToday ? 'timeline-day-column-header--today' : ''}`}
               >
-                {/* グリッドライン（15分単位） */}
-                {hours.map(hour => (
-                  <div key={hour} className="timeline-hour-section">
-                    {[0, 1, 2, 3].map(quarter => (
-                      <DroppableTimeSlot 
-                        key={`${hour}-${quarter}`} 
-                        dayKey={dayKey}
-                        hour={hour}
-                        quarter={quarter}
-                        onCreateTask={onCreateTask}
-                      >
-                        <div 
-                          className="timeline-grid-cell-inner" 
-                          style={{ height: '100%' }}
-                        />
-                      </DroppableTimeSlot>
-                    ))}
-                  </div>
-                ))}
-                
-                {/* セグメント */}
-                {dayTasks.map((segment, index) => {
-                  const position = getSegmentPosition(segment);
-                  if (!position) return null;
-                  
-                  const isBeingDragged = activeId === `task-${segment.task.id}`;
-                  const uniqueKey = `${segment.task.id}-${segment.segmentIndex}`;
-                  
-                  return (
-                    <div
-                      key={uniqueKey}
-                      style={{
-                        position: 'absolute',
-                        top: `${position.top + segment.column * 20}px`,
-                        height: `${position.height}px`,
-                        left: '4px',
-                        right: '4px',
-                        zIndex: 20 + segment.column,
-                      }}
-                    >
-                      {isBeingDragged ? (
-                        <div
-                          className={`timeline-task timeline-task--${segment.task.status} timeline-task--priority-${segment.task.priority} timeline-task--ghost-placeholder`}
-                          style={{
-                            height: `${position.height}px`,
-                            opacity: 0.3,
-                          }}
-                        >
-                          <div className="timeline-task-content">
-                            <div className="timeline-task-time">
-                              {(() => {
-                                if (segment.isFirstSegment) {
-                                  return `${format(segment.segmentStart, 'HH:mm')} -`;
-                                } else if (segment.isLastSegment) {
-                                  return `- ${format(segment.segmentEnd, 'HH:mm')}`;
-                                } else {
-                                  return '全日';
-                                }
-                              })()} 
-                            </div>
-                            <div className="timeline-task-title">{segment.task.title}</div>
-                          </div>
-                        </div>
-                      ) : (
-                        <DraggableTask
-                          task={segment.task}
-                          column={segment.column}
-                          position={position}
-                          onTaskClick={onTaskClick}
-                          onTaskResize={handleTaskResize}
-                          segment={segment}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-                
+                <div className="timeline-day-name">{dayName}</div>
+                <div className="timeline-day-number">{dayNumber}</div>
               </div>
             );
           })}
+          
+          {/* ボディ */}
+          <div className="timeline-body">
+            <div className="timeline-content">
+              {/* 時刻列 */}
+              <div className="timeline-times">
+                <div className="timeline-times-content">
+                  {hours.map(hour => (
+                    <div key={hour} className="timeline-hour">
+                      <div className="timeline-hour-label">
+                        {hour.toString().padStart(2, '0')}:00
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* 各日の列 */}
+              {weekDays.map(day => {
+                const dayKey = format(day, 'yyyy-MM-dd');
+                const dayTasks = tasksByDay[dayKey] || [];
+                const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+                
+                return (
+                  <div
+                    key={dayKey}
+                    className={`timeline-day-column ${isToday ? 'timeline-day-column--today' : ''}`}
+                  >
+                    <div className="timeline-day-column-content">
+                      {/* 時間スロット（15分単位のグリッド） */}
+                      {hours.map(hour => (
+                        <div
+                          key={hour}
+                          className="timeline-hour-section"
+                          style={{ height: `${HOUR_HEIGHT}px` }}
+                        >
+                          {/* 15分単位の4つのセル */}
+                          {[0, 15, 30, 45].map(minute => (
+                            <DroppableTimeSlot
+                              key={`${hour}-${minute}`}
+                              dayKey={dayKey}
+                              hour={hour}
+                              quarter={Math.floor(minute / 15)}
+                              onCreateTask={onCreateTask}
+                            >
+                              <div className="timeline-grid-cell-inner" />
+                            </DroppableTimeSlot>
+                          ))}
+                        </div>
+                      ))}
+                      
+                      {/* タスク */}
+                      {dayTasks.map((segment, index) => {
+                        const position = getSegmentPosition(segment);
+                        if (!position) return null;
+                        
+                        const isBeingDragged = activeId === `task-${segment.task.id}`;
+                        const uniqueKey = `${segment.task.id}-${segment.segmentIndex}`;
+                        
+                        // タスクの色を取得（タグがある場合はタグの色、ない場合は#039be5）
+                        let taskColor = '#039be5'; // デフォルト色
+                        if (segment.task.tagIds && segment.task.tagIds.length > 0) {
+                          // タグの色があれば使用（実装は後で必要に応じて）
+                        }
+                        
+                        return (
+                          <div
+                            key={uniqueKey}
+                            style={{
+                              position: 'absolute',
+                              top: `${position.top + segment.column * 3}px`,
+                              height: `${position.height}px`,
+                              left: '4px',
+                              right: '4px',
+                              zIndex: 20 + segment.column,
+                            }}
+                          >
+                            {isBeingDragged ? (
+                              <div
+                                className={`timeline-task timeline-task--${segment.task.status} timeline-task--priority-${segment.task.priority} timeline-task--ghost-placeholder`}
+                                style={{
+                                  height: `${position.height}px`,
+                                  opacity: 0.3,
+                                  backgroundColor: taskColor,
+                                }}
+                              >
+                                <div className="timeline-task-content">
+                                  <div className="timeline-task-time">
+                                    {(() => {
+                                      if (segment.isFirstSegment) {
+                                        return `${format(segment.segmentStart, 'HH:mm')} -`;
+                                      } else if (segment.isLastSegment) {
+                                        return `- ${format(segment.segmentEnd, 'HH:mm')}`;
+                                      } else {
+                                        return '全日';
+                                      }
+                                    })()} 
+                                  </div>
+                                  <div className="timeline-task-title">{segment.task.title}</div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div
+                                className={`timeline-task timeline-task--${segment.task.status} timeline-task--priority-${segment.task.priority}`}
+                                style={{
+                                  height: `${position.height}px`,
+                                  backgroundColor: taskColor,
+                                  cursor: 'pointer',
+                                }}
+                                onClick={() => onTaskClick(segment.task)}
+                              >
+                                <div className="timeline-task-content">
+                                  <div className="timeline-task-time">
+                                    {(() => {
+                                      if (segment.isFirstSegment) {
+                                        return `${format(segment.segmentStart, 'HH:mm')} -`;
+                                      } else if (segment.isLastSegment) {
+                                        return `- ${format(segment.segmentEnd, 'HH:mm')}`;
+                                      } else {
+                                        return '全日';
+                                      }
+                                    })()} 
+                                  </div>
+                                  <div className="timeline-task-title">{segment.task.title}</div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+      
       <DragOverlay dropAnimation={null} style={{ pointerEvents: 'none' }}>
         {activeTask ? (
           <div

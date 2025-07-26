@@ -12,6 +12,8 @@
   min-height: 0; /* Flexboxでの高さ計算を適切に行う */
   width: 100%; /* 幅を固定してガタつきを防ぐ */
   max-height: 100%; /* 親コンテナの高さ制限を使用 */
+  /* スクロールバー用の余白をviewレベルで確保 */
+  padding-right: 28px; /* スクロールバー分の余白 */
 }
 
 /* Grid Container */
@@ -71,6 +73,8 @@
   display: grid;
   grid-template-columns: 60px repeat(7, 1fr);
   box-sizing: border-box;
+  /* スクロールバーを右側にオフセット */
+  scrollbar-gutter: stable;
 }
 
 .timeline-content {
@@ -226,7 +230,7 @@
   display: flex;
   flex-direction: column;
   font-size: clamp(10px, 1.2vw, 14px); /* レスポンシブフォントサイズ */
-  transition: all 0.1s ease; /* 高速アニメーション */
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   color: white;
   width: 100%;
@@ -529,7 +533,7 @@
 .timeline-body::-webkit-scrollbar-thumb {
   background: #d1d5db;
   border-radius: 4px;
-  transition: background 0.2s;
+  transition: background-color var(--transition-fast);
 }
 
 .timeline-body::-webkit-scrollbar-thumb:hover {

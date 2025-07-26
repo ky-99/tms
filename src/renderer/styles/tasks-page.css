@@ -164,7 +164,7 @@
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 14px;
-    transition: all 0.2s ease;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
 .breadcrumb-link:hover {

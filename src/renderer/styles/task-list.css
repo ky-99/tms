@@ -168,7 +168,7 @@
 .page-enter-active {
     opacity: 1;
     transform: translateX(0);
-    transition: all 0.3s ease;
+    transition: opacity var(--transition-slow), transform var(--transition-slow);
 }
 
 .task-header {
@@ -457,7 +457,7 @@
   border-radius: 4px;
   padding: 2px 4px;
   margin: -2px -4px;
-  transition: color 0.2s ease;
+  transition: color var(--transition-fast);
 }
 
 .task-list__title-text:hover {
@@ -545,7 +545,7 @@
   padding: 2px 8px;
   font-size: 11px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
 .task-list__tag-add:hover {
@@ -602,7 +602,7 @@
   cursor: grab;
   margin-right: 4px;
   border-radius: 4px;
-  transition: all 0.2s;
+  transition: background-color var(--transition-fast), opacity var(--transition-fast);
   opacity: 0;
 }
 
@@ -641,7 +641,7 @@
   background-color: var(--color-warning-light) !important;
   border: 2px dashed #f59e0b !important;
   box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2) !important;
-  transition: all 0.2s ease;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 /* ゴーストタスク（ドラッグ中の元の位置表示） */

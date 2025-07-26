@@ -357,7 +357,7 @@
   background: var(--color-border-medium);
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-background-subtle);
-  transition: var(--transition-base);
+  transition: background-color var(--transition-fast);
 }
 
 *::-webkit-scrollbar-thumb:hover {
@@ -366,4 +366,40 @@
 
 *::-webkit-scrollbar-corner {
   background: var(--color-background-subtle);
+}
+
+/* ================================
+ * INSTANT THEME SWITCHING
+ * ================================ */
+
+/* テーマ切り替え時にすべてのアニメーションを無効化 */
+[data-theme] *,
+[data-theme] *::before,
+[data-theme] *::after {
+  transition: none !important;
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+}
+
+/* より特定的に、すべてのtransitionプロパティを完全に無効化 */
+[data-theme] [style*="transition"],
+[data-theme] .transition-fast,
+[data-theme] .transition-base,
+[data-theme] .transition-slow {
+  transition: none !important;
+}
+
+/* テーマ切り替え後の遅延実行でアニメーションを復元 */
+.animations-enabled *,
+.animations-enabled *::before,
+.animations-enabled *::after {
+  transition-property: transform, opacity, box-shadow, border-radius, width, height, margin, padding !important;
+  transition-duration: var(--transition-fast) !important;
+}
+
+/* ホバーやフォーカス時のアニメーションは即座に復元 */
+*:hover,
+*:focus,
+*:active {
+  transition: all var(--transition-fast) !important;
 }

@@ -65,7 +65,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color var(--transition-base);
+  transition: color var(--transition-fast);
   -webkit-app-region: no-drag;
 }
 
@@ -168,7 +168,7 @@
   flex-shrink: 0; /* サイズ固定 */
   white-space: nowrap; /* 改行を防ぐ */
   min-width: fit-content;
-  transition: all var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
 /* ホバー効果を削除 */

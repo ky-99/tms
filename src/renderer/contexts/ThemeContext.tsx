@@ -23,12 +23,30 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       setThemeState(prefersDark ? 'dark' : 'light');
     }
+
+    // 初期化後にアニメーションを有効化
+    const timer = setTimeout(() => {
+      document.documentElement.classList.add('animations-enabled');
+    }, 200);
+
+    return () => clearTimeout(timer);
   }, []);
 
   // テーマが変更されたときにHTML要素にdata-theme属性を設定
   useEffect(() => {
+    // アニメーション無効化のクラスを削除（念のため）
+    document.documentElement.classList.remove('animations-enabled');
+    
+    // テーマを設定
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
+    
+    // 短い遅延後にアニメーションを復元（テーマ切り替えが完了してから）
+    const timer = setTimeout(() => {
+      document.documentElement.classList.add('animations-enabled');
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [theme]);
 
   const toggleTheme = () => {
