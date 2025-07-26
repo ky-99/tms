@@ -1,19 +1,18 @@
 /* Timeline View Styles */
 .timeline-view {
-  background: var(--color-background-card);
+  background: var(--color-background);
   border-radius: var(--radius-lg);
   border: none;
   padding: 20px;
   height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden; /* スクロールを削除 */
   flex: 1;
   min-height: 0; /* Flexboxでの高さ計算を適切に行う */
   width: 100%; /* 幅を固定してガタつきを防ぐ */
   max-height: 100%; /* 親コンテナの高さ制限を使用 */
-  /* スクロールバー用の余白をviewレベルで確保 */
-  padding-right: 28px; /* スクロールバー分の余白 */
+  position: relative;
 }
 
 /* Grid Container */
@@ -25,7 +24,6 @@
   border: 1px solid var(--color-border-medium);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  /* 縦線を一本化するため、内部の境界線を統一 */
   gap: 0;
 }
 
@@ -63,18 +61,16 @@
 .timeline-day-column-header:nth-child(8) { grid-column: 8; grid-row: 1; border-right: none; }
 
 
+
 /* Body - Grid内で8列全体を占める */
 .timeline-body {
   grid-column: 1 / -1;
   grid-row: 2;
-  overflow: auto;
+  overflow: visible;
   position: relative;
-  scrollbar-width: thin;
   display: grid;
   grid-template-columns: 60px repeat(7, 1fr);
   box-sizing: border-box;
-  /* スクロールバーを右側にオフセット */
-  scrollbar-gutter: stable;
 }
 
 .timeline-content {
@@ -84,7 +80,7 @@
 /* Time column */
 .timeline-times {
   grid-column: 1;
-  background: #f9fafb;
+  background: var(--color-background-alt);
   border-right: 1px solid var(--color-border-light);
   position: sticky;
   left: 0;
@@ -96,7 +92,7 @@
 
 
 .timeline-times-content {
-  background: #f9fafb; /* 時刻コンテンツ部分のグレー背景 */
+  background: var(--color-background-alt);
 }
 
 .timeline-hour {
@@ -106,8 +102,8 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-2);
-  background: #f9fafb; /* 時刻部分のグレー背景 */
-  height: 60px; /* 高さを固定して枠に合わせる */
+  background: var(--color-background-alt);
+  height: 60px; /* JavaScript側のHOUR_HEIGHTと一致 */
   box-sizing: border-box; /* パディングを含めて高さ計算 */
   width: 100%; /* 時刻列の幅を確実に100%にする */
 }
@@ -141,6 +137,7 @@
 .timeline-day-column:nth-child(6) { grid-column: 6; }
 .timeline-day-column:nth-child(7) { grid-column: 7; }
 .timeline-day-column:nth-child(8) { grid-column: 8; border-right: none; }
+
 
 .timeline-day-column--today {
   background: rgba(59, 130, 246, 0.05);
@@ -178,7 +175,8 @@
 .timeline-hour-section {
   display: flex;
   flex-direction: column;
-  /* height は動的に設定される */
+  height: 60px; /* JavaScript側のHOUR_HEIGHTと一致 */
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 /* 15分単位のグリッドライン */
@@ -515,28 +513,4 @@
   }
 }
 
-/* 週カレンダー内部のスクロールバースタイル */
-.timeline-body::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.timeline-body::-webkit-scrollbar-track {
-  background: #f9fafb;
-  border-radius: 4px;
-}
-
-.timeline-body::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 4px;
-  transition: background-color var(--transition-fast);
-}
-
-.timeline-body::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
-
-.timeline-body::-webkit-scrollbar-corner {
-  background: #f9fafb;
-}
 

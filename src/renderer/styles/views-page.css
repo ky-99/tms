@@ -1,15 +1,18 @@
 .views-page {
-  width: 100%;
-  height: 100vh;
+  width: calc(100vw - 60px); /* サイドバー幅を引く */
+  height: calc(100vh - 40px); /* ヘッダー高さを引く */
   display: flex;
   flex-direction: column;
   overflow: hidden; /* 外部スクロールを完全に防ぐ */
+  position: fixed;
+  top: 40px; /* ヘッダーの下 */
+  left: 60px; /* サイドバーの右 */
 }
 
 .views-page-header {
   padding: 16px 20px;
   border-bottom: none;
-  background-color: var(--color-background-card);
+  background-color: var(--color-background);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -105,12 +108,13 @@
 .views-content {
   flex: 1;
   overflow: hidden; /* カレンダービューでは外部スクロールを完全に防ぐ */
-  background-color: var(--color-background-card);
-  padding: 20px;
+  background-color: var(--color-background);
+  padding: 0; /* パディングを削除 */
   display: flex;
   flex-direction: column;
   min-height: 0; /* Flexboxでの高さ計算を適切に行う */
   width: 100%; /* 幅を固定してガタつきを防ぐ */
+  box-sizing: border-box;
 }
 
 /* レスポンシブデザイン */

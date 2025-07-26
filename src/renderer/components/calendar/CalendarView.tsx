@@ -146,12 +146,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                   </div>
                 )}
                 <div 
-                  className="calendar-day-number"
-                  style={{
-                    color: !isCurrentMonth ? '#d1d5db' : 
-                           dayOfWeek === 0 ? '#dc2626' : 
-                           dayOfWeek === 6 ? '#2563eb' : '#374151'
-                  }}
+                  className={`calendar-day-number ${
+                    dayOfWeek === 0 ? 'sunday' : 
+                    dayOfWeek === 6 ? 'saturday' : ''
+                  }`}
                 >
                   {format(day, 'd')}
                 </div>

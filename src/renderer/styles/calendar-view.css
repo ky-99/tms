@@ -1,9 +1,9 @@
 /* カレンダービュー全体 */
 .calendar-view {
-  background: var(--color-background-card);
+  background: var(--color-background);
   border-radius: var(--radius-lg);
   border: none;
-  padding: 20px;
+  padding: 16px; /* 適切な余白を確保 */
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -11,7 +11,9 @@
   flex: 1;
   min-height: 0; /* Flexboxでの高さ計算を適切に行う */
   width: 100%; /* 幅を固定してガタつきを防ぐ */
+  max-width: 100%; /* 親コンテナの幅制限を使用 */
   max-height: 100%; /* 親コンテナの高さ制限を使用 */
+  box-sizing: border-box;
 }
 
 /* ヘッダー部分 */
@@ -19,7 +21,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 4px;
+  flex-shrink: 0;
+  height: 32px;
 }
 
 .calendar-nav {
@@ -76,7 +80,7 @@
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-template-rows: repeat(6, 1fr);
+  grid-template-rows: repeat(6, minmax(60px, 1fr));
   gap: 1px;
   background-color: var(--color-border-medium);
   border: 1px solid var(--color-border-medium);
@@ -84,16 +88,16 @@
   overflow: hidden;
   flex: 1;
   min-height: 0; /* Flexboxで適切な高さ計算 */
-  height: 100%; /* 親の高さを使用 */
   width: 100%;
+  height: calc(100% - 36px); /* ヘッダー分を除いた高さ */
 }
 
 .calendar-day {
   background-color: var(--color-background-card);
   min-height: 0;
-  padding: 8px;
+  padding: 4px;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -105,11 +109,26 @@
 }
 
 .calendar-day.other-month {
-  background-color: var(--color-background-alt);
+  background-color: var(--color-background-other-month);
 }
 
 .calendar-day.other-month .calendar-day-number {
-  color: var(--color-text-light);
+  color: var(--color-text-muted);
+}
+
+/* 日曜日と土曜日の色設定 */
+.calendar-day-number.sunday {
+  color: var(--color-error);
+}
+
+.calendar-day-number.saturday {
+  color: var(--color-primary);
+}
+
+/* 他月の日曜日・土曜日は通常の薄い色 */
+.calendar-day.other-month .calendar-day-number.sunday,
+.calendar-day.other-month .calendar-day-number.saturday {
+  color: var(--color-text-muted);
 }
 
 .calendar-day.today {
@@ -156,7 +175,7 @@
 
 .calendar-day-number {
   font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
   font-weight: var(--font-weight-medium);
   width: 20px;
   height: 20px;
@@ -187,35 +206,15 @@
   flex-direction: column;
   gap: 2px;
   flex: 1;
-  overflow: hidden;
+  overflow: visible;
   min-height: 0;
   width: 100%;
   box-sizing: border-box;
 }
 
-/* 展開状態の日付セルのみスクロールを許可 */
+/* 月カレンダーではスクロールを無効化して全体を表示 */
 .calendar-day.expanded .calendar-day-tasks {
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-
-/* カレンダー日付セルは狭いため特別なスクロールバースタイルを維持 */
-.calendar-day.expanded .calendar-day-tasks::-webkit-scrollbar {
-  width: 3px;
-}
-
-.calendar-day.expanded .calendar-day-tasks::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.calendar-day.expanded .calendar-day-tasks::-webkit-scrollbar-thumb {
-  background: var(--color-border-light);
-  border-radius: 1px;
-  transition: background var(--transition-base);
-}
-
-.calendar-day.expanded .calendar-day-tasks::-webkit-scrollbar-thumb:hover {
-  background: var(--color-border-medium);
+  overflow: visible;
 }
 
 .calendar-task {
@@ -232,24 +231,24 @@
   height: 20px; /* タスクカードの高さを固定 */
 }
 
-/* ステータス別の明るい背景色 */
+/* ステータス別の背景色 */
 .calendar-task--pending {
-  background-color: #f8fafc !important;
-  border: 1px solid #e2e8f0;
+  background-color: var(--color-status-pending-bg);
+  border: 1px solid var(--color-border-light);
 }
 
 .calendar-task--in_progress {
-  background-color: #eff6ff !important;
-  border: 1px solid #bfdbfe;
+  background-color: var(--color-status-progress-bg);
+  border: 1px solid var(--color-border-light);
 }
 
 .calendar-task--completed {
-  background-color: #f0fdf4 !important;
-  border: 1px solid #bbf7d0;
+  background-color: var(--color-status-completed-bg);
+  border: 1px solid var(--color-border-light);
 }
 
 .calendar-task:hover {
-  background-color: #e2e8f0 !important;
+  background-color: var(--color-background-hover);
 }
 
 .calendar-task-content {
@@ -271,20 +270,20 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #1e293b;
+  color: var(--color-text-primary);
   flex: 1;
   font-weight: 500;
 }
 
 .calendar-task-title.completed {
   text-decoration: line-through;
-  color: #64748b;
+  color: var(--color-text-muted);
 }
 
 /* カレンダー日付にタスク追加ボタン */
 .calendar-add-task-btn {
-  background: #e5e7eb;
-  color: #6b7280;
+  background: var(--color-border-medium);
+  color: var(--color-text-muted);
   border: none;
   border-radius: 4px;
   width: 18px;
@@ -302,17 +301,17 @@
 }
 
 .calendar-add-task-btn:hover {
-  background: #d1d5db;
-  color: #374151;
+  background: var(--color-border-dark);
+  color: var(--color-text-secondary);
   opacity: 1;
   transform: scale(1.05);
 }
 
 .calendar-more-tasks {
   font-size: 11px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   padding: 2px 6px;
-  background-color: #f3f4f6;
+  background-color: var(--color-background-alt);
   border-radius: 4px;
   text-align: center;
   cursor: pointer;
@@ -320,15 +319,15 @@
 }
 
 .calendar-more-tasks:hover {
-  background-color: #e5e7eb;
-  color: #374151;
+  background-color: var(--color-background-hover);
+  color: var(--color-text-secondary);
 }
 
 .calendar-less-tasks {
   font-size: 11px;
-  color: #8b5cf6;
+  color: var(--color-primary);
   padding: 2px 6px;
-  background-color: #f3e8ff;
+  background-color: var(--color-primary-light);
   border-radius: 4px;
   text-align: center;
   cursor: pointer;
@@ -336,8 +335,8 @@
 }
 
 .calendar-less-tasks:hover {
-  background-color: #e9d5ff;
-  color: #7c3aed;
+  background-color: var(--color-primary-light);
+  color: var(--color-primary-hover);
 }
 
 /* ドラッグアンドドロップスタイル */

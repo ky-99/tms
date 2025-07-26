@@ -20,8 +20,18 @@
   --color-background-alt: #f1f5f9;
   --color-background-subtle: #f8fafc;
   --color-background-card: #ffffff;
+  --color-background-other-month: #f1f5f9; /* 別月用のより薄い背景 */
   --color-background-overlay: rgba(0, 0, 0, 0.3);
   --color-background-modal: rgba(0, 0, 0, 0.08);
+  
+  /* Task Status Colors - Light Theme */
+  --color-status-pending-bg: #f8fafc;
+  --color-status-progress-bg: #eff6ff;
+  --color-status-completed-bg: #f0fdf4;
+  --color-status-overdue-bg: #fef2f2;
+  
+  /* Interactive Colors - Light Theme */
+  --color-background-hover: #e2e8f0;
 
   /* Text Colors - Export Page Unified */
   --color-text-primary: #1f2937;
@@ -199,7 +209,8 @@
   /* Background Colors - Dark Theme */
   --color-background: #111827;           /* ダーク背景 */
   --color-background-alt: #1f2937;       /* 代替ダーク背景 */
-  --color-background-card: #1f2937;       /* カードダーク背景 */
+  --color-background-card: #161e2c;       /* カードダーク背景（今月用・より暗く） */
+  --color-background-other-month: #1f2937; /* 別月用の背景 */
   --color-background-overlay: rgba(0, 0, 0, 0.6);
   --color-background-modal: rgba(0, 0, 0, 0.4);
 
@@ -220,6 +231,9 @@
   --color-status-progress-bg: #1e3a8a;
   --color-status-completed-bg: #065f46;
   --color-status-overdue-bg: #7f1d1d;
+  
+  /* Interactive Colors - Dark Theme */
+  --color-background-hover: #4b5563;
 
   /* Priority Colors Background - Dark Theme */
   --color-priority-low-bg: #374151;

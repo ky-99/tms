@@ -27,7 +27,7 @@ interface TimelineViewProps {
   currentDate?: Date;
 }
 
-const HOUR_HEIGHT = 40; // 1時間あたりの高さ（px）
+const HOUR_HEIGHT = 60; // 1時間あたりの高さ（px）
 const TIME_COLUMN_WIDTH = 60; // 時間列の幅
 // 各日付列の幅を動的に計算（残りの幅を7日で分割）
 
@@ -266,6 +266,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollbarRef = useRef<HTMLDivElement>(null);
   const { tags } = useTaskData();
 
   // タスクの色を取得（タグがある場合はタグの色、ない場合はデフォルト色）
@@ -462,6 +463,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
       scrollContainerRef.current.scrollTop = scrollPosition;
     }
   }, []);
+
 
   // タスクの時間間隔を取得（新スキーマ対応）
   const getTaskInterval = useCallback((task: Task) => {

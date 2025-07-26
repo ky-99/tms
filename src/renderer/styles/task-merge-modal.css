@@ -9,7 +9,7 @@
 .parent-task-search-input {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border-light);
   border-radius: 6px;
   font-size: 14px;
   outline: none;
@@ -29,7 +29,7 @@
   left: 0;
   right: 0;
   background: var(--color-background-card);
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border-light);
   border-top: none;
   border-radius: 0 0 4px 4px;
   max-height: 200px;
@@ -41,7 +41,7 @@
 .parent-task-suggestion {
   padding: 8px 12px;
   cursor: pointer;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--color-border-light);
   font-size: 14px;
   transition: background-color 0.2s;
 }
@@ -166,7 +166,7 @@
 /* ヘッダー */
 .task-merge-header {
   padding: 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-border-light);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -229,7 +229,7 @@
 .task-merge-search-input {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border-light);
   border-radius: 6px;
   font-size: 14px;
   outline: none;
@@ -298,7 +298,7 @@
 .task-merge-task-list {
   height: 280px;
   overflow-y: auto;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border-light);
   border-radius: 6px;
   padding-bottom: 12px;
 }
@@ -309,7 +309,7 @@
   display: flex;
   align-items: flex-start;
   padding: 12px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--color-border-light);
   cursor: pointer;
   transition: background-color 0.15s;
 }
@@ -491,7 +491,7 @@
 /* アクション */
 .task-merge-actions {
   padding: 16px 24px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--color-border-light);
   display: flex;
   gap: 12px;
   justify-content: flex-end;
@@ -581,7 +581,7 @@
   overflow-y: auto;
   padding: 12px;
   background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border-light);
   border-radius: 6px;
 }
 
@@ -609,7 +609,7 @@
   gap: 4px;
   padding: 8px 12px;
   background-color: #f3f4f6;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border-light);
   border-radius: 6px;
   font-size: 14px;
   cursor: pointer;
