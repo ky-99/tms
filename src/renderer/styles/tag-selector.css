@@ -221,23 +221,7 @@
   font-size: 14px;
 }
 
-/* Scrollbar styling for the tag list */
-.tag-selection-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.tag-selection-list::-webkit-scrollbar-track {
-  background: var(--color-background-subtle);
-}
-
-.tag-selection-list::-webkit-scrollbar-thumb {
-  background: var(--color-border-light);
-  border-radius: 3px;
-}
-
-.tag-selection-list::-webkit-scrollbar-thumb:hover {
-  background: var(--color-border-medium);
-}
+/* 個別のスクロールバースタイルは削除 - グローバルスタイルを使用 */
 
 /* レスポンシブ対応 */
 @media (max-width: 640px) {

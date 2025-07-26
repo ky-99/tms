@@ -92,6 +92,7 @@ export type ApiTask = BaseTask & {
   routine_type?: RoutineType | null;
   last_generated_at?: string | null;
   routine_parent_id?: number | null;
+  tag_ids?: number[];
 };
 
 /**
@@ -111,6 +112,7 @@ export const transformApiTask = (apiTask: ApiTask): Task => {
     routineType: apiTask.routineType ?? apiTask.routine_type,
     lastGeneratedAt: apiTask.lastGeneratedAt ?? apiTask.last_generated_at,
     routineParentId: apiTask.routineParentId ?? apiTask.routine_parent_id,
+    tagIds: apiTask.tagIds ?? apiTask.tag_ids,
   };
 
   // Recursively transform children

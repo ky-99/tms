@@ -17,7 +17,7 @@
 
 .status-priority-modal {
   position: absolute;
-  background: white;
+  background: var(--color-background-card);
   border-radius: 4px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   border: 1px solid #e5e7eb;

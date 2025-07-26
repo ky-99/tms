@@ -63,7 +63,7 @@ html body .filter-modal .modal-body {
   background: none;
   border: none;
   font-size: 24px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   cursor: pointer;
   padding: 4px;
   width: 32px;
@@ -80,7 +80,7 @@ html body .filter-modal .modal-body {
 
 .filters-modal-close:hover {
   background-color: #f3f4f6;
-  color: #374151;
+  color: var(--color-text-secondary);
 }
 
 .clear-filters-btn {
@@ -133,14 +133,14 @@ html body .filter-modal .modal-body {
   position: relative;
   font-size: 12px;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--color-text-muted);
   min-width: 90px;
   white-space: nowrap;
 }
 
 .filter-tab:hover {
-  background-color: #ffffff;
-  color: #374151;
+  background-color: var(--color-background-card);
+  color: var(--color-text-secondary);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -252,7 +252,7 @@ html body .filter-modal .modal-body {
 /* Status specific colors - unselected */
 .filter-option-card[data-status="pending"] {
   background-color: #e5e7eb;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .filter-option-card[data-status="in_progress"] {
@@ -269,7 +269,7 @@ html body .filter-modal .modal-body {
 /* Priority specific colors - unselected */
 .filter-option-card[data-priority="low"] {
   background-color: #e5e7eb;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .filter-option-card[data-priority="medium"] {
@@ -295,7 +295,7 @@ html body .filter-modal .modal-body {
 
 .filter-option-card.selected[data-status="pending"],
 .filter-option-card.selected[data-priority="low"] {
-  border-color: #6b7280;
+  border-color: var(--color-text-muted);
   box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.1);
 }
 
@@ -401,7 +401,7 @@ html body .filter-modal .modal-body {
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 18px;
   cursor: pointer;
   padding: 4px;
@@ -416,12 +416,12 @@ html body .filter-modal .modal-body {
 
 .tag-search-clear:hover {
   background-color: #f3f4f6;
-  color: #374151;
+  color: var(--color-text-secondary);
 }
 
 .no-tags-message {
   text-align: center;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 13px;
   padding: 15px;
   background-color: #f9fafb;
@@ -450,7 +450,7 @@ html body .filter-modal .modal-body {
 .date-label {
   font-size: 14px;
   font-weight: 500;
-  color: #374151;
+  color: var(--color-text-secondary);
   height: 20px;
   display: flex;
   align-items: center;
@@ -472,7 +472,7 @@ html body .filter-modal .modal-body {
   height: 40px;
   font-size: 18px;
   font-weight: bold;
-  color: #6b7280;
+  color: var(--color-text-muted);
   flex-shrink: 0;
 }
 

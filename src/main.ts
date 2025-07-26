@@ -27,7 +27,8 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    title: 'Task Management System',
+    title: 'TaskFlowy',
+    titleBarStyle: 'hiddenInset', // Macのボタンを表示、タイトルバーは隠す
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -195,4 +196,31 @@ ipcMain.handle('generate-daily-routine-tasks', async () => {
     console.error('Error generating daily routine tasks:', error);
     return false;
   }
+});
+
+// ウィンドウコントロール用のIPCハンドラー
+ipcMain.handle('window-minimize', () => {
+  if (mainWindow) {
+    mainWindow.minimize();
+  }
+});
+
+ipcMain.handle('window-maximize', () => {
+  if (mainWindow) {
+    if (mainWindow.isMaximized()) {
+      mainWindow.restore();
+    } else {
+      mainWindow.maximize();
+    }
+  }
+});
+
+ipcMain.handle('window-close', () => {
+  if (mainWindow) {
+    mainWindow.close();
+  }
+});
+
+ipcMain.handle('window-is-maximized', () => {
+  return mainWindow ? mainWindow.isMaximized() : false;
 });

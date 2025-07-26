@@ -3,14 +3,17 @@ import { Task } from '../types';
 import { useTaskData } from '../contexts/TaskDataContext';
 import { useTaskContext } from '../contexts/TaskContext';
 import { useShortcut } from '../contexts/ShortcutContext';
-import TimelineView from '../components/calendar/TimelineView';
 import CalendarView from '../components/calendar/CalendarView';
+import TimelineView from '../components/calendar/TimelineView';
 import CalendarTaskCreateModal from '../components/modals/CalendarTaskCreateModal';
 import CalendarTaskEditModal from '../components/modals/CalendarTaskEditModal';
 import { setEndOfDay } from '../utils/lightDateUtils';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
+import { ja } from 'date-fns/locale';
 import '../styles/views-page.css';
 
-type ViewType = 'timeline' | 'calendar';
+type ViewType = 'calendar';
+type CalendarViewType = 'month' | 'week';
 
 const ViewsPage: React.FC = () => {
   const { tasks } = useTaskData();
@@ -22,8 +25,8 @@ const ViewsPage: React.FC = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [defaultEndDate, setDefaultEndDate] = useState<string | undefined>();
   const [defaultStartDate, setDefaultStartDate] = useState<string | undefined>();
-  const [currentView, setCurrentView] = useState<ViewType>('calendar');
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [calendarViewType, setCalendarViewType] = useState<CalendarViewType>('month');
 
   // TasksPageと同様のタスク検索関数
   const findTaskById = useCallback((taskList: Task[], targetId: number): Task | null => {
@@ -56,7 +59,7 @@ const ViewsPage: React.FC = () => {
     setIsCreating(false);
   };
 
-  const handleCreateTask = (date: string) => {
+  const handleCreateTask = (date: string, time?: string) => {
     // カレンダーから作成する場合は開始日と終了日に日付のみを設定（時刻は未入力状態）
     if (date) {
       // 日付のみをそのまま設定（時刻は補完しない）
@@ -70,11 +73,6 @@ const ViewsPage: React.FC = () => {
     setStableSelectedTask(null);
     setIsCreating(true);
     setIsModalOpen(true);
-  };
-
-  // TimelineView用のonUpdateTask（Promise<Task>を返す）
-  const handleUpdateTaskForTimeline = async (taskId: number, updates: Partial<Task>) => {
-    return await updateTask(taskId, updates);
   };
 
   // CalendarView用のonUpdateTask（Promise<void>を返す）
@@ -99,7 +97,8 @@ const ViewsPage: React.FC = () => {
 
   const handleDateNavigation = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
-    if (currentView === 'timeline') {
+    
+    if (calendarViewType === 'week') {
       // 週ナビゲーション
       if (direction === 'prev') {
         newDate.setDate(newDate.getDate() - 7);
@@ -153,16 +152,12 @@ const ViewsPage: React.FC = () => {
   // ViewsPageのコンテキストを設定
   useEffect(() => {
     // カレンダー表示時はcalendarコンテキストを設定
-    if (currentView === 'calendar') {
-      setCurrentContext('calendar');
-    } else {
-      setCurrentContext('global');
-    }
+    setCurrentContext('calendar');
     
     return () => {
       setCurrentContext('global');
     };
-  }, [currentView, setCurrentContext]);
+  }, [setCurrentContext]);
 
   return (
     <div className="views-page">
@@ -191,46 +186,51 @@ const ViewsPage: React.FC = () => {
             </svg>
           </button>
           <div className="date-display">
-            {currentView === 'timeline' 
-              ? `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月` 
-              : `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月`
-            }
+            {calendarViewType === 'week' ? (
+              (() => {
+                const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
+                const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
+                return `${format(weekStart, 'M/d', { locale: ja })} - ${format(weekEnd, 'M/d', { locale: ja })}`;
+              })()
+            ) : (
+              `${currentDate.getFullYear()}年${currentDate.getMonth() + 1}月`
+            )}
           </div>
         </div>
         
-        <div className="view-type-buttons">
+        <div className="view-type-selector">
           <button 
-            className={`view-type-button ${currentView === 'timeline' ? 'active' : ''}`}
-            onClick={() => setCurrentView('timeline')}
-          >
-            週
-          </button>
-          <button 
-            className={`view-type-button ${currentView === 'calendar' ? 'active' : ''}`}
-            onClick={() => setCurrentView('calendar')}
+            className={`view-type-button ${calendarViewType === 'month' ? 'active' : ''}`}
+            onClick={() => setCalendarViewType('month')}
           >
             月
+          </button>
+          <button 
+            className={`view-type-button ${calendarViewType === 'week' ? 'active' : ''}`}
+            onClick={() => setCalendarViewType('week')}
+          >
+            週
           </button>
         </div>
       </div>
 
       <div className="views-content">
-        {currentView === 'timeline' ? (
+        {calendarViewType === 'week' ? (
           <TimelineView
             tasks={tasks}
             onTaskClick={handleTaskClick}
             onCreateTask={handleCreateTask}
-            onUpdateTask={handleUpdateTaskForTimeline}
             currentDate={currentDate}
+            onUpdateTask={updateTask}
           />
         ) : (
           <CalendarView
             tasks={tasks}
             onTaskClick={handleTaskClick}
             onCreateTask={handleCreateTask}
-            onUpdateTask={handleUpdateTaskForCalendar}
             currentDate={currentDate}
-            hideNavigation={true}
+            onDateChange={setCurrentDate}
+            viewType={calendarViewType}
           />
         )}
       </div>

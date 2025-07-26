@@ -16,7 +16,7 @@
 }
 
 .task-detail-modal {
-  background: white;
+  background: var(--color-background-card);
   border-radius: 12px;
   box-shadow: 
     0 8px 28px rgba(0, 0, 0, 0.12),
@@ -136,34 +136,34 @@
 }
 
 .task-detail-save-btn {
-  background-color: #1a73e8;
-  color: white;
-  border-color: #1a73e8;
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+  border-color: var(--color-primary);
 }
 
 .task-detail-save-btn:hover:not(:disabled) {
-  background-color: #1557b0;
-  border-color: #1557b0;
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
   box-shadow: 0 1px 3px rgba(26, 115, 232, 0.4);
 }
 
 .task-detail-save-btn:disabled {
-  background-color: #e8eaed;
-  border-color: #e8eaed;
-  color: #80868b;
+  background-color: var(--color-background-subtle);
+  border-color: var(--color-border-light);
+  color: var(--color-text-muted);
   cursor: not-allowed;
   box-shadow: none;
 }
 
 .task-detail-cancel-btn {
-  background-color: white;
-  color: #3c4043;
-  border-color: #dadce0;
+  background-color: var(--color-background-card);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-light);
 }
 
 .task-detail-cancel-btn:hover {
-  background-color: #f8f9fa;
-  border-color: #bdc1c6;
+  background-color: var(--color-background-subtle);
+  border-color: var(--color-border-medium);
   box-shadow: 0 1px 3px rgba(60, 64, 67, 0.15);
 }
 
@@ -171,7 +171,7 @@
   padding: 24px 24px 0 24px;
   flex-shrink: 0;
   position: relative;
-  background: white;
+  background: var(--color-background-card);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -207,7 +207,7 @@
 .task-detail-title {
   font-size: 22px;
   font-weight: 400;
-  color: #202124;
+  color: var(--color-text-primary);
   margin: 0;
   line-height: 1.3;
   cursor: pointer;
@@ -236,7 +236,7 @@
   flex: 1;
   overflow-y: auto;
   min-height: 300px;
-  background: white;
+  background: var(--color-background-card);
   display: flex;
   flex-direction: column;
 }
@@ -298,12 +298,12 @@
 .task-detail-section h3 {
   font-size: 14px;
   font-weight: 700;
-  color: #374151;
+  color: var(--color-text-secondary);
   margin: 0 0 16px 0;
   text-transform: uppercase;
   letter-spacing: 0.8px;
   padding-bottom: 8px;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 2px solid var(--color-border-light);
   position: relative;
 }
 
@@ -314,11 +314,11 @@
   left: 0;
   width: 40px;
   height: 2px;
-  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+  background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary) 100%);
 }
 
 .task-detail-description-display {
-  color: #3c4043;
+  color: var(--color-text-primary);
   line-height: 1.6;
   margin: 0;
   white-space: pre-wrap;
@@ -327,7 +327,7 @@
   border-radius: 8px;
   border: none;
   border-bottom: none;
-  background: #f5f5f5;
+  background: var(--color-background-subtle);
   min-height: 100px;
   box-sizing: border-box;
   font-size: 15px;
@@ -341,14 +341,14 @@
 }
 
 .task-detail-description-display:hover {
-  background-color: #eeeeee;
+  background-color: var(--color-background-subtle);
   box-shadow: none;
   border-bottom: none;
 }
 
 .task-detail-description-display:empty::before {
   content: '説明を追加...';
-  color: #b0b0b0;
+  color: var(--color-text-muted);
   font-style: normal;
 }
 
@@ -356,11 +356,11 @@
 textarea.task-detail-description-input {
   width: 100%;
   border: none;
-  background: #f5f5f5;
+  background: var(--color-background-subtle);
   padding: 12px 16px;
   font-size: 15px !important;
   font-weight: 400 !important;
-  color: #3c4043;
+  color: var(--color-text-primary);
   line-height: 1.6;
   border-radius: 8px;
   resize: none;
@@ -384,17 +384,17 @@ textarea.task-detail-description-input {
 
 .task-detail-description-input:focus {
   outline: none;
-  border-bottom: 2px solid #60a5fa;
-  background: #f5f5f5;
+  border-bottom: 2px solid var(--color-primary-light);
+  background: var(--color-background-subtle);
   box-shadow: none;
 }
 
 .task-detail-description-input:hover:not(:focus) {
-  border-color: #bdc1c6;
+  border-color: var(--color-border-medium);
 }
 
 .task-detail-description-input::placeholder {
-  color: #b0b0b0;
+  color: var(--color-text-muted);
   font-style: italic;
 }
 
@@ -405,7 +405,7 @@ textarea.task-detail-description-input {
   padding: 0;
   font-size: 22px;
   font-weight: 400;
-  color: #202124;
+  color: var(--color-text-primary);
   margin: 0;
   line-height: 1.3;
   border-radius: 8px;
@@ -437,7 +437,7 @@ textarea.task-detail-description-input {
   border-radius: 4px;
   padding: 6px 10px;
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   cursor: pointer;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-weight: normal;
@@ -551,7 +551,7 @@ textarea.task-detail-description-input {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  background: white;
+  background: var(--color-background-card);
   padding: 0;
   border: none;
   border-radius: 0;
@@ -588,7 +588,7 @@ textarea.task-detail-description-input {
 .task-detail-icon-label .task-detail-icon {
   width: 16px;
   height: 16px;
-  color: #5f6368;
+  color: var(--color-text-muted);
   flex-shrink: 0;
 }
 
@@ -596,7 +596,7 @@ textarea.task-detail-description-input {
   margin: 0;
   font-size: 14px;
   font-weight: 500;
-  color: #3c4043;
+  color: var(--color-text-primary);
   white-space: nowrap;
 }
 
@@ -688,7 +688,7 @@ label.task-detail-label,
 div.task-detail-label {
   font-size: 15px !important;
   font-weight: 400 !important;
-  color: #3c4043;
+  color: var(--color-text-primary);
   min-width: 120px;
   margin: 0;
   line-height: 1.2;
@@ -703,7 +703,7 @@ div.task-detail-label {
   margin-bottom: 8px;
   font-size: 15px !important;
   font-weight: 400 !important;
-  color: #3c4043 !important;
+  color: var(--color-text-primary) !important;
   text-transform: none !important;
   letter-spacing: normal !important;
   font-family: 'Google Sans', system-ui, -apple-system, sans-serif !important;
@@ -736,14 +736,14 @@ div.task-detail-label {
 
 /* Status colors */
 .task-detail-field .status.pending {
-  background-color: #f3f4f6;
-  color: #6b7280;
-  border-color: #e5e7eb;
+  background-color: var(--color-background-subtle);
+  color: var(--color-text-muted);
+  border-color: var(--color-border-light);
 }
 
 .task-detail-field .status.in_progress {
   background-color: #dbeafe;
-  color: #3b82f6;
+  color: var(--color-status-progress);
   border-color: #bfdbfe;
 }
 
@@ -794,18 +794,18 @@ div.task-detail-label {
 }
 
 .task-detail-field .status.parent-task-status:hover {
-  background-color: white;
+  background-color: var(--color-background-card);
   box-shadow: none;
 }
 
 /* Date fields styling */
 .task-detail-date-display {
-  background: white;
-  border: 1px solid #e8eaed;
+  background: var(--color-background-card);
+  border: 1px solid var(--color-border-light);
   padding: 10px 14px;
   font-size: 15px;
   font-weight: 400;
-  color: #3c4043;
+  color: var(--color-text-primary);
   cursor: pointer;
   transition: all 0.15s ease;
   min-height: 36px;
@@ -818,25 +818,25 @@ div.task-detail-label {
 }
 
 .task-detail-date-display:hover {
-  background-color: #f8f9fa;
-  border-color: #dadce0;
+  background-color: var(--color-background-subtle);
+  border-color: var(--color-border-light);
   box-shadow: 0 1px 3px rgba(60, 64, 67, 0.15);
 }
 
 .task-detail-date-display:empty::before {
   content: '日時を設定';
-  color: #b0b0b0;
+  color: var(--color-text-muted);
   font-style: normal;
 }
 
 .task-detail-date-input {
-  background: white;
+  background: var(--color-background-card);
   border: 2px solid #1a73e8;
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 15px;
   font-weight: 400;
-  color: #3c4043;
+  color: var(--color-text-primary);
   font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
   box-sizing: border-box;
   flex: 1;
@@ -846,7 +846,7 @@ div.task-detail-label {
 }
 
 .task-detail-date-input:focus {
-  border-color: #1a73e8;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 1px #1a73e8;
 }
 
@@ -899,46 +899,44 @@ div.task-detail-label {
 
 .parent-task-selector-input {
   width: 100%;
-  padding: 6px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border-light);
+  border-radius: 8px;
   font-size: 15px;
   font-weight: 400;
-  background-color: white;
-  color: #1f2937;
+  background-color: var(--color-background-card);
+  color: var(--color-text-primary);
   cursor: pointer;
-  transition: border-color 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  transition: all 0.15s ease;
   box-sizing: border-box;
-  height: 36px;
-  line-height: 1.4;
+  min-height: 36px;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+  outline: none;
 }
 
 .parent-task-selector-input:hover {
-  border-color: #d1d5db;
+  background-color: var(--color-background-subtle);
+  border-color: var(--color-border-light);
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.15);
 }
 
-.parent-task-selector-value {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.parent-task-selector-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px #1a73e8;
 }
 
-.parent-task-selector-arrow {
-  flex-shrink: 0;
-  color: #6b7280;
-  margin-left: 8px;
+.parent-task-selector-input::placeholder {
+  color: var(--color-text-muted);
+  font-style: normal;
 }
+
 
 .parent-task-selector-dropdown {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background: white;
+  background: var(--color-background-card);
   border: 1px solid #e5e7eb;
   border-radius: 4px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -979,24 +977,24 @@ div.task-detail-label {
   padding: 8px 16px 0 16px;
   cursor: pointer;
   font-size: 14px;
-  color: #374151;
+  color: var(--color-text-secondary);
   transition: background-color 0.15s;
 }
 
 .parent-task-selector-option:hover,
 .parent-task-selector-option.hovered {
-  background-color: #f3f4f6;
+  background-color: var(--color-background-subtle);
 }
 
 .parent-task-selector-option.selected {
   background-color: #eff6ff;
-  color: #3b82f6;
+  color: var(--color-status-progress);
   font-weight: 500;
 }
 
 .parent-task-selector-no-results {
   padding: 16px;
   text-align: center;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-size: 14px;
 }

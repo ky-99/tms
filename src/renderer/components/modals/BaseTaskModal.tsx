@@ -120,6 +120,7 @@ const BaseTaskModal: React.FC<BaseTaskModalProps> = ({
   const [optimisticStartTime, setOptimisticStartTime] = useState<string | null>(null);
   const [optimisticEndDate, setOptimisticEndDate] = useState<string | null>(null);
   const [optimisticEndTime, setOptimisticEndTime] = useState<string | null>(null);
+  const [optimisticTagIds, setOptimisticTagIds] = useState<number[] | null>(null);
   
   // 現在のタスクを取得（楽観的更新を考慮）
   const task = React.useMemo(() => {
@@ -240,6 +241,7 @@ const BaseTaskModal: React.FC<BaseTaskModalProps> = ({
         setEditedStatus(task.status);
         setEditedPriority(task.priority);
         setEditedIsRoutine(task.isRoutine || false);
+        // タグIDは初期化時は常に元のタスクデータを使用
         setEditedTagIds(task.tagIds || []);
         // 編集状態を設定
         setIsEditingTitle(edit.titleAlwaysEditing || false);
@@ -262,6 +264,11 @@ const BaseTaskModal: React.FC<BaseTaskModalProps> = ({
       // 説明は楽観的更新中でない場合かつアクティブに編集していない場合のみ更新（ユーザー入力を保護）
       if (optimisticDescription === null && !isActivelyEditingDescription) {
         setEditedDescription(task.description || '');
+      }
+      
+      // タグIDは楽観的更新中でない場合のみ更新（ユーザー操作を保護）
+      if (optimisticTagIds === null) {
+        setEditedTagIds(task.tagIds || []);
       }
       
       // 日時は楽観的更新を反映
@@ -309,7 +316,7 @@ const BaseTaskModal: React.FC<BaseTaskModalProps> = ({
       }
       setEditedEndDate(endDateValue);
     }
-  }, [task, optimisticTitle, optimisticDescription, optimisticStartDate, optimisticEndDate, optimisticStartTime, optimisticEndTime, isCreating, isActivelyEditingDescription]);
+  }, [task, optimisticTitle, optimisticDescription, optimisticStartDate, optimisticEndDate, optimisticStartTime, optimisticEndTime, optimisticTagIds, isCreating, isActivelyEditingDescription]);
 
 
   // 日時調整が有効かどうかのチェック用関数
@@ -424,6 +431,14 @@ const BaseTaskModal: React.FC<BaseTaskModalProps> = ({
           setOptimisticEndTime(null);
           setOptimisticEndDate(null);
         }
+        if (updates.tagIds !== undefined) {
+          // タグIDの更新が成功した場合、楽観的更新をクリア
+          // editedTagIdsの更新はuseEffectで自動的に行われる
+          // TaskDataContextからの更新が反映されるまで少し待ってから楽観的更新をクリア
+          setTimeout(() => {
+            setOptimisticTagIds(null);
+          }, 50);
+        }
       } catch (error) {
         console.error('❌ Failed to update task metadata:', error);
         showAlert('更新に失敗しました', { type: 'error' });
@@ -461,15 +476,29 @@ const BaseTaskModal: React.FC<BaseTaskModalProps> = ({
             setEditedEndDate('');
           }
         }
-        if (updates.tagIds !== undefined) setEditedTagIds(task.tagIds || []);
+        if (updates.tagIds !== undefined) {
+          setOptimisticTagIds(null);
+          setEditedTagIds(task.tagIds || []);
+        }
       }
     }
   };
 
   // タグ変更ハンドラー
   const handleTagsChange = async (newTagIds: number[]) => {
+    // 楽観的更新：即座にUIを更新
+    const previousTagIds = editedTagIds;
+    setOptimisticTagIds(newTagIds);  // 楽観的更新状態を設定
     setEditedTagIds(newTagIds);
-    await handleMetadataUpdate({ tagIds: newTagIds });
+    
+    try {
+      await handleMetadataUpdate({ tagIds: newTagIds });
+    } catch (error) {
+      // エラー時は前の状態に戻す
+      setOptimisticTagIds(null);
+      setEditedTagIds(previousTagIds);
+      throw error;
+    }
   };
 
   // ステータス変更ハンドラー

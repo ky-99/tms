@@ -686,12 +686,12 @@ export class TaskRepository {
       params.routineType = input.routineType;
     }
 
-    if (updates.length === 0) return this.getTaskById(id);
-    const stmt = db.prepare(`
-      UPDATE tasks SET ${updates.join(', ')} WHERE id = @id
-    `);
-
-    stmt.run(params);
+    if (updates.length > 0) {
+      const stmt = db.prepare(`
+        UPDATE tasks SET ${updates.join(', ')} WHERE id = @id
+      `);
+      stmt.run(params);
+    }
 
     // タグの更新
     if (input.tagIds !== undefined) {
@@ -740,7 +740,14 @@ export class TaskRepository {
       }
     }
 
-    return this.getTaskWithChildren(id);
+    const resultTask = this.getTaskWithChildren(id);
+    
+    // APIレスポンス用にsnake_caseフィールドも設定
+    if (resultTask && resultTask.tagIds) {
+      (resultTask as any).tag_ids = resultTask.tagIds;
+    }
+    
+    return resultTask;
   }
 
   // 親タスクのステータスを子タスクがない場合にリセット
@@ -1108,7 +1115,6 @@ export class TaskRepository {
       
       transaction();
       
-      console.log(`Generated ${routineTasks.length} daily routine tasks for today`);
       return true;
       
     } catch (error) {

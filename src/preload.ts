@@ -40,6 +40,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     offChanged: (listener: any) => {
       ipcRenderer.removeListener('workspace:changed', listener);
     }
+  },
+  window: {
+    minimize: () => ipcRenderer.invoke('window-minimize'),
+    maximize: () => ipcRenderer.invoke('window-maximize'),
+    close: () => ipcRenderer.invoke('window-close'),
+    isMaximized: () => ipcRenderer.invoke('window-is-maximized')
   }
 });
 

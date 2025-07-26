@@ -1,18 +1,19 @@
 .views-page {
   width: 100%;
-  height: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - var(--height-header));
+  overflow: hidden; /* 外部スクロールを完全に防ぐ */
 }
 
 .views-page-header {
   padding: 16px 20px;
   border-bottom: none;
-  background-color: #ffffff;
+  background-color: var(--color-background-card);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0; /* ヘッダーが縮小されないようにする */
 }
 
 .date-navigation {
@@ -29,86 +30,87 @@
   height: 32px;
   border: none;
   background-color: transparent;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   cursor: pointer;
-  color: #6b7280;
-  transition: all 0.2s ease;
+  color: var(--color-text-muted);
+  transition: all var(--transition-base);
 }
 
 .nav-button:hover {
-  background-color: #f3f4f6;
-  color: #374151;
+  background-color: var(--color-background-alt);
+  color: var(--color-text-secondary);
 }
 
 .today-button {
   padding: 6px 16px;
-  border: 1px solid #d1d5db;
-  background-color: #ffffff;
-  border-radius: 20px;
+  border: 1px solid var(--color-border-medium);
+  background-color: var(--color-background-card);
+  border-radius: var(--radius-2xl);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  transition: all var(--transition-base);
   font-weight: 500;
-  color: #374151;
-  transition: all 0.2s ease;
   margin-right: 8px;
   min-width: 60px;
 }
 
 .today-button:hover {
-  background-color: #f3f4f6;
-  border-color: #9ca3af;
+  background-color: var(--color-background-alt);
+  border-color: var(--color-border-dark);
 }
 
 .date-display {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
   margin-left: 12px;
   white-space: nowrap;
 }
 
-.view-type-buttons {
+.view-type-selector {
   display: flex;
   gap: 4px;
-  background-color: #f3f4f6;
-  border-radius: 6px;
+  background-color: var(--color-background-alt);
+  border-radius: var(--radius-md);
   padding: 2px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border-light);
 }
 
 .view-type-button {
   padding: 6px 12px;
   border: none;
   background-color: transparent;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  color: #6b7280;
-  transition: all 0.2s ease;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+  transition: all var(--transition-base);
   min-width: 40px;
 }
 
 .view-type-button:hover {
-  color: #374151;
-  background-color: rgba(255, 255, 255, 0.5);
+  color: var(--color-text-secondary);
+  background-color: var(--color-primary-light);
 }
 
 .view-type-button.active {
-  color: #374151;
-  background-color: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  font-weight: 600;
+  color: var(--color-text-primary);
+  background-color: var(--color-background-card);
+  box-shadow: var(--shadow-sm);
+  font-weight: var(--font-weight-semibold);
 }
 
 .views-content {
   flex: 1;
-  overflow: hidden;
-  background-color: #ffffff;
+  overflow: hidden; /* カレンダービューでは外部スクロールを完全に防ぐ */
+  background-color: var(--color-background-card);
   padding: 20px;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 0; /* Flexboxでの高さ計算を適切に行う */
+  width: 100%; /* 幅を固定してガタつきを防ぐ */
 }
 
 /* レスポンシブデザイン */
@@ -123,7 +125,7 @@
     order: 2;
   }
   
-  .view-type-buttons {
+  .view-type-selector {
     order: 1;
   }
   

@@ -1,76 +1,220 @@
-/* Header Navigation styles */
-.header {
-    background-color: #fff;
-    border-bottom: 1px solid #e5e7eb;
-    padding: 0 20px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    transition: transform 0.15s ease-out;
+/* Top Header styles */
+.top-header {
+  position: fixed;
+  top: 0;
+  left: 0; /* サイドバーの上に配置 */
+  right: 0;
+  height: 40px;
+  background-color: var(--color-background-alt);
+  border-bottom: 1px solid var(--color-border-light);
+  z-index: 100; /* サイドバーより上に */
+  display: flex;
+  align-items: center;
 }
-
-.header-visible {
-    transform: translateY(0);
-}
-
 
 .header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 0 16px;
 }
 
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #8b5cf6;
+.header-left {
+  display: flex;
+  align-items: center;
+  min-width: 80px;
+  padding-left: 80px; /* Macのネイティブボタン用スペース */
 }
 
-.logo-text {
-    font-size: 18px;
-    font-weight: 700;
-    color: #111827;
+.current-date {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 500;
 }
 
-.header-nav {
-    display: flex;
-    gap: 12px;
+.header-tasks {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  justify-content: flex-start;
+  overflow-x: visible; /* 見切れを防ぐためvisibleに変更 */
+  flex-wrap: nowrap;
 }
 
-.nav-link {
-    color: #6b7280;
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 14px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    transition: all 0.2s;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 48px;
-    height: 48px;
+.header-tasks::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
 }
 
-.nav-link:hover {
-    color: #8b5cf6;
-    background-color: #f3f4f6;
+.header-right {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-right: 16px;
 }
 
-.nav-link.active {
-    color: #8b5cf6;
-    background-color: #ede9fe;
+/* テーマ切り替えボタン */
+.theme-toggle-button {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-base);
+  -webkit-app-region: no-drag;
 }
 
-/* 期限切れ通知バッジ */
+.theme-toggle-button:hover {
+  color: var(--color-text-primary);
+}
+
+.theme-toggle-button:active {
+  color: var(--color-text-muted);
+}
+
+/* ウィンドウドラッグ領域（Macのネイティブボタンエリアを除く） */
+.header-drag-region {
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+/* ドラッグ領域内のインタラクティブ要素 */
+.header-task-section,
+.task-item-mini,
+.task-section-count {
+  -webkit-app-region: no-drag;
+}
+
+/* Task sections in header */
+.header-task-section {
+  display: flex;
+  flex-direction: row; /* 横並びに変更 */
+  align-items: center;
+  gap: 8px;
+  min-width: fit-content;
+  padding: 4px 0; /* 上下に余裕を追加 */
+  flex-shrink: 0; /* スクロール時に縮まないように */
+}
+
+.overdue-section {
+  border-left: 2px solid #dc2626;
+  padding-left: 8px;
+}
+
+.today-section {
+  border-left: 2px solid #8b5cf6;
+  padding-left: 8px;
+}
+
+.task-section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0; /* 縮まないように固定 */
+}
+
+.task-section-title {
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.task-section-count {
+  background-color: var(--color-background-card);
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 16px;
+  text-align: center;
+  border: 1px solid var(--color-border-light);
+}
+
+.overdue-section .task-section-count {
+  background-color: #dc2626;
+  color: #ffffff;
+}
+
+.today-section .task-section-count {
+  background-color: #8b5cf6;
+  color: #ffffff;
+}
+
+/* Mini task list */
+.task-list-mini {
+  display: flex;
+  flex-direction: row; /* 横並びに変更 */
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow-x: visible; /* スクロールではなく表示を優先 */
+  overflow-y: hidden;
+}
+
+.task-list-mini::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+.task-item-mini {
+  background-color: var(--color-background-card);
+  border-radius: var(--radius-sm);
+  padding: 3px 6px;
+  border: 1px solid var(--color-border-light);
+  flex-shrink: 0; /* サイズ固定 */
+  white-space: nowrap; /* 改行を防ぐ */
+  min-width: fit-content;
+  transition: all var(--transition-fast);
+}
+
+/* ホバー効果を削除 */
+
+/* 重要度色は削除 - ヘッダーではシンプルに */
+
+.task-item-mini.status-completed {
+  opacity: 0.6;
+}
+
+.task-title-mini {
+  color: var(--color-text-primary);
+  font-size: 11px;
+  line-height: 1.3;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px; /* 最大幅を制限 */
+}
+
+/* 期限切れタスクも今日のタスクと同じ文字色に統一 */
+
+.task-item-mini.status-completed .task-title-mini {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+.task-more {
+  color: var(--color-text-light);
+  font-size: 10px;
+  font-style: italic;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 2px 4px;
+}
+
+.no-tasks {
+  color: var(--color-text-light);
+  font-size: 11px;
+  font-style: italic;
+  white-space: nowrap;
+  padding: 2px 4px;
+}
+
+/* 期限切れ通知バッジ（サイドバー用） */
 .overdue-badge {
     background: #dc2626;
     color: white;
@@ -86,6 +230,90 @@
     padding: 0 2px;
     box-sizing: border-box;
     position: absolute;
-    top: -2px;
-    right: -2px;
+    top: 8px;
+    right: 8px;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .header-center {
+    gap: 16px;
+  }
+  
+  .header-task-section {
+    min-width: fit-content;
+  }
+  
+  .header-left {
+    min-width: 70px;
+    padding-left: 70px; /* Macボタン用スペースを少し縮小 */
+  }
+}
+
+@media (max-width: 900px) {
+  .header-tasks {
+    gap: 12px;
+    justify-content: flex-start;
+  }
+  
+  .header-task-section {
+    min-width: fit-content;
+  }
+  
+  .header-left {
+    min-width: 60px;
+    padding-left: 60px;
+  }
+  
+  .task-section-title {
+    font-size: 11px;
+  }
+  
+  .task-title-mini {
+    font-size: 10px;
+    max-width: 80px;
+  }
+  
+  .task-item-mini {
+    padding: 2px 4px;
+  }
+}
+
+@media (max-width: 600px) {
+  .top-header {
+    height: auto;
+    min-height: 48px;
+    padding: 4px 0;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 6px 12px;
+  }
+  
+  .header-left,
+  .header-tasks {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .header-tasks {
+    justify-content: flex-start;
+    gap: 8px;
+  }
+  
+  .header-left {
+    padding-left: 16px;
+  }
+  
+  .header-task-section {
+    min-width: fit-content;
+    padding: 2px 0;
+  }
+  
+  .task-title-mini {
+    max-width: 60px;
+  }
 }

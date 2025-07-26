@@ -8,6 +8,7 @@
 
 /* Layout components */
 @import './sidebar.css';
+@import './header.css';
 @import './breadcrumb.css';
 @import './task-breadcrumb.css';
 
@@ -16,12 +17,12 @@
 @import './forms.css';
 @import './buttons.css';
 @import './tag-selector.css';
+@import './parent-task-selector.css';
 @import './tag-pool.css';
 
 /* Task components */
 @import './task-list.css';
 @import './badges.css';
-@import './dashboard.css';
 @import './weekly-task-cards.css';
 @import './calendar-view.css';
 @import './task-tree-overview.css';

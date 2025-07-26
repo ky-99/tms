@@ -19,7 +19,7 @@
 }
 
 .task-cards-section {
-    background: white;
+    background: var(--color-background-card);
     border: 1px solid #e5e7eb;
     border-radius: 4px;
     padding: 16px;
@@ -46,7 +46,7 @@
 .task-cards-section h3 {
     font-size: 14px;
     margin: 0 0 12px 0;
-    color: #374151;
+    color: var(--color-text-secondary);
     font-weight: 600;
 }
 
@@ -58,7 +58,7 @@
 }
 
 .weekly-task-card {
-    background: white;
+    background: var(--color-background-card);
     border: 1px solid #e5e7eb;
     border-radius: 4px;
     padding: 12px;
@@ -73,17 +73,17 @@
 }
 
 .weekly-task-card.completed {
-    background: white;
+    background: var(--color-background-card);
     border-color: #e5e7eb;
 }
 
 .weekly-task-card.in_progress {
-    background: white;
+    background: var(--color-background-card);
     border-color: #e5e7eb;
 }
 
 .weekly-task-card.pending {
-    background: white;
+    background: var(--color-background-card);
     border-color: #e5e7eb;
 }
 
@@ -164,7 +164,7 @@
 
 .priority-low {
     background-color: #e5e7eb;
-    color: #6b7280;
+    color: var(--color-text-muted);
 }
 
 .status {
@@ -186,12 +186,12 @@
 
 .status-pending {
     background-color: #f3f4f6;
-    color: #4b5563;
+    color: var(--color-text-secondary);
 }
 
 .task-card-title {
     font-size: 13px;
-    color: #374151;
+    color: var(--color-text-secondary);
     line-height: 1.4;
     flex: 1;
     display: -webkit-box;
@@ -203,7 +203,7 @@
 
 .task-card-description {
     font-size: 12px;
-    color: #6b7280;
+    color: var(--color-text-muted);
     line-height: 1.3;
     display: -webkit-box;
     -webkit-line-clamp: 3;
@@ -213,7 +213,7 @@
 }
 
 .weekly-task-card.completed .task-card-title {
-    color: #6b7280;
+    color: var(--color-text-muted);
     text-decoration: line-through;
 }
 

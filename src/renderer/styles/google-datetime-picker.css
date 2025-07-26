@@ -8,12 +8,12 @@
 .google-datetime-input {
   display: flex;
   align-items: center;
-  background: white;
+  background: var(--color-background-card);
   border: 1px solid #dadce0;
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 14px;
-  color: #3c4043;
+  color: var(--color-text-primary);
   cursor: pointer;
   transition: all 0.15s ease;
   min-height: 36px;
@@ -34,7 +34,7 @@
 
 .google-datetime-input.disabled {
   background-color: #f8f9fa;
-  color: #80868b;
+  color: var(--color-text-muted);
   cursor: not-allowed;
   border-color: #e8eaed;
 }
@@ -57,14 +57,14 @@
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1) !important;
   border-radius: 12px !important;
   overflow: hidden !important;
-  background: white !important;
+  background: var(--color-background-card) !important;
   max-width: 90vw !important;
   max-height: 90vh !important;
 }
 
 /* ヘッダー */
 .react-datepicker__header {
-  background: white !important;
+  background: var(--color-background-card) !important;
   border-bottom: 1px solid #e8eaed !important;
   padding: 16px 20px 12px !important;
 }
@@ -103,7 +103,7 @@
 }
 
 .react-datepicker__navigation-icon::before {
-  border-color: #5f6368 !important;
+  border-color: var(--color-text-muted) !important;
   border-width: 2px 2px 0 0 !important;
   width: 8px !important;
   height: 8px !important;
@@ -115,7 +115,7 @@
 }
 
 .react-datepicker__day-name {
-  color: #5f6368 !important;
+  color: var(--color-text-muted) !important;
   font-size: 12px !important;
   font-weight: 500 !important;
   width: 40px !important;
@@ -140,7 +140,7 @@
   line-height: 40px !important;
   margin: 0 !important;
   border-radius: 50% !important;
-  color: #3c4043 !important;
+  color: var(--color-text-primary) !important;
   font-size: 14px !important;
   font-weight: 400 !important;
   display: flex !important;
@@ -190,7 +190,7 @@
 }
 
 .react-datepicker__header--time {
-  background: white !important;
+  background: var(--color-background-card) !important;
   border-bottom: 1px solid #e8eaed !important;
   padding: 12px !important;
 }
@@ -203,7 +203,7 @@
 .react-datepicker__time-list-item {
   padding: 8px 16px !important;
   font-size: 14px !important;
-  color: #3c4043 !important;
+  color: var(--color-text-primary) !important;
   cursor: pointer !important;
   transition: background-color 0.15s ease !important;
 }
@@ -220,7 +220,7 @@
 
 /* 今日ボタン */
 .react-datepicker__today-button {
-  background: white !important;
+  background: var(--color-background-card) !important;
   border: none !important;
   border-top: 1px solid #e8eaed !important;
   color: #1a73e8 !important;
@@ -241,17 +241,17 @@
 }
 
 .react-datepicker__time-list::-webkit-scrollbar-track {
-  background: #f1f3f4;
+  background: var(--color-background-subtle);
   border-radius: 4px;
 }
 
 .react-datepicker__time-list::-webkit-scrollbar-thumb {
-  background: #bdc1c6;
+  background: var(--color-border-medium);
   border-radius: 4px;
 }
 
 .react-datepicker__time-list::-webkit-scrollbar-thumb:hover {
-  background: #80868b;
+  background: var(--color-text-muted);
 }
 
 /* モバイル対応 */

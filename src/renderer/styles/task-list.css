@@ -7,7 +7,7 @@
 
 .task-list__divider {
     height: 1px;
-    background-color: #e5e7eb;
+    background-color: var(--color-border-light);
     margin: 16px 0;
     margin-left: 30px; /* タスクアイテムの左マージンに合わせる */
     border: none;
@@ -20,7 +20,7 @@
 /* TaskItem内の子タスク間の区切り線 */
 .task-divider {
     height: 1px;
-    background-color: #e5e7eb;
+    background-color: var(--color-border-light);
     margin: 12px 0;
     border: none;
     width: calc(100% - 30px);
@@ -199,7 +199,7 @@
 .task-title {
     font-weight: 500;
     font-size: 16px;
-    color: #1f2937;
+    color: var(--color-text-primary);
     margin-right: 4px;
     white-space: nowrap;
     overflow: hidden;
@@ -211,7 +211,7 @@
 
 .task-description {
     font-size: 14px;
-    color: #6b7280;
+    color: var(--color-text-muted);
     line-height: 1.5;
     padding: 4px 0;
     white-space: pre-wrap;
@@ -219,7 +219,7 @@
 
 .task-timeline {
     font-size: 13px;
-    color: #9ca3af;
+    color: var(--color-text-light);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -285,7 +285,7 @@
     right: -8px;
     display: flex;
     gap: 4px;
-    background: white;
+    background: var(--color-background-card);
     border-radius: 6px;
     padding: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
@@ -304,8 +304,8 @@
     align-items: center;
     justify-content: center;
     font-weight: 500;
-    background: white;
-    color: #374151;
+    background: var(--color-background-card);
+    color: var(--color-text-secondary);
 }
 
 .operation-btn:hover {
@@ -313,7 +313,7 @@
 }
 
 .operation-btn.routine-btn {
-    color: #6b7280;
+    color: var(--color-text-muted);
 }
 
 .operation-btn.routine-btn:hover {
@@ -334,7 +334,7 @@
 
 .operation-btn.edit-btn {
     color: #3b82f6;
-    background: white;
+    background: var(--color-background-card);
     border-color: #dbeafe;
 }
 
@@ -345,7 +345,7 @@
 
 .operation-btn.add-btn {
     color: #10b981;
-    background: white;
+    background: var(--color-background-card);
     border-color: #d1fae5;
 }
 
@@ -356,7 +356,7 @@
 
 .operation-btn.delete-btn {
     color: #ef4444;
-    background: white;
+    background: var(--color-background-card);
     border-color: #fecaca;
 }
 
@@ -366,19 +366,19 @@
 }
 
 .operation-btn.close-btn {
-    color: #6b7280;
-    background: white;
+    color: var(--color-text-muted);
+    background: var(--color-background-card);
     border-color: #e5e7eb;
 }
 
 .operation-btn.close-btn:hover {
     background: #f3f4f6;
-    color: #374151;
+    color: var(--color-text-secondary);
 }
 
 .operation-btn.duplicate-btn {
     color: #8b5cf6;
-    background: white;
+    background: var(--color-background-card);
     border-color: #e9d5ff;
 }
 
@@ -442,7 +442,7 @@
 .task-list__title {
   font-weight: 500;
   font-size: 16px;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin-right: 4px;
   white-space: nowrap;
   overflow: hidden;
@@ -466,7 +466,7 @@
 
 .task-list__description {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   line-height: 1.5;
   padding: 4px 0;
   white-space: pre-wrap;
@@ -474,7 +474,7 @@
 
 .task-list__timeline {
   font-size: 13px;
-  color: #9ca3af;
+  color: var(--color-text-light);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -540,7 +540,7 @@
 .task-list__tag-add {
   background: none;
   border: 1px dashed #d1d5db;
-  color: #6b7280;
+  color: var(--color-text-muted);
   border-radius: 12px;
   padding: 2px 8px;
   font-size: 11px;
@@ -550,12 +550,12 @@
 
 .task-list__tag-add:hover {
   border-color: #9ca3af;
-  color: #374151;
+  color: var(--color-text-secondary);
 }
 
 /* Task item modifiers */
 .task-list__item--clicked {
-  background-color: #f3f4f6;
+  background-color: var(--color-background-subtle);
 }
 
 .task-list__item--operation-mode {
@@ -598,7 +598,7 @@
   justify-content: center;
   width: 20px;
   height: 20px;
-  color: #9ca3af;
+  color: var(--color-text-light);
   cursor: grab;
   margin-right: 4px;
   border-radius: 4px;
@@ -607,8 +607,8 @@
 }
 
 .task-list__drag-handle:hover {
-  color: #6b7280;
-  background-color: #f3f4f6;
+  color: var(--color-text-muted);
+  background-color: var(--color-background-subtle);
   opacity: 1;
 }
 
@@ -638,7 +638,7 @@
 
 /* 親タスクへのドラッグオーバー時のハイライト */
 .task-list__item--drag-over {
-  background-color: #fef3c7 !important;
+  background-color: var(--color-warning-light) !important;
   border: 2px dashed #f59e0b !important;
   box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2) !important;
   transition: all 0.2s ease;
@@ -646,7 +646,7 @@
 
 /* ゴーストタスク（ドラッグ中の元の位置表示） */
 .task-list__item--ghost {
-  background-color: #f8fafc !important;
+  background-color: var(--color-background-subtle) !important;
   border: 1px dashed #cbd5e1 !important;
   opacity: 0.4 !important;
   pointer-events: none !important;
@@ -655,11 +655,11 @@
 }
 
 .task-list__item--ghost .task-list__title {
-  color: #94a3b8 !important;
+  color: var(--color-text-light) !important;
 }
 
 .task-list__item--ghost .task-list__description {
-  color: #cbd5e1 !important;
+  color: var(--color-border-medium) !important;
 }
 
 .task-list__item--ghost .task-list__tag {

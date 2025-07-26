@@ -84,7 +84,10 @@ const TagSelectionModal: React.FC<{
 
   // フィルタリングされたタグ（メモ化）
   const filteredTags = useMemo(() => {
-    if (!searchTerm.trim()) return availableTags;
+    if (!searchTerm.trim()) {
+      // 検索語がない場合は最新の6つのタグのみ表示
+      return availableTags.slice(0, 6);
+    }
     const searchLower = searchTerm.toLowerCase();
     return availableTags.filter(tag =>
       tag.name.toLowerCase().includes(searchLower)

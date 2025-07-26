@@ -123,10 +123,7 @@ class TaskAPIService {
       
       // Use the real IPC communication instead of in-memory manipulation
       const updatedTask = await this.api.updateTask(id, updates);
-      
-      const normalizedTask = normalizeTask(updatedTask);
-      
-      return normalizedTask;
+      return normalizeTask(updatedTask);
     } catch (error) {
       console.error('❌ TaskAPI updateTask Error:', error);
       throw new Error('タスクの更新に失敗しました');

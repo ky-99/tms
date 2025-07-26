@@ -570,34 +570,6 @@ const TasksPage: React.FC = () => {
     }
   };
 
-  // タスクの順序変更処理
-  const handleTaskReorder = async (taskId: number, newParentId: number | null, newPosition: number) => {
-    try {
-      console.log('Task reorder:', { taskId, newParentId, newPosition });
-      
-      // タスクの親IDと位置を更新
-      const updateData: { parentId?: number | null; position?: number } = {};
-      
-      if (newParentId !== null) {
-        // 親タスクへの移動
-        updateData.parentId = newParentId;
-        updateData.position = newPosition;
-      } else {
-        // 同じレベルでの順序変更
-        updateData.position = newPosition;
-      }
-      
-      await window.taskAPI.updateTask(taskId, updateData);
-      
-      // タスクリストを再読み込み
-      await loadTasks();
-      
-      console.log('Task reorder completed successfully');
-    } catch (error) {
-      console.error('Failed to reorder task:', error);
-      throw error;
-    }
-  };
 
 
   return (
@@ -829,7 +801,6 @@ const TasksPage: React.FC = () => {
               setShowTagPool(true);
             }}
             isDetailView={!!rootId}
-            onTaskReorder={handleTaskReorder}
           />
         )}
       </div>

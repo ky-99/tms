@@ -28,7 +28,7 @@
   top: 100%;
   left: 0;
   right: 0;
-  background: white;
+  background: var(--color-background-card);
   border: 1px solid #d1d5db;
   border-top: none;
   border-radius: 0 0 4px 4px;
@@ -67,14 +67,14 @@
   background: none;
   border: none;
   font-size: 18px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   cursor: pointer;
   padding: 4px;
   line-height: 1;
 }
 
 .clear-parent-task:hover {
-  color: #374151;
+  color: var(--color-text-secondary);
 }
 
 /* 親タスクフィルター選択カード */
@@ -103,7 +103,7 @@
   background: none;
   border: none;
   font-size: 16px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   cursor: pointer;
   padding: 2px 4px;
   line-height: 1;
@@ -113,7 +113,7 @@
 
 .parent-filter-card-remove:hover {
   background: #dbeafe;
-  color: #374151;
+  color: var(--color-text-secondary);
 }
 
 .task-merge-modal-backdrop {
@@ -132,7 +132,7 @@
 }
 
 .task-merge-modal {
-  background: white;
+  background: var(--color-background-card);
   border-radius: 8px;
   box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
   width: 700px;
@@ -177,14 +177,14 @@
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
 }
 
 .task-merge-close {
   background: none;
   border: none;
   font-size: 20px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
@@ -210,7 +210,7 @@
 .task-merge-section h3 {
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text-secondary);
   margin: 0 0 12px 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -290,7 +290,7 @@
 .task-merge-select-all span {
   font-size: 14px;
   font-weight: 500;
-  color: #374151;
+  color: var(--color-text-secondary);
 }
 
 
@@ -303,24 +303,7 @@
   padding-bottom: 12px;
 }
 
-/* スクロールバーのスタイル改善 */
-.task-merge-task-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.task-merge-task-list::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.task-merge-task-list::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-.task-merge-task-list::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
+/* 個別のスクロールバースタイルは削除 - グローバルスタイルを使用 */
 
 .task-merge-task-item {
   display: flex;
@@ -472,14 +455,14 @@
 
 .task-merge-task-title {
   font-weight: 500;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin-bottom: 4px;
   line-height: 1.4;
 }
 
 .task-merge-task-description {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   line-height: 1.4;
   margin-bottom: 8px;
   overflow: hidden;
@@ -528,8 +511,8 @@
 }
 
 .task-merge-cancel {
-  background-color: white;
-  color: #6b7280;
+  background-color: var(--color-background-card);
+  color: var(--color-text-muted);
   border-color: #d1d5db;
 }
 
@@ -579,8 +562,8 @@
 }
 
 .task-merge-back {
-  background-color: white;
-  color: #6b7280;
+  background-color: var(--color-background-card);
+  color: var(--color-text-muted);
   border-color: #d1d5db;
 }
 

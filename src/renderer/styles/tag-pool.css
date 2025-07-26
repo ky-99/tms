@@ -310,14 +310,14 @@
 .tag-create-save:disabled {
   background-color: #e8eaed;
   border-color: #e8eaed;
-  color: #80868b;
+  color: var(--color-text-muted);
   cursor: not-allowed;
   box-shadow: none;
 }
 
 .tag-create-cancel {
-  background-color: white;
-  color: #3c4043;
+  background-color: var(--color-background-card);
+  color: var(--color-text-primary);
   border-color: #dadce0;
 }
 

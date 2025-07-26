@@ -32,7 +32,11 @@
       "Bash(git checkout:*)",
       "mcp__ide__executeCode",
       "Bash(true)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(awk:*)",
+      "Bash(npx webpack:*)",
+      "Bash(git restore:*)",
+      "Bash(git stash:*)"
     ],
     "deny": []
   }

@@ -1,6 +1,4 @@
 import React, { useState, useRef } from 'react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { Task, Tag } from '../../types';
 import { getContrastColor } from '../../utils';
 import { TASK_STATUS_LABELS, TASK_PRIORITY_LABELS } from '../../constants/task';
@@ -23,13 +21,9 @@ interface TaskItemProps {
   isDetailView?: boolean; // 子タスクの詳細画面として表示されている場合true
   isExpanded?: boolean;
   isLastChild?: boolean;
-  isDragEnabled?: boolean;
-  isDragOver?: boolean;
-  isExternalDragging?: boolean;
-  showGhost?: boolean;
 }
 
-const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onTasksChange, onAddSubTask, onTaskClick, onEditTask, onDeleteTask, onToggleExpand, onTaskSelectForTagging, isDetailView = false, isDragEnabled = false, isDragOver = false, isExternalDragging = false, showGhost = false }) => {
+const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onTasksChange, onAddSubTask, onTaskClick, onEditTask, onDeleteTask, onToggleExpand, onTaskSelectForTagging, isDetailView = false }) => {
   const { updateTask, createTaskAfter } = useTaskContext();
   const { setCurrentContext, setHoveredTask } = useShortcut();
   const { showAlert } = useGlobalAlert();
@@ -50,26 +44,6 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onTasksChan
   const statusRef = useRef<HTMLSpanElement>(null);
   const priorityRef = useRef<HTMLSpanElement>(null);
 
-  // ドラッグアンドドロップの設定
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: task.id,
-    disabled: !isDragEnabled,
-  });
-
-  // ドラッグ中は元の位置にゴーストを表示、ドラッグ中のタスクは半透明
-  const style = {
-    transform: showGhost ? undefined : CSS.Transform.toString(transform),
-    transition,
-    opacity: showGhost ? 0.4 : isDragging ? 0.8 : 1,
-    zIndex: isDragging ? 1000 : 'auto',
-  };
 
   // 選択状態をホバーベースのみに変更
   const isSelected = false; // クリック選択を完全に削除
@@ -406,9 +380,8 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onTasksChan
 
   return (
     <>
-      <div 
-        ref={setNodeRef}
-        className={`task-list__item ${level > 0 ? 'task-list__item--child' : ''} ${isOperationMode ? 'task-list__item--operation-mode' : ''} ${task.isRoutine ? 'task-list__item--routine' : ''} ${isDragEnabled ? 'task-list__item--draggable' : ''} ${isDragOver ? 'task-list__item--drag-over' : ''} ${showGhost ? 'task-list__item--ghost' : ''}`} 
+      <div
+        className={`task-list__item ${level > 0 ? 'task-list__item--child' : ''} ${isOperationMode ? 'task-list__item--operation-mode' : ''} ${task.isRoutine ? 'task-list__item--routine' : ''}`} 
         style={{ 
           marginLeft: `${level * 30}px`,
           ...(isOperationMode ? {
@@ -416,29 +389,11 @@ const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onTasksChan
             borderWidth: '2px',
             boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.2)',
             background: '#eff6ff'
-          } : {}),
-          ...(isDragOver ? {
-            backgroundColor: '#fef3c7',
-            border: '2px dashed #f59e0b',
-            boxShadow: '0 0 0 2px rgba(245, 158, 11, 0.2)'
-          } : {}),
-          ...style
+          } : {})
         }}
         data-task-id={task.id}
-        {...attributes}
       >
         <div className={`task-list__expand-container ${isLeafNode ? 'task-list__expand-container--leaf-node' : ''}`}>
-          {isDragEnabled && (
-            <div 
-              className="task-list__drag-handle"
-              {...listeners}
-              title="ドラッグして移動"
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M9 3H11V5H9V3ZM13 3H15V5H13V3ZM9 7H11V9H9V7ZM13 7H15V9H13V7ZM9 11H11V13H9V11ZM13 11H15V13H13V11ZM9 15H11V17H9V15ZM13 15H15V17H13V15ZM9 19H11V21H9V19ZM13 19H15V21H13V19Z" />
-              </svg>
-            </div>
-          )}
           <div 
             className={`task-list__expand ${hasChildren ? 'task-list__expand--has-children' : ''} ${isLeafNode ? 'task-list__expand--leaf-node' : ''} ${isParentInFilter ? 'task-list__expand--parent-in-filter' : ''}`} 
             onClick={hasChildren ? toggleExpand : undefined}

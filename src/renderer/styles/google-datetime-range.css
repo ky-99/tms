@@ -27,7 +27,7 @@
 
 .range-arrow {
   font-size: 16px;
-  color: #5f6368;
+  color: var(--color-text-muted);
   font-weight: 500;
   user-select: none;
 }
@@ -56,7 +56,7 @@
 
 .range-display-text {
   font-size: 13px;
-  color: #5f6368;
+  color: var(--color-text-muted);
   font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
   line-height: 1.4;
 }
@@ -122,12 +122,12 @@
 }
 
 .google-datetime-range.disabled .range-display-text {
-  color: #80868b;
+  color: var(--color-text-muted);
 }
 
 /* ホバー効果 */
 .google-datetime-range-container:hover .range-arrow {
-  color: #3c4043;
+  color: var(--color-text-primary);
   transition: color 0.15s ease;
 }
 

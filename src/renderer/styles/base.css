@@ -15,6 +15,7 @@ body {
     color: var(--color-text-primary);
     font-size: var(--font-size-base);
     line-height: var(--line-height-normal);
+    overflow: hidden; /* 二重スクロールバーを防ぐ */
 }
 
 .app {
@@ -24,15 +25,16 @@ body {
 
 .main-content {
     flex: 1;
-    margin-left: 220px; /* Width of sidebar */
-    min-height: 100vh;
+    margin-left: 60px; /* Icon-only sidebar width */
+    margin-top: 40px; /* Header height */
+    height: calc(100vh - 40px); /* 固定高さからヘッダー分を引く */
+    overflow: auto; /* 分析ページなどでスクロールを許可 */
+    background: var(--color-background); /* 統一背景色 */
 }
 
-/* レスポンシブデザイン - 小さい画面では狭いサイドバー */
-@media (max-width: 768px) {
-    .main-content {
-        margin-left: 60px; /* Collapsed sidebar width */
-    }
+/* カレンダー・週ビューページでのスクロール制御 */
+.main-content.calendar-view {
+    overflow: hidden; /* カレンダー・週ビューでは外部スクロールバーを排除 */
 }
 
 .container {
@@ -89,22 +91,10 @@ body {
 }
 
 /* Smooth fade-in for content */
-.dashboard-content {
-    animation: fadeIn var(--transition-slow) ease-out;
-}
-
-.task-list-container {
-    animation: fadeIn var(--transition-slow) ease-out;
-}
-
-.analytics-grid {
-    animation: fadeIn var(--transition-slow) ease-out;
-}
-
-.export-page {
-    animation: fadeIn var(--transition-slow) ease-out;
-}
-
+.dashboard-content,
+.task-list-container,
+.analytics-grid,
+.export-page,
 .workspace-page {
     animation: fadeIn var(--transition-slow) ease-out;
 }

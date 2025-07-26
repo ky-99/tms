@@ -1,6 +1,6 @@
 /* Notion-like Sort Modal Styles */
 .notion-sort-modal {
-  background: white;
+  background: var(--color-background-card);
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   border: 1px solid #e5e7eb;
@@ -148,23 +148,7 @@
   margin-bottom: 2px;
 }
 
-/* Custom scrollbar */
-.notion-sort-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.notion-sort-content::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-.notion-sort-content::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-.notion-sort-content::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
+/* 個別のスクロールバースタイルは削除 - グローバルスタイルを使用 */
 
 /* Responsive */
 @media (max-width: 768px) {

@@ -103,7 +103,7 @@ const taskDataReducer = (state: TaskDataState, action: TaskDataAction): TaskData
       const updateTaskRecursively = (tasks: Task[]): Task[] => {
         return tasks.map(task => {
           if (task.id === action.payload.id) {
-            return action.payload;
+            return { ...action.payload, children: task.children };
           }
           if (task.children && task.children.length > 0) {
             return {
@@ -211,26 +211,39 @@ export const TaskDataProvider: React.FC<TaskDataProviderProps> = ({ children }) 
 
   const updateTask = useCallback(async (id: number, updates: Partial<Task>): Promise<Task> => {
     try {
-      
+      // 階層的にタスクを検索する関数
+      const findTaskById = (tasks: Task[], targetId: number): Task | null => {
+        for (const task of tasks) {
+          if (task.id === targetId) {
+            return task;
+          }
+          if (task.children && task.children.length > 0) {
+            const found = findTaskById(task.children, targetId);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+
       // 楽観的UI更新: 即座にUI状態を更新
-      const currentTask = state.tasks.find(task => task.id === id);
+      const currentTask = findTaskById(state.tasks, id);
+      
       if (currentTask) {
         const optimisticTask = { ...currentTask, ...updates };
         dispatch({ type: 'UPDATE_TASK', payload: optimisticTask });
       }
       
-      // 新スキーマでは分離された日付・時刻フィールドを使用するため、
-      // 旧形式の結合されたdatetimeフィールドのバリデーションは不要
-      
       // バックグラウンドでデータベース更新
       const updatedTask = await taskAPI.updateTask(id, updates);
       
-      // 親子関係の変更など、本当に必要な場合のみ全リロード
-      if ('parentId' in updates || 'isRoutine' in updates) {
+      // 親子関係の変更、ルーティン設定の変更、ステータス変更の場合は全リロード
+      // ステータス変更時は親タスクの進行度が自動更新されるため全リロードが必要
+      if ('parentId' in updates || 'isRoutine' in updates || 'status' in updates) {
         const tasks = await taskAPI.loadTasks();
         dispatch({ type: 'SET_TASKS', payload: tasks });
       } else {
         // 最終的な正確なデータでUI更新（個別更新）
+        // タグの変更は他のタスクに影響しないため個別更新で十分
         dispatch({ type: 'UPDATE_TASK', payload: updatedTask });
       }
       

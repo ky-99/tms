@@ -1,7 +1,7 @@
 /* Timeline View Styles */
 .timeline-view {
-  background: white;
-  border-radius: 8px;
+  background: var(--color-background-card);
+  border-radius: var(--radius-lg);
   border: none;
   padding: 20px;
   height: 100%;
@@ -9,29 +9,139 @@
   flex-direction: column;
   overflow: hidden;
   flex: 1;
+  min-height: 0; /* Flexboxでの高さ計算を適切に行う */
+  width: 100%; /* 幅を固定してガタつきを防ぐ */
+  max-height: 100%; /* 親コンテナの高さ制限を使用 */
 }
 
-/* Header */
-.timeline-header {
-  display: flex;
-  background: white;
-  border-bottom: 1px solid var(--color-border-light);
-  height: 60px;
-  flex-shrink: 0;
+/* Grid Container */
+.timeline-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 60px repeat(7, 1fr);
+  grid-template-rows: 60px 1fr;
+  border: 1px solid var(--color-border-medium);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  /* 縦線を一本化するため、内部の境界線を統一 */
+  gap: 0;
 }
 
-.timeline-corner {
+/* Header Row - Grid内の各セル */
+.timeline-times-header {
+  grid-column: 1;
+  grid-row: 1;
+  background: var(--color-background-alt);
   border-right: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
-.timeline-day-header {
+.timeline-day-column-header {
+  background: var(--color-background-alt);
+  border-right: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-light);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-right: 1px solid var(--color-border-light);
   padding: var(--space-2);
+  box-sizing: border-box;
 }
+
+.timeline-day-column-header:nth-child(2) { grid-column: 2; grid-row: 1; }
+.timeline-day-column-header:nth-child(3) { grid-column: 3; grid-row: 1; }
+.timeline-day-column-header:nth-child(4) { grid-column: 4; grid-row: 1; }
+.timeline-day-column-header:nth-child(5) { grid-column: 5; grid-row: 1; }
+.timeline-day-column-header:nth-child(6) { grid-column: 6; grid-row: 1; }
+.timeline-day-column-header:nth-child(7) { grid-column: 7; grid-row: 1; }
+.timeline-day-column-header:nth-child(8) { grid-column: 8; grid-row: 1; border-right: none; }
+
+
+/* Body - Grid内で8列全体を占める */
+.timeline-body {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  overflow: auto;
+  position: relative;
+  scrollbar-width: thin;
+  display: grid;
+  grid-template-columns: 60px repeat(7, 1fr);
+  box-sizing: border-box;
+}
+
+.timeline-content {
+  display: contents; /* グリッドアイテムを透過してグリッドに直接配置 */
+}
+
+/* Time column */
+.timeline-times {
+  grid-column: 1;
+  background: #f9fafb;
+  border-right: 1px solid var(--color-border-light);
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+
+.timeline-times-content {
+  background: #f9fafb; /* 時刻コンテンツ部分のグレー背景 */
+}
+
+.timeline-hour {
+  border-bottom: 1px solid var(--color-border-light);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+  background: #f9fafb; /* 時刻部分のグレー背景 */
+  height: 60px; /* 高さを固定して枠に合わせる */
+  box-sizing: border-box; /* パディングを含めて高さ計算 */
+  width: 100%; /* 時刻列の幅を確実に100%にする */
+}
+
+/* 23時の境界線も表示 */
+.timeline-hour:last-child {
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.timeline-hour-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1;
+  font-weight: var(--font-weight-medium);
+}
+
+/* Day columns */
+.timeline-day-column {
+  position: relative;
+  border-right: 1px solid var(--color-border-light);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.timeline-day-column:nth-child(2) { grid-column: 2; }
+.timeline-day-column:nth-child(3) { grid-column: 3; }
+.timeline-day-column:nth-child(4) { grid-column: 4; }
+.timeline-day-column:nth-child(5) { grid-column: 5; }
+.timeline-day-column:nth-child(6) { grid-column: 6; }
+.timeline-day-column:nth-child(7) { grid-column: 7; }
+.timeline-day-column:nth-child(8) { grid-column: 8; border-right: none; }
+
+.timeline-day-column--today {
+  background: rgba(59, 130, 246, 0.05);
+}
+
 
 .timeline-day-name {
   font-size: var(--font-size-sm);
@@ -46,50 +156,10 @@
   color: var(--color-text-primary);
 }
 
-/* Body */
-.timeline-body {
-  flex: 1;
-  overflow: auto;
+/* Day column content */
+.timeline-day-column-content {
   position: relative;
-}
-
-.timeline-grid {
-  display: flex;
-  position: relative;
-  min-height: 960px; /* 24 hours * 40px */
-}
-
-/* Time column */
-.timeline-times {
-  background: white;
-  border-right: 1px solid var(--color-border-light);
-  position: sticky;
-  left: 0;
-  z-index: 10;
-}
-
-.timeline-hour {
-  border-bottom: 1px solid var(--color-border-light);
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  padding: var(--space-2);
-}
-
-.timeline-hour-label {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
-  line-height: 1;
-}
-
-/* Day columns */
-.timeline-day-column {
-  position: relative;
-  border-right: 1px solid var(--color-border-light);
-}
-
-.timeline-day-column--today {
-  background: rgba(59, 130, 246, 0.05);
+  overflow: hidden; /* タスクが列を貫通しないように */
 }
 
 .timeline-grid-cell {
@@ -97,20 +167,26 @@
   cursor: pointer;
   transition: background-color var(--transition-fast);
   position: relative;
+  /* 月次カレンダー風のセル */
+}
+
+/* 1時間ごとのセクション - 月次カレンダー風 */
+.timeline-hour-section {
+  border-bottom: 1px solid var(--color-border-medium); /* 1時間境界を強調 */
+  /* height は動的に設定される */
+}
+
+.timeline-hour-section:last-child {
+  border-bottom: 1px solid var(--color-border-medium) !important; /* 23時も縦線を確実に表示 */
 }
 
 /* 15分単位のグリッドライン */
-.timeline-hour-section {
-  border-bottom: 1px solid var(--color-border-light);
-  height: 40px;
-}
-
 .timeline-hour-section .timeline-grid-cell {
-  border-bottom: 1px dotted var(--color-border-light);
+  border-bottom: 1px dotted var(--color-border-light); /* 15分境界は点線 */
 }
 
 .timeline-hour-section .timeline-grid-cell:last-child {
-  border-bottom: 1px solid var(--color-border-light);
+  border-bottom: 1px dotted var(--color-border-light); /* 最後のセルも境界線を表示 */
 }
 
 .timeline-grid-cell:hover {
@@ -130,88 +206,144 @@
 
 /* Task wrapper */
 .timeline-task-wrapper {
-  width: 100%;
+  width: calc(100% - 8px); /* 左右に4pxずつマージンを確保 */
   position: relative;
   transition: opacity 0.05s ease; /* 高速アニメーション */
+  box-sizing: border-box;
 }
 
 .timeline-task-wrapper--dragging {
   z-index: 1000;
 }
 
-/* Task */
+/* Task - レスポンシブサイズ対応 */
 .timeline-task {
-  background: #039be5; /* Google Calendar blue */
+  /* background color is set inline based on tag color */
   border: none;
   border-radius: 4px;
   cursor: default;
   overflow: visible;
   display: flex;
   flex-direction: column;
-  font-size: 12px;
+  font-size: clamp(10px, 1.2vw, 14px); /* レスポンシブフォントサイズ */
   transition: all 0.1s ease; /* 高速アニメーション */
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   color: white;
   width: 100%;
   user-select: none;
   position: relative;
+  box-sizing: border-box;
+  /* 上寄せ配置 */
+  justify-content: flex-start;
+  align-items: stretch;
+  /* 高さを明示的に継承して制約を排除 */
+  height: 100% !important;
+  flex-shrink: 0 !important;
+  flex-grow: 0 !important;
+}
+
+/* 日跨ぎタスクのセグメント表示スタイル */
+.timeline-task--segment-start {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: 2px dashed rgba(255, 255, 255, 0.5);
+}
+
+.timeline-task--segment-middle {
+  border-radius: 0;
+  border-top: 2px dashed rgba(255, 255, 255, 0.5);
+  border-bottom: 2px dashed rgba(255, 255, 255, 0.5);
+}
+
+.timeline-task--segment-end {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-top: 2px dashed rgba(255, 255, 255, 0.5);
+}
+
+/* 完全重複時の複数列表示スタイル */
+.timeline-task--multi-column {
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* 部分重複時のずらし表示スタイル */
+.timeline-task--partial-overlap {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* 重なったタスクのスタイル（旧スタイル - 互換性のため残す） */
+.timeline-task--overlapped {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+/* 段階状に配置されたタスクのスタイル（旧スタイル - 互換性のため残す） */
+.timeline-task--stacked {
+  border: 1px solid white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* レスポンシブ調整 */
+@media (max-width: 768px) {
+  .timeline-task {
+    font-size: 10px;
+    border-radius: 3px;
+  }
+  
+  .timeline-task-content {
+    padding: 2px 4px;
+  }
+  
+  .timeline-task-time {
+    font-size: 9px;
+    margin-bottom: 1px;
+  }
+  
+  .timeline-task-title {
+    font-size: 10px;
+    line-height: 1.1;
+  }
+}
+
+@media (min-width: 1200px) {
+  .timeline-task {
+    font-size: 14px;
+    border-radius: 6px;
+  }
+  
+  .timeline-task-content {
+    padding: 6px 12px;
+  }
+  
+  .timeline-task-time {
+    font-size: 12px;
+    margin-bottom: 3px;
+  }
+  
+  .timeline-task-title {
+    font-size: 13px;
+    line-height: 1.3;
+  }
 }
 
 
-.timeline-task:active {
-  cursor: grabbing;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
 
-/* ドラッグ中のタスクスタイル */
-.timeline-task--dragging-active {
-  /* transformは削除 - dnd-kitのtransformと競合するため */
-  box-shadow: 0 8px 24px rgba(3, 155, 229, 0.4);
-  border: 2px solid rgba(3, 155, 229, 0.8);
-  z-index: 1000 !important;
-  opacity: 0.9;
-  filter: brightness(1.1);
-  transition: box-shadow 0.1s ease, border 0.1s ease, opacity 0.1s ease; /* transformは除外 */
-}
-
-.timeline-task--dragging {
-  transition: none; /* ドラッグ中はトランジションを無効化 */
-}
-
-/* ゴーストタスク用スタイル */
-.timeline-task--ghost {
-  cursor: grabbing;
-  box-shadow: 0 8px 24px rgba(3, 155, 229, 0.4);
-  border: 2px solid rgba(3, 155, 229, 0.8);
-  transform: scale(1.05);
-  z-index: 1000 !important;
-}
-
-/* ゴーストプレースホルダー用スタイル */
-.timeline-task--ghost-placeholder {
-  background: #039be5;
-  border: 2px dashed rgba(3, 155, 229, 0.5);
-  cursor: default;
-  pointer-events: none;
-}
-
-/* Task content - this is the drag handle area */
+/* Task content - レスポンシブパディング */
 .timeline-task-content {
-  padding: 4px 8px;
+  padding: clamp(2px, 0.5vw, 6px) clamp(4px, 1vw, 12px);
   flex: 1;
   overflow: hidden;
-  cursor: grab;
-}
-
-.timeline-task-content:active {
-  cursor: grabbing;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* 上寄せ */
+  text-align: left; /* 左寄せ */
 }
 
 .timeline-task-time {
   font-weight: 600;
   color: white;
-  font-size: 11px;
-  margin-bottom: 2px;
+  font-size: clamp(9px, 1vw, 12px); /* レスポンシブフォントサイズ */
+  margin-bottom: clamp(1px, 0.2vw, 3px);
 }
 
 .timeline-task-title {
@@ -219,8 +351,15 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.3;
+  line-height: 1.2;
   font-weight: 500;
+  font-size: clamp(10px, 1.1vw, 13px); /* レスポンシブフォントサイズ */
+}
+
+.timeline-task-segment-indicator {
+  font-size: 0.85em;
+  opacity: 0.8;
+  font-weight: 400;
 }
 
 /* Resize zone - invisible bottom area */
@@ -280,29 +419,28 @@
   cursor: default !important;
 }
 
-/* Task status colors - all use Google Calendar blue */
+/* Task status colors - opacity only, background color is set inline */
 .timeline-task--completed {
-  background: #039be5;
   opacity: 0.7;
 }
 
 .timeline-task--in_progress {
-  background: #039be5;
+  opacity: 1;
 }
 
 .timeline-task--pending {
-  background: #039be5;
+  opacity: 1;
 }
 
 /* Priority modifiers - shown with left border */
 .timeline-task--priority-urgent {
   border-left: 3px solid #ff0000;
-  padding-left: 5px;
+  box-sizing: border-box;
 }
 
 .timeline-task--priority-high {
   border-left: 3px solid #ff9800;
-  padding-left: 5px;
+  box-sizing: border-box;
 }
 
 
@@ -377,21 +515,28 @@
   }
 }
 
-/* Scrollbar styles */
+/* 週カレンダー内部のスクロールバースタイル */
 .timeline-body::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 .timeline-body::-webkit-scrollbar-track {
-  background: var(--color-background-subtle);
+  background: #f9fafb;
+  border-radius: 4px;
 }
 
 .timeline-body::-webkit-scrollbar-thumb {
-  background: var(--color-border-medium);
-  border-radius: var(--radius-xs);
+  background: #d1d5db;
+  border-radius: 4px;
+  transition: background 0.2s;
 }
 
 .timeline-body::-webkit-scrollbar-thumb:hover {
-  background: var(--color-border-dark);
+  background: #9ca3af;
 }
+
+.timeline-body::-webkit-scrollbar-corner {
+  background: #f9fafb;
+}
+

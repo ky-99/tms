@@ -1,34 +1,35 @@
-/* WorkSpace page styles - Responsive Layout */
+/* WorkSpace page styles - Unified with Export Page Design */
 .workspace-page {
   min-height: 100vh;
   width: 100%;
   margin: 0;
+  background: var(--color-background);
   padding: 20px 16px;
 }
 
-/* Responsive adjustments for workspace */
+/* Responsive adjustments - Unified with Export Page */
 @media (min-width: 768px) {
   .workspace-page {
-    padding: 20px 20px;
+    padding: 24px;
   }
 }
 
 @media (min-width: 1024px) {
   .workspace-page {
-    padding: 20px 24px;
+    padding: 24px 32px;
   }
 }
 
 @media (min-width: 1440px) {
   .workspace-page {
-    padding: 20px 32px;
+    padding: 24px 40px;
   }
 }
 
 /* For very large screens, limit padding */
 @media (min-width: 1800px) {
   .workspace-page {
-    padding: 20px 48px;
+    padding: 24px 48px;
   }
 }
 
@@ -47,7 +48,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #8b5cf6;
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 4px;
@@ -119,7 +120,7 @@
 }
 
 .workspace-card {
-  background: white;
+  background: var(--color-background-card);
   border-radius: 4px;
   padding: 1.5rem;
   border: 1px solid #e2e8f0;
@@ -143,11 +144,11 @@
 }
 
 .workspace-card.active .workspace-description {
-  color: #64748b;
+  color: var(--color-text-muted);
 }
 
 .workspace-card.active .workspace-stats .stat {
-  color: #64748b;
+  color: var(--color-text-muted);
 }
 
 .workspace-card.active .workspace-stats .stat strong {
@@ -201,7 +202,7 @@
 
 .workspace-description {
   font-size: 15px;
-  color: #64748b;
+  color: var(--color-text-muted);
   margin: 0;
   line-height: 1.5;
   grid-row: 2;
@@ -218,7 +219,7 @@
 
 .workspace-stats .stat {
   font-size: 14px;
-  color: #64748b;
+  color: var(--color-text-muted);
   line-height: 1.4;
 }
 
@@ -240,14 +241,14 @@
   width: 32px;
   height: 32px;
   border: 1px solid #e5e7eb;
-  background: white;
+  background: var(--color-background-card);
   border-radius: 4px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.15s ease;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .workspace-action-btn:hover:not(:disabled) {
@@ -258,13 +259,13 @@
 .workspace-action-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  color: #9ca3af !important;
+  color: var(--color-text-light) !important;
 }
 
 .workspace-action-btn.export-btn {
   all: unset !important;
   box-sizing: border-box !important;
-  background: white !important;
+  background: var(--color-background-card) !important;
   color: #6b7280 !important;
   border: 1px solid #e5e7eb !important;
   width: 32px !important;
@@ -282,7 +283,7 @@
   opacity: 0.7 !important;
   cursor: not-allowed !important;
   color: #6b7280 !important;
-  background: white !important;
+  background: var(--color-background-card) !important;
   border: 1px solid #e5e7eb !important;
 }
 
@@ -314,7 +315,7 @@
   grid-column: 1 / -1;
   text-align: center;
   padding: 4rem 2rem;
-  color: #64748b;
+  color: var(--color-text-muted);
 }
 
 .loading-message p,
@@ -386,7 +387,7 @@
 }
 
 .workspace-modal {
-  background: white;
+  background: var(--color-background-card);
   border-radius: 4px;
   width: 480px;
   max-width: 90%;
@@ -404,7 +405,7 @@
   background: none;
   border: none;
   font-size: 24px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   cursor: pointer;
   padding: 0;
   width: 32px;
@@ -418,7 +419,7 @@
 
 .modal-close-btn:hover {
   background: #f3f4f6;
-  color: #374151;
+  color: var(--color-text-secondary);
 }
 
 .workspace-modal-body {
@@ -437,7 +438,7 @@
   display: block;
   font-size: 14px;
   font-weight: 500;
-  color: #374151;
+  color: var(--color-text-secondary);
   margin-bottom: 0.5rem;
 }
 
@@ -478,9 +479,9 @@
 }
 
 .workspace-modal-footer .btn-cancel {
-  background: white;
+  background: var(--color-background-card);
   border: 1px solid #e5e7eb;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .workspace-modal-footer .btn-cancel:hover {
@@ -510,7 +511,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 4px;
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-family: monospace;
   word-break: break-all;
 }
@@ -523,7 +524,7 @@
   border: 2px dashed #d1d5db;
   border-radius: 4px;
   background: #f9fafb;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;

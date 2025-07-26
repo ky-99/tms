@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { DayPicker, DateRange } from 'react-day-picker';
+import { ja } from 'react-day-picker/locale';
+import 'react-day-picker/dist/style.css';
 import { useTaskContext } from '../contexts/TaskContext';
 import { Task, Tag } from '../types';
 import { flattenTasks, findTaskById } from '../utils/taskUtils';
@@ -13,8 +16,7 @@ interface ExportSettings {
   includeTags: boolean;
   statusFilter: string[];
   priorityFilter: string[];
-  dateRangeStart: string;
-  dateRangeEnd: string;
+  dateRange?: DateRange;
   hierarchical: boolean;
 }
 
@@ -29,6 +31,7 @@ const ExportPage: React.FC = () => {
   const [downloadedAnimation, setDownloadedAnimation] = useState(false);
   const [selectedParentId, setSelectedParentId] = useState<number | null>(null);
   const [parentSearchQuery, setParentSearchQuery] = useState<string>('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [settings, setSettings] = useState<ExportSettings>({
     includeDescription: true,
     includeStatus: true,
@@ -39,8 +42,7 @@ const ExportPage: React.FC = () => {
     includeTags: true,
     statusFilter: ['pending', 'in_progress', 'completed'],
     priorityFilter: ['low', 'medium', 'high', 'urgent'],
-    dateRangeStart: '',
-    dateRangeEnd: '',
+    dateRange: undefined,
     hierarchical: false
   });
 
@@ -134,20 +136,37 @@ const ExportPage: React.FC = () => {
       }
 
       // Date range filter
-      if (settings.dateRangeStart || settings.dateRangeEnd) {
-        const endDateValue = task.endDate || task.endDate;
-        if (endDateValue) {
-          const endDate = new Date(endDateValue);
-          if (settings.dateRangeStart) {
-            const startDate = new Date(settings.dateRangeStart);
-            if (endDate < startDate) return false;
+      if (settings.dateRange?.from || settings.dateRange?.to) {
+        const taskStartDate = task.startDate ? new Date(task.startDate) : null;
+        const taskEndDate = task.endDate ? new Date(task.endDate) : null;
+        
+        // Check if task falls within the selected range
+        if (taskStartDate || taskEndDate) {
+          const rangeFrom = settings.dateRange.from ? new Date(settings.dateRange.from.toDateString()) : null;
+          const rangeTo = settings.dateRange.to ? new Date(settings.dateRange.to.toDateString()) : null;
+          
+          // For single day selection (from = to), include tasks that start or end on that day
+          if (rangeFrom && rangeTo && rangeFrom.getTime() === rangeTo.getTime()) {
+            const taskStartDateOnly = taskStartDate ? new Date(taskStartDate.toDateString()) : null;
+            const taskEndDateOnly = taskEndDate ? new Date(taskEndDate.toDateString()) : null;
+            
+            return (taskStartDateOnly && taskStartDateOnly.getTime() === rangeFrom.getTime()) ||
+                   (taskEndDateOnly && taskEndDateOnly.getTime() === rangeFrom.getTime()) ||
+                   (taskStartDateOnly && taskEndDateOnly && 
+                    taskStartDateOnly <= rangeFrom && taskEndDateOnly >= rangeFrom);
           }
-          if (settings.dateRangeEnd) {
-            const endDate = new Date(settings.dateRangeEnd);
-            if (endDate > endDate) return false;
+          
+          // For range selection
+          if (rangeFrom && taskEndDate) {
+            const taskEndDateOnly = new Date(taskEndDate.toDateString());
+            if (taskEndDateOnly < rangeFrom) return false;
           }
-        } else if (settings.dateRangeStart || settings.dateRangeEnd) {
-          return false; // Exclude tasks without due date when date filter is applied
+          if (rangeTo && taskStartDate) {
+            const taskStartDateOnly = new Date(taskStartDate.toDateString());
+            if (taskStartDateOnly > rangeTo) return false;
+          }
+        } else {
+          return false; // Exclude tasks without date when date filter is applied
         }
       }
 
@@ -261,9 +280,18 @@ const ExportPage: React.FC = () => {
       details += `**重要度:** ${priorityMap[task.priority] || task.priority}\n\n`;
     }
     
-    if (settings.includeDueDate && (task.endDate || task.endDate)) {
-      const endDate = new Date(task.endDate || task.endDate || '');
-      details += `**期限:** ${endDate.toLocaleDateString('ja-JP')}\n\n`;
+    if (settings.includeDueDate && (task.startDate || task.endDate)) {
+      if (task.startDate && task.endDate) {
+        const startDate = new Date(task.startDate);
+        const endDate = new Date(task.endDate);
+        details += `**期間:** ${startDate.toLocaleDateString('ja-JP')} - ${endDate.toLocaleDateString('ja-JP')}\n\n`;
+      } else if (task.endDate) {
+        const endDate = new Date(task.endDate);
+        details += `**期限:** ${endDate.toLocaleDateString('ja-JP')}\n\n`;
+      } else if (task.startDate) {
+        const startDate = new Date(task.startDate);
+        details += `**開始日:** ${startDate.toLocaleDateString('ja-JP')}\n\n`;
+      }
     }
     
     if (settings.includeCreatedDate && (task.createdAt || task.createdAt)) {
@@ -363,34 +391,35 @@ const ExportPage: React.FC = () => {
   return (
     <div className="export-page">
       <div className="export-container">
-        <div className="export-settings">
-          <div className="settings-section">
-            <div className="section-header">
-              <h3>含める情報</h3>
-              <div className="bulk-actions">
-                <button 
-                  className="bulk-icon-button"
-                  onClick={() => toggleAllIncludes(true)}
-                  title="すべて選択"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m9 12 2 2 4-4"/>
-                    <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
-                  </svg>
-                </button>
-                <button 
-                  className="bulk-icon-button"
-                  onClick={() => toggleAllIncludes(false)}
-                  title="すべて解除"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="m15 9-6 6"/>
-                    <path d="m9 9 6 6"/>
-                  </svg>
-                </button>
+        <div className="export-left-panel">
+          <div className="export-settings">
+            <div className="settings-section">
+              <div className="section-header">
+                <h3>含める情報</h3>
+                <div className="bulk-actions">
+                  <button 
+                    className="bulk-icon-button"
+                    onClick={() => toggleAllIncludes(true)}
+                    title="すべて選択"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m9 12 2 2 4-4"/>
+                      <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
+                    </svg>
+                  </button>
+                  <button 
+                    className="bulk-icon-button"
+                    onClick={() => toggleAllIncludes(false)}
+                    title="すべて解除"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="m15 9-6 6"/>
+                      <path d="m9 9 6 6"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
-            </div>
             <div className="include-options-grid">
               <div 
                 className={`include-option-card ${settings.includeDescription ? 'active' : ''}`}
@@ -611,27 +640,79 @@ const ExportPage: React.FC = () => {
 
             <div className="filter-group">
               <label>期限範囲:</label>
-              <div className="date-range">
-                <input
-                  type="date"
-                  value={settings.dateRangeStart}
-                  onChange={(e) => {
-                  const newSettings = {...settings, dateRangeStart: e.target.value};
-                  setSettings(newSettings);
-                }}
-                />
-                <span>から</span>
-                <input
-                  type="date"
-                  value={settings.dateRangeEnd}
-                  onChange={(e) => {
-                  const newSettings = {...settings, dateRangeEnd: e.target.value};
-                  setSettings(newSettings);
-                }}
-                />
-                <span>まで</span>
+              <div className="date-range-controls">
+                <button
+                  className="date-range-button"
+                  onClick={() => setShowDatePicker(true)}
+                >
+                  {settings.dateRange?.from ? (
+                    <>
+                      {settings.dateRange.from.toLocaleDateString('ja-JP')}
+                      {settings.dateRange.to && (
+                        <> - {settings.dateRange.to.toLocaleDateString('ja-JP')}</>
+                      )}
+                    </>
+                  ) : (
+                    '日付範囲を選択'
+                  )}
+                </button>
+                {settings.dateRange?.from && (
+                  <button
+                    className="clear-range-btn"
+                    onClick={() => setSettings({...settings, dateRange: undefined})}
+                    title="範囲をクリア"
+                  >
+                    ×
+                  </button>
+                )}
               </div>
             </div>
+
+            {/* Date picker modal */}
+            {showDatePicker && (
+              <div className="date-picker-modal" onClick={() => setShowDatePicker(false)}>
+                <div className="date-picker-content" onClick={(e) => e.stopPropagation()}>
+                  <div className="date-picker-header">
+                    <h3>期限範囲を選択</h3>
+                    <button
+                      className="close-modal-btn"
+                      onClick={() => setShowDatePicker(false)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <DayPicker
+                    mode="range"
+                    selected={settings.dateRange}
+                    onSelect={(range) => {
+                      const newSettings = {...settings, dateRange: range};
+                      setSettings(newSettings);
+                    }}
+                    numberOfMonths={1}
+                    className="export-day-picker"
+                    locale={ja}
+                    showOutsideDays={false}
+                    captionLayout="dropdown"
+                    fromYear={2020}
+                    toYear={2030}
+                  />
+                  <div className="date-picker-actions">
+                    <button
+                      className="modal-action-btn cancel"
+                      onClick={() => setShowDatePicker(false)}
+                    >
+                      キャンセル
+                    </button>
+                    <button
+                      className="modal-action-btn confirm"
+                      onClick={() => setShowDatePicker(false)}
+                    >
+                      確定
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="settings-section">
@@ -727,14 +808,15 @@ const ExportPage: React.FC = () => {
             )}
           </div>
 
-          <div className="export-actions">
-            <button className="export-btn" onClick={handleExport}>
-              エクスポート
-            </button>
+            <div className="export-actions">
+              <button className="export-btn" onClick={handleExport}>
+                エクスポート
+              </button>
+            </div>
           </div>
         </div>
 
-        {exportedText && (
+        <div className="export-right-panel">
           <div className="export-result">
             <div className="result-header">
               <h3>エクスポート結果</h3>
@@ -743,6 +825,7 @@ const ExportPage: React.FC = () => {
                   className={`icon-button copy-button ${copiedAnimation ? 'copied' : ''}`}
                   onClick={handleCopyToClipboard}
                   title="クリップボードにコピー"
+                  disabled={!exportedText}
                 >
                   {copiedAnimation ? (
                     <svg width="28" height="28" viewBox="0 0 20 20" fill="none">
@@ -759,6 +842,7 @@ const ExportPage: React.FC = () => {
                   className={`icon-button download-button ${downloadedAnimation ? 'downloaded' : ''}`}
                   onClick={handleDownload}
                   title="ファイルダウンロード"
+                  disabled={!exportedText}
                 >
                   {downloadedAnimation ? (
                     <svg width="28" height="28" viewBox="0 0 20 20" fill="none">
@@ -775,14 +859,14 @@ const ExportPage: React.FC = () => {
             </div>
             <div className="export-preview">
               <textarea
-                value={exportedText}
+                value={exportedText || 'エクスポートボタンを押すと結果がここに表示されます'}
                 readOnly
                 rows={20}
                 cols={80}
               />
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

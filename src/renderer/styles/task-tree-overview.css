@@ -1,6 +1,6 @@
 /* タスクツリー概要 */
 .task-tree-overview {
-  background: white;
+  background: var(--color-background-card);
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 16px;
@@ -73,7 +73,7 @@
   padding: 4px 12px;
   border-radius: 50px;
   border: 1px solid #000000;
-  background: white;
+  background: var(--color-background-card);
   min-height: 24px;
   max-width: 180px;
   cursor: pointer;
@@ -123,25 +123,7 @@
   font-size: 14px;
 }
 
-/* スクロールバー */
-.tree-canvas::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.tree-canvas::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.tree-canvas::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-.tree-canvas::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
+/* 個別のスクロールバースタイルは削除 - グローバルスタイルを使用 */
 
 /* レスポンシブ */
 @media (max-width: 768px) {

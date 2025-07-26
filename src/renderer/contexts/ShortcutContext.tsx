@@ -144,15 +144,15 @@ export const ShortcutProvider: React.FC<ShortcutProviderProps> = ({ children }) 
       }
 
       // グローバルショートカット
-      if (currentContext === 'global' || currentContext === 'taskSelected' || currentContext === 'tasksPage' || currentContext === 'calendar' || currentContext === 'dashboard') {
+      if (currentContext === 'global' || currentContext === 'taskSelected' || currentContext === 'tasksPage' || currentContext === 'calendar') {
         // cmd + n: 新しいタスクを作成
         if (isCmd && key === 'n' && !event.shiftKey) {
-          // カレンダー内でのCmd+Nは CalendarView で直接処理される
-          // カレンダーコンテキスト以外でのみ処理
-          if (currentContext !== 'calendar') {
-            event.preventDefault();
-            handleCreateTask();
+          // カレンダー内でのCmd+Nは無効
+          if (currentContext === 'calendar') {
+            return;
           }
+          event.preventDefault();
+          handleCreateTask();
           return;
         }
 

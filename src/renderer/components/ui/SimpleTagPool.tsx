@@ -8,11 +8,8 @@ interface SimpleTagPoolProps {
 
 const SimpleTagPool: React.FC<SimpleTagPoolProps> = ({ isOpen, onClose }) => {
   if (!isOpen) {
-    console.log('SimpleTagPool: not open');
     return null;
   }
-
-  console.log('SimpleTagPool: rendering');
 
   const content = (
     <div

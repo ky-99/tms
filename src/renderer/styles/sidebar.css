@@ -1,78 +1,101 @@
 /* Sidebar Navigation styles */
 .sidebar {
-    background-color: #fff;
-    border-right: 1px solid #e5e7eb;
-    width: 220px;
-    height: 100vh;
+    background-color: var(--color-background-alt);
+    border-right: 1px solid var(--color-border-light);
+    width: 60px;
+    height: calc(100vh - 40px); /* ヘッダー分を引く */
     display: flex;
     flex-direction: column;
     position: fixed;
-    top: 0;
+    top: 40px; /* ヘッダーの下に配置 */
     left: 0;
-    z-index: 100;
-    overflow-y: auto;
+    z-index: 90; /* ヘッダーより下に */
+    overflow-y: overlay;
+    scrollbar-width: thin;
+}
+
+/* サイドバーは狭いため特別なスクロールバースタイルを維持 */
+.sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: var(--color-border-medium);
+    border-radius: 2px;
+    transition: background var(--transition-base);
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--color-border-dark);
 }
 
 .sidebar-content {
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: 20px 16px;
+    padding: 8px 4px;
 }
 
 .logo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: #8b5cf6;
-    text-decoration: none;
-    margin-bottom: 32px;
-    padding: 8px 0;
+    display: none;
 }
 
 .logo-text {
-    font-size: 20px;
-    font-weight: 700;
-    color: #111827;
+    display: none;
 }
 
 .sidebar-nav {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 0px;
     flex: 1;
 }
 
 .nav-link {
-    color: #6b7280;
+    color: var(--color-text-muted);
     text-decoration: none;
     font-weight: 500;
-    font-size: 14px;
-    padding: 12px 16px;
-    border-radius: 8px;
-    transition: all 0.2s;
+    font-size: 48px !important;
+    padding: 12px 4px;
     position: relative;
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: center;
     width: 100%;
-    min-height: 48px;
+    min-height: 60px;
     box-sizing: border-box;
+    line-height: 1;
+    transition: all var(--transition-base);
+    border-radius: var(--radius-md);
+    margin: 2px;
 }
 
 .nav-link:hover {
-    color: #8b5cf6;
-    background-color: #f3f4f6;
+    color: var(--color-text-primary);
 }
 
 .nav-link.active {
-    color: #8b5cf6;
-    background-color: #ede9fe;
+    color: var(--color-text-primary);
+}
+
+.nav-link.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 40px;
+    background-color: var(--color-primary);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
 .nav-text {
-    flex: 1;
-    text-align: left;
+    display: none;
 }
 
 /* 期限切れ通知バッジ */
@@ -90,33 +113,8 @@
     line-height: 1;
     padding: 0 2px;
     box-sizing: border-box;
-    margin-left: auto;
+    position: absolute;
+    top: 8px;
+    right: 8px;
 }
 
-/* レスポンシブデザイン - 小さい画面では折りたたみ */
-@media (max-width: 768px) {
-    .sidebar {
-        width: 60px;
-    }
-    
-    .logo-text {
-        display: none;
-    }
-    
-    .nav-text {
-        display: none;
-    }
-    
-    .nav-link {
-        justify-content: center;
-        padding: 12px 8px;
-        gap: 0;
-    }
-    
-    .overdue-badge {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        margin-left: 0;
-    }
-}
