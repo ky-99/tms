@@ -12,7 +12,7 @@
   --color-primary: #3b82f6;
   --color-primary-hover: #2563eb;
   --color-primary-active: #1d4ed8;
-  --color-primary-light: rgba(59, 130, 246, 0.1);
+  --color-primary-light: #e0f7fa;
   --color-primary-focus: rgba(59, 130, 246, 0.5);
 
   /* Background Colors - Export Page Unified */
@@ -219,7 +219,7 @@
   --color-text-secondary: #e5e7eb;       /* 副次テキスト（薄い白） */
   --color-text-muted: #9ca3af;          /* ミュートテキスト（グレー） */
   --color-text-light: #6b7280;          /* 薄いテキスト（暗いグレー） */
-  --color-text-inverse: #1f2937;         /* 反転テキスト（黒） */
+  --color-text-inverse: #ffffff;         /* 反転テキスト（白） */
 
   /* Border Colors - Dark Theme */
   --color-border-light: #374151;
@@ -234,6 +234,9 @@
   
   /* Interactive Colors - Dark Theme */
   --color-background-hover: #4b5563;
+  
+  /* Primary Colors - Dark Theme */
+  --color-primary-light: #1a4d4d;
 
   /* Priority Colors Background - Dark Theme */
   --color-priority-low-bg: #374151;

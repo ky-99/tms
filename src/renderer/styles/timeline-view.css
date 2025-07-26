@@ -3,7 +3,7 @@
   background: var(--color-background);
   border-radius: var(--radius-lg);
   border: none;
-  padding: 20px;
+  padding: 16px; /* 月カレンダーと統一 */
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -11,7 +11,9 @@
   flex: 1;
   min-height: 0; /* Flexboxでの高さ計算を適切に行う */
   width: 100%; /* 幅を固定してガタつきを防ぐ */
+  max-width: 100%; /* 親コンテナの幅制限を使用 */
   max-height: 100%; /* 親コンテナの高さ制限を使用 */
+  box-sizing: border-box;
   position: relative;
 }
 

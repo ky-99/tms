@@ -90,7 +90,7 @@
     transform: translateY(-50%);
     width: 3px;
     height: 40px;
-    background-color: var(--color-primary);
+    background-color: #8b5cf6;
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 

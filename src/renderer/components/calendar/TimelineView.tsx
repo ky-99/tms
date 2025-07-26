@@ -18,6 +18,7 @@ import { adjustTaskTime } from '../../utils/taskValidation';
 import { getTaskStartDateTime, getTaskEndDateTime } from '../../utils/taskUtils';
 import { separateDateAndTime, combineDateAndTime, toLocalDateTimeString } from '../../utils/lightDateUtils';
 import { useTaskData } from '../../contexts/TaskDataContext';
+import { useShortcut } from '../../contexts/ShortcutContext';
 
 interface TimelineViewProps {
   tasks: Task[];
@@ -268,6 +269,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollbarRef = useRef<HTMLDivElement>(null);
   const { tags } = useTaskData();
+  const { setHoveredCalendarTaskId } = useShortcut();
 
   // タスクの色を取得（タグがある場合はタグの色、ない場合はデフォルト色）
   const getTaskColor = useCallback((task: Task) => {
@@ -400,7 +402,11 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     const startDateTime = getTaskStartDateTime(task);
     const endDateTime = getTaskEndDateTime(task);
     
-    if (!startDateTime || !endDateTime) {
+    // 開始時刻と終了時刻の両方が設定されている場合のみ表示
+    // startDateとstartTime、endDateとendTimeがすべて存在する必要がある
+    if (!startDateTime || !endDateTime || 
+        !task.startDate || !task.startTime || 
+        !task.endDate || !task.endTime) {
       return [];
     }
 
@@ -465,27 +471,14 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 
   // タスクの時間間隔を取得（新スキーマ対応）
   const getTaskInterval = useCallback((task: Task) => {
+    const startDateTime = getTaskStartDateTime(task);
     const endDateTime = getTaskEndDateTime(task);
-    if (!endDateTime) {
-      // completedAtをフォールバックとして使用
-      if (task.completedAt) {
-        try {
-          const endDate = parseISO(task.completedAt);
-          if (!isNaN(endDate.getTime())) {
-            const startDate = new Date(endDate.getTime() - 30 * 60 * 1000);
-            return { start: startDate, end: endDate };
-          }
-        } catch (error) {
-          console.warn(`Error parsing completedAt for task ${task.id}:`, error);
-        }
-      }
-      return null;
-    }
     
-    let startDateTime = getTaskStartDateTime(task);
-    if (!startDateTime) {
-      // startDateがない場合は30分前を開始時間とする
-      startDateTime = new Date(endDateTime.getTime() - 30 * 60 * 1000);
+    // 開始時刻と終了時刻の両方が設定されている場合のみ処理
+    if (!startDateTime || !endDateTime || 
+        !task.startDate || !task.startTime || 
+        !task.endDate || !task.endTime) {
+      return null;
     }
     
     return { start: startDateTime, end: endDateTime };
@@ -510,31 +503,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         }
       });
 
-      // 完了タスクのフォールバック（セグメント化できない場合）
-      if (segments.length === 0 && task.completedAt) {
-        try {
-          const taskDate = parseISO(task.completedAt);
-          if (!isNaN(taskDate.getTime())) {
-            const dayKey = format(taskDate, 'yyyy-MM-dd');
-            
-            if (isWithinInterval(taskDate, { start: weekStart, end: weekEnd }) && grouped[dayKey]) {
-              // 単一セグメントとして追加
-              grouped[dayKey].push({
-                task,
-                column: 0,
-                segmentStart: taskDate,
-                segmentEnd: new Date(taskDate.getTime() + 30 * 60 * 1000), // 30分のデフォルト期間
-                isFirstSegment: true,
-                isLastSegment: true,
-                totalSegments: 1,
-                segmentIndex: 0
-              });
-            }
-          }
-        } catch (error) {
-          console.warn(`Error parsing completedAt for task ${task.id}: ${task.completedAt}`, error);
-        }
-      }
+      // 完了タスクのフォールバック処理を削除
+      // 開始時刻と終了時刻の両方が設定されていないタスクは表示しない
     });
 
     // 各日のセグメントを時間順にソートし、重なりを検出してカラムを割り当て
@@ -782,6 +752,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                                   cursor: 'pointer',
                                 }}
                                 onClick={() => onTaskClick(segment.task)}
+                                onMouseEnter={() => setHoveredCalendarTaskId(segment.task.id)}
+                                onMouseLeave={() => setHoveredCalendarTaskId(null)}
                               >
                                 <div className="timeline-task-content">
                                   <div className="timeline-task-time">

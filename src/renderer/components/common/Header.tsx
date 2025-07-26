@@ -3,7 +3,9 @@ import { Link, useLocation } from 'wouter';
 import { useTaskContext } from '../../contexts/TaskContext';
 import { useDateManager } from '../../hooks/useDateManager';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useTaskHover } from '../../hooks/useTaskHover';
 import { Task } from '../../types';
+import TaskHoverCard from '../ui/TaskHoverCard';
 
 // Electron APIの型定義
 declare global {
@@ -26,6 +28,7 @@ const Header: React.FC = () => {
   const { tasks } = useTaskContext();
   const { todayTasks, overdueTasks } = useDateManager(tasks);
   const { theme, toggleTheme } = useTheme();
+  const { hoverState, handleMouseEnter, handleMouseLeave, handleMouseMove } = useTaskHover(750);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
 
   // ウィンドウリサイズを監視
@@ -38,13 +41,10 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // タスクの簡潔な表示用のフォーマット
-  const formatTaskForHeader = (task: Task) => ({
-    id: task.id,
-    title: task.title.length > 30 ? `${task.title.substring(0, 30)}...` : task.title,
-    status: task.status,
-    priority: task.priority
-  });
+  // タスクの簡潔な表示用のタイトルフォーマット
+  const formatTaskTitle = (title: string) => {
+    return title.length > 30 ? `${title.substring(0, 30)}...` : title;
+  };
 
   // 画面幅に応じてタスク表示数を動的に調整
   const getMaxTaskCount = () => {
@@ -55,8 +55,14 @@ const Header: React.FC = () => {
   };
 
   const maxTasks = getMaxTaskCount();
-  const displayTodayTasks = todayTasks.slice(0, maxTasks).map(formatTaskForHeader);
-  const displayOverdueTasks = overdueTasks.slice(0, maxTasks).map(formatTaskForHeader);
+  const displayTodayTasks = todayTasks.slice(0, maxTasks);
+  const displayOverdueTasks = overdueTasks.slice(0, maxTasks);
+  
+  // ホバーされているタスクを取得
+  const hoveredTask = React.useMemo(() => {
+    if (!hoverState.taskId) return null;
+    return [...todayTasks, ...overdueTasks].find(task => task.id === hoverState.taskId) || null;
+  }, [hoverState.taskId, todayTasks, overdueTasks]);
 
   // 期限切れタスクの数を計算（既存のロジックを保持）
   const overdueCount = React.useMemo(() => {
@@ -114,8 +120,13 @@ const Header: React.FC = () => {
                 </div>
                 <div className="task-list-mini">
                   {displayOverdueTasks.map(task => (
-                    <div key={task.id} className={`task-item-mini overdue`}>
-                      <span className="task-title-mini">{task.title}</span>
+                    <div 
+                      key={task.id} 
+                      className={`task-item-mini overdue`}
+                      onMouseEnter={(e) => handleMouseEnter(task.id, e)}
+                      onMouseLeave={handleMouseLeave}
+                    >
+                      <span className="task-title-mini">{formatTaskTitle(task.title)}</span>
                     </div>
                   ))}
                   {overdueTasks.length > maxTasks && (
@@ -134,8 +145,13 @@ const Header: React.FC = () => {
               {displayTodayTasks.length > 0 ? (
                 <div className="task-list-mini">
                   {displayTodayTasks.map(task => (
-                    <div key={task.id} className={`task-item-mini status-${task.status}`}>
-                      <span className="task-title-mini">{task.title}</span>
+                    <div 
+                      key={task.id} 
+                      className={`task-item-mini status-${task.status}`}
+                      onMouseEnter={(e) => handleMouseEnter(task.id, e)}
+                      onMouseLeave={handleMouseLeave}
+                    >
+                      <span className="task-title-mini">{formatTaskTitle(task.title)}</span>
                     </div>
                   ))}
                   {todayTasks.length > maxTasks && (
@@ -235,6 +251,15 @@ const Header: React.FC = () => {
       </nav>
     </div>
   </aside>
+  
+  {/* Task Hover Card */}
+  {hoveredTask && hoverState.isVisible && (
+    <TaskHoverCard 
+      task={hoveredTask}
+      position={hoverState.position}
+      isVisible={hoverState.isVisible}
+    />
+  )}
 </>
 );
 };

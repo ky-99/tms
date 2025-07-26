@@ -95,7 +95,7 @@
 
 .view-type-button:hover {
   color: var(--color-text-secondary);
-  background-color: var(--color-primary-light);
+  background-color: var(--color-border-medium);
 }
 
 .view-type-button.active {

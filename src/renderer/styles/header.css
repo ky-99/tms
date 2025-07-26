@@ -102,12 +102,12 @@
 }
 
 .overdue-section {
-  border-left: 2px solid #dc2626;
+  border-left: 2px solid var(--color-error);
   padding-left: 8px;
 }
 
 .today-section {
-  border-left: 2px solid #8b5cf6;
+  border-left: 2px solid var(--color-primary);
   padding-left: 8px;
 }
 
@@ -137,13 +137,13 @@
 }
 
 .overdue-section .task-section-count {
-  background-color: #dc2626;
-  color: #ffffff;
+  background-color: var(--color-error);
+  color: var(--color-text-inverse);
 }
 
 .today-section .task-section-count {
-  background-color: #8b5cf6;
-  color: #ffffff;
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
 }
 
 /* Mini task list */
@@ -171,6 +171,22 @@
   transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
+/* ダークモード特定のスタイル強化 */
+[data-theme="dark"] .task-item-mini {
+  background-color: var(--color-background-card) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border-light) !important;
+}
+
+/* ダークモード用全体のタスクリスト強化 */
+[data-theme="dark"] .task-list-mini {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="dark"] .task-list-mini * {
+  color: inherit !important;
+}
+
 /* ホバー効果を削除 */
 
 /* 重要度色は削除 - ヘッダーではシンプルに */
@@ -188,6 +204,28 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 120px; /* 最大幅を制限 */
+}
+
+/* ダークモード特定のテキスト色強化 */
+[data-theme="dark"] .task-title-mini {
+  color: var(--color-text-primary) !important;
+}
+
+/* ダークモード用タスクセクション強化 */
+[data-theme="dark"] .task-section-count {
+  background-color: var(--color-background-card) !important;
+  color: var(--color-text-muted) !important;
+  border-color: var(--color-border-light) !important;
+}
+
+[data-theme="dark"] .overdue-section .task-section-count {
+  background-color: var(--color-error) !important;
+  color: var(--color-text-inverse) !important;
+}
+
+[data-theme="dark"] .today-section .task-section-count {
+  background-color: var(--color-primary) !important;
+  color: var(--color-text-inverse) !important;
 }
 
 /* 期限切れタスクも今日のタスクと同じ文字色に統一 */
@@ -216,8 +254,8 @@
 
 /* 期限切れ通知バッジ（サイドバー用） */
 .overdue-badge {
-    background: #dc2626;
-    color: white;
+    background: var(--color-error);
+    color: var(--color-text-inverse);
     font-size: 10px;
     font-weight: 600;
     border-radius: 50%;

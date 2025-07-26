@@ -11,6 +11,7 @@
 @import './header.css';
 @import './breadcrumb.css';
 @import './task-breadcrumb.css';
+@import './task-hover-card.css';
 
 /* Form components */
 @import './modal.css';
