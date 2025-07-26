@@ -3,7 +3,7 @@ import { Task } from '../types';
 import { useTaskData } from '../contexts/TaskDataContext';
 import { useTaskContext } from '../contexts/TaskContext';
 import { useShortcut } from '../contexts/ShortcutContext';
-import TimelineView from '../components/dashboard/TimelineView';
+import TimelineView from '../components/calendar/TimelineView';
 import CalendarView from '../components/calendar/CalendarView';
 import CalendarTaskCreateModal from '../components/modals/CalendarTaskCreateModal';
 import CalendarTaskEditModal from '../components/modals/CalendarTaskEditModal';
