@@ -17,6 +17,7 @@ import {
 import { adjustTaskTime } from '../../utils/taskValidation';
 import { getTaskStartDateTime, getTaskEndDateTime } from '../../utils/taskUtils';
 import { separateDateAndTime, combineDateAndTime, toLocalDateTimeString } from '../../utils/lightDateUtils';
+import { useTaskData } from '../../contexts/TaskDataContext';
 
 interface TimelineViewProps {
   tasks: Task[];
@@ -265,6 +266,19 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { tags } = useTaskData();
+
+  // タスクの色を取得（タグがある場合はタグの色、ない場合はデフォルト色）
+  const getTaskColor = useCallback((task: Task) => {
+    if (task.tagIds && task.tagIds.length > 0) {
+      const firstTagId = task.tagIds[0];
+      const tag = tags.find(t => t.id === firstTagId);
+      if (tag && tag.color) {
+        return tag.color;
+      }
+    }
+    return '#039be5'; // デフォルト色
+  }, [tags]);
   
   
   const mouseSensor = useSensor(MouseSensor, {
@@ -690,7 +704,15 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                               quarter={Math.floor(minute / 15)}
                               onCreateTask={onCreateTask}
                             >
-                              <div className="timeline-grid-cell-inner" />
+                              <div 
+                                className="timeline-grid-cell-inner"
+                                style={{ 
+                                  height: `${HOUR_HEIGHT / 4}px`,
+                                  borderBottom: minute === 45 ? 
+                                    '1px solid var(--color-border-medium)' : 
+                                    '1px dotted var(--color-border-light)'
+                                }}
+                              />
                             </DroppableTimeSlot>
                           ))}
                         </div>
@@ -704,11 +726,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                         const isBeingDragged = activeId === `task-${segment.task.id}`;
                         const uniqueKey = `${segment.task.id}-${segment.segmentIndex}`;
                         
-                        // タスクの色を取得（タグがある場合はタグの色、ない場合は#039be5）
-                        let taskColor = '#039be5'; // デフォルト色
-                        if (segment.task.tagIds && segment.task.tagIds.length > 0) {
-                          // タグの色があれば使用（実装は後で必要に応じて）
-                        }
+                        // タスクの色を取得
+                        const taskColor = getTaskColor(segment.task);
                         
                         return (
                           <div
@@ -734,12 +753,18 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                                 <div className="timeline-task-content">
                                   <div className="timeline-task-time">
                                     {(() => {
-                                      if (segment.isFirstSegment) {
-                                        return `${format(segment.segmentStart, 'HH:mm')} -`;
+                                      if (segment.isFirstSegment && segment.isLastSegment) {
+                                        // 同日内タスク：開始時刻-終了時刻
+                                        return `${format(segment.segmentStart, 'HH:mm')} - ${format(segment.segmentEnd, 'HH:mm')}`;
+                                      } else if (segment.isFirstSegment) {
+                                        // 開始セグメント：開始時刻-23:59
+                                        return `${format(segment.segmentStart, 'HH:mm')} - 23:59`;
                                       } else if (segment.isLastSegment) {
-                                        return `- ${format(segment.segmentEnd, 'HH:mm')}`;
+                                        // 終了セグメント：00:00-終了時刻
+                                        return `00:00 - ${format(segment.segmentEnd, 'HH:mm')}`;
                                       } else {
-                                        return '全日';
+                                        // 中間セグメント：全日
+                                        return '00:00 - 23:59';
                                       }
                                     })()} 
                                   </div>
@@ -759,12 +784,18 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                                 <div className="timeline-task-content">
                                   <div className="timeline-task-time">
                                     {(() => {
-                                      if (segment.isFirstSegment) {
-                                        return `${format(segment.segmentStart, 'HH:mm')} -`;
+                                      if (segment.isFirstSegment && segment.isLastSegment) {
+                                        // 同日内タスク：開始時刻-終了時刻
+                                        return `${format(segment.segmentStart, 'HH:mm')} - ${format(segment.segmentEnd, 'HH:mm')}`;
+                                      } else if (segment.isFirstSegment) {
+                                        // 開始セグメント：開始時刻-23:59
+                                        return `${format(segment.segmentStart, 'HH:mm')} - 23:59`;
                                       } else if (segment.isLastSegment) {
-                                        return `- ${format(segment.segmentEnd, 'HH:mm')}`;
+                                        // 終了セグメント：00:00-終了時刻
+                                        return `00:00 - ${format(segment.segmentEnd, 'HH:mm')}`;
                                       } else {
-                                        return '全日';
+                                        // 中間セグメント：全日
+                                        return '00:00 - 23:59';
                                       }
                                     })()} 
                                   </div>
@@ -790,6 +821,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
             className={`timeline-task timeline-task--${activeTask.status} timeline-task--priority-${activeTask.priority} timeline-task--ghost`}
             style={{
               height: `${getTaskPosition(activeTask)?.height || 60}px`,
+              backgroundColor: getTaskColor(activeTask),
               opacity: 0.9,
             }}
           >

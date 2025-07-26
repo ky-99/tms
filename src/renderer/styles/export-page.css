@@ -164,7 +164,7 @@
 }
 
 .bulk-icon-button:active {
-    background: #e5e7eb;
+    background: var(--export-border);
     transform: scale(0.95);
 }
 
@@ -754,19 +754,18 @@
     font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
     font-size: 13px;
     line-height: 1.6;
-    border: 1px solid var(--export-border-light);
+    border: 1px solid var(--color-border-light);
     padding: 16px;
     resize: none;
-    background: #fafbfc;
-    color: var(--export-text-primary);
+    background: var(--color-background-card);
+    color: var(--color-text-primary);
     min-height: 0;
-    transition: border-color 0.2s ease;
 }
 
 .export-preview textarea:focus {
     outline: none;
-    border-color: var(--export-accent);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-focus);
 }
 
 /* Toggle switch styles */
@@ -926,7 +925,7 @@
 }
 
 .parent-task-search-input::placeholder {
-    color: #9ca3af;
+    color: var(--export-text-muted);
 }
 
 .search-clear-btn {
@@ -984,7 +983,7 @@
 }
 
 .parent-task-suggestion-item.no-results {
-    color: #6b7280;
+    color: var(--export-text-muted);
     cursor: default;
     font-style: italic;
 }
@@ -995,13 +994,13 @@
 
 .suggestion-title {
     font-weight: 500;
-    color: #374151;
+    color: var(--export-text-secondary);
     font-size: 14px;
     margin-bottom: 2px;
 }
 
 .suggestion-description {
-    color: #6b7280;
+    color: var(--export-text-muted);
     font-size: 12px;
     line-height: 1.4;
     overflow: hidden;

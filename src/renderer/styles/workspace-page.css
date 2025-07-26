@@ -123,8 +123,8 @@
   background: var(--color-background-card);
   border-radius: 4px;
   padding: 1.5rem;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--color-border-light);
+  box-shadow: 0 1px 3px var(--color-shadow-light);
   display: grid;
   grid-template-rows: auto auto 1fr auto;
   gap: 1rem;
@@ -133,14 +133,14 @@
 }
 
 .workspace-card.active {
-  border-color: #10b981;
+  border-color: var(--color-success);
   border-width: 1px;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
-  background: #fafffe;
+  box-shadow: 0 2px 8px var(--color-success-light);
+  background: var(--color-background-card);
 }
 
 .workspace-card.active .workspace-header h3 {
-  color: #1e293b;
+  color: var(--color-text-primary);
 }
 
 .workspace-card.active .workspace-description {

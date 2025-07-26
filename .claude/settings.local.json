@@ -36,7 +36,8 @@
       "Bash(awk:*)",
       "Bash(npx webpack:*)",
       "Bash(git restore:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(git push:*)"
     ],
     "deny": []
   }

@@ -176,21 +176,17 @@
 
 /* 1時間ごとのセクション - 月次カレンダー風 */
 .timeline-hour-section {
-  border-bottom: 1px solid var(--color-border-medium); /* 1時間境界を強調 */
+  display: flex;
+  flex-direction: column;
   /* height は動的に設定される */
 }
 
-.timeline-hour-section:last-child {
-  border-bottom: 1px solid var(--color-border-medium) !important; /* 23時も縦線を確実に表示 */
-}
-
 /* 15分単位のグリッドライン */
-.timeline-hour-section .timeline-grid-cell {
-  border-bottom: 1px dotted var(--color-border-light); /* 15分境界は点線 */
-}
-
-.timeline-hour-section .timeline-grid-cell:last-child {
-  border-bottom: 1px dotted var(--color-border-light); /* 最後のセルも境界線を表示 */
+.timeline-grid-cell {
+  flex: 1;
+  position: relative;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
 }
 
 .timeline-grid-cell:hover {
