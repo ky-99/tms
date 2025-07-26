@@ -455,12 +455,10 @@ const TimelineView: React.FC<TimelineViewProps> = ({
     return segments;
   }, [weekStart, weekEnd]);
 
-  // 現在時刻にスクロール
+  // 初期スクロール位置を一番上に設定
   useEffect(() => {
     if (scrollContainerRef.current) {
-      const currentHour = new Date().getHours();
-      const scrollPosition = Math.max(0, (currentHour - 1) * HOUR_HEIGHT);
-      scrollContainerRef.current.scrollTop = scrollPosition;
+      scrollContainerRef.current.scrollTop = 0; // 一番上にスクロール
     }
   }, []);
 
@@ -664,22 +662,24 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           
           {/* ボディ */}
           <div className="timeline-body">
-            <div className="timeline-content">
-              {/* 時刻列 */}
-              <div className="timeline-times">
-                <div className="timeline-times-content">
-                  {hours.map(hour => (
-                    <div key={hour} className="timeline-hour">
-                      <div className="timeline-hour-label">
-                        {hour.toString().padStart(2, '0')}:00
-                      </div>
+            <div className="timeline-scrollable-area" ref={scrollContainerRef}>
+              <div className="timeline-scroll-content">
+                <div className="timeline-content">
+                  {/* 時刻列 */}
+                  <div className="timeline-times">
+                    <div className="timeline-times-content">
+                      {hours.map(hour => (
+                        <div key={hour} className="timeline-hour">
+                          <div className="timeline-hour-label">
+                            {hour.toString().padStart(2, '0')}:00
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
-              
-              {/* 各日の列 */}
-              {weekDays.map(day => {
+                  </div>
+                  
+                  {/* 各日の列 */}
+                  {weekDays.map(day => {
                 const dayKey = format(day, 'yyyy-MM-dd');
                 const dayTasks = tasksByDay[dayKey] || [];
                 const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
@@ -812,6 +812,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                   </div>
                 );
               })}
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -66,11 +66,39 @@
 .timeline-body {
   grid-column: 1 / -1;
   grid-row: 2;
-  overflow: visible;
+  overflow: hidden;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* スクロール可能なコンテナ - ヘッダーと同じ幅を維持 */
+.timeline-scrollable-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  /* 重要: スクロールバーの幅を確保してグリッドの縦線がずれないようにする */
+  margin-right: 0;
+}
+
+/* スクロールバーを非表示にする */
+.timeline-scrollable-area::-webkit-scrollbar {
+  display: none; /* スクロールバーを完全に非表示 */
+}
+
+.timeline-scrollable-area {
+  scrollbar-width: none; /* Firefox用 */
+  -ms-overflow-style: none; /* IE/Edge用 */
+}
+
+/* スクロール内容 - グリッドレイアウトを維持 */
+.timeline-scroll-content {
   display: grid;
   grid-template-columns: 60px repeat(7, 1fr);
-  box-sizing: border-box;
+  min-height: calc(24 * 60px); /* 24時間分の高さを確保 */
+  position: relative;
 }
 
 .timeline-content {
