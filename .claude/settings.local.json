@@ -31,7 +31,8 @@
       "WebFetch(domain:github.com)",
       "Bash(git checkout:*)",
       "mcp__ide__executeCode",
-      "Bash(true)"
+      "Bash(true)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }
