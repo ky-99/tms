@@ -454,7 +454,7 @@ const WorkSpacePage: React.FC = () => {
                 <label>ワークスペース名</label>
                 <input
                   type="text"
-                  className="modal-input"
+                  className="workspace-name-input"
                   placeholder="例: 個人プロジェクト"
                   value={newWorkspaceName}
                   onChange={(e) => setNewWorkspaceName(e.target.value)}
@@ -463,9 +463,8 @@ const WorkSpacePage: React.FC = () => {
               </div>
               <div className="form-group">
                 <label>説明（任意）</label>
-                <input
-                  type="text"
-                  className="modal-input"
+                <textarea
+                  className="workspace-description-input"
                   placeholder="このワークスペースの説明"
                   value={newWorkspaceDescription}
                   onChange={(e) => setNewWorkspaceDescription(e.target.value)}
@@ -508,7 +507,7 @@ const WorkSpacePage: React.FC = () => {
                 <label>ワークスペース名</label>
                 <input
                   type="text"
-                  className="modal-input"
+                  className="workspace-name-input"
                   placeholder="例: 個人プロジェクト"
                   value={importWorkspaceName}
                   onChange={(e) => setImportWorkspaceName(e.target.value)}
@@ -517,9 +516,8 @@ const WorkSpacePage: React.FC = () => {
               </div>
               <div className="form-group">
                 <label>説明（任意）</label>
-                <input
-                  type="text"
-                  className="modal-input"
+                <textarea
+                  className="workspace-description-input"
                   placeholder="このワークスペースの説明"
                   value={importWorkspaceDescription}
                   onChange={(e) => setImportWorkspaceDescription(e.target.value)}

@@ -142,6 +142,7 @@ const GoogleTimePicker: React.FC<GoogleTimePickerProps> = ({
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
+      e.stopPropagation(); // イベントの伝播を停止
       handleInputSubmit();
     } else if (e.key === 'Escape') {
       setIsEditing(false);
@@ -228,7 +229,7 @@ const GoogleTimePicker: React.FC<GoogleTimePickerProps> = ({
           aria-label="時間を選択"
           style={{ cursor: disabled ? 'not-allowed' : 'text' }}
         >
-          <span className="google-time-value">
+          <span className={`google-time-value ${!selectedTime ? 'placeholder' : ''}`}>
             {selectedTime ? formatDisplayTime(selectedTime) : placeholder}
           </span>
         </div>

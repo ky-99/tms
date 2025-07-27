@@ -131,6 +131,48 @@
   color: var(--color-text-muted);
 }
 
+/* ダークモード時の土曜日・日曜日の色（より鮮やかに） */
+[data-theme="dark"] .calendar-day-number.sunday {
+  color: #ff6b6b; /* より明るい赤 */
+}
+
+[data-theme="dark"] .calendar-day-number.saturday {
+  color: #74c0fc; /* より明るい青 */
+}
+
+/* ダークモード時の他月の日曜日・土曜日は薄い色を維持 */
+[data-theme="dark"] .calendar-day.other-month .calendar-day-number.sunday,
+[data-theme="dark"] .calendar-day.other-month .calendar-day-number.saturday {
+  color: var(--color-text-muted);
+}
+
+/* ダークモード時の曜日名の色（より鮮やかに） */
+[data-theme="dark"] .calendar-day-name.sunday {
+  color: #ff6b6b !important; /* より明るい赤 */
+}
+
+[data-theme="dark"] .calendar-day-name.saturday {
+  color: #74c0fc !important; /* より明るい青 */
+}
+
+/* 週カレンダー専用の土日色設定（より高い優先度） */
+.calendar-grid.week-view .calendar-day-name.sunday {
+  color: var(--color-error) !important;
+}
+
+.calendar-grid.week-view .calendar-day-name.saturday {
+  color: var(--color-primary) !important;
+}
+
+/* 週カレンダー専用のダークモード時土日色設定 */
+[data-theme="dark"] .calendar-grid.week-view .calendar-day-name.sunday {
+  color: #ff6b6b !important;
+}
+
+[data-theme="dark"] .calendar-grid.week-view .calendar-day-name.saturday {
+  color: #74c0fc !important;
+}
+
 .calendar-day.today {
   background-color: var(--color-primary-light);
 }
@@ -171,6 +213,15 @@
   width: 100%;
   text-align: left;
   box-sizing: border-box;
+}
+
+/* 曜日名の土曜日・日曜日の色設定 */
+.calendar-day-name.sunday {
+  color: var(--color-error) !important;
+}
+
+.calendar-day-name.saturday {
+  color: var(--color-primary) !important;
 }
 
 .calendar-day-number {

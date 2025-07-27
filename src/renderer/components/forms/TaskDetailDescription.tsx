@@ -49,6 +49,8 @@ const TaskDetailDescription: React.FC<TaskDetailDescriptionProps> = ({
 
   const handleDescriptionSave = async () => {
     await onDescriptionSave(editedDescription);
+    // 保存後にフォーカスを外す
+    descriptionInputRef.current?.blur();
   };
 
   const handleDescriptionCancel = () => {

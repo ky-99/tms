@@ -20,7 +20,7 @@
 
 .task-cards-section {
     background: var(--color-background-card);
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--color-border-light);
     border-radius: 4px;
     padding: 16px;
     height: fit-content;
@@ -32,15 +32,15 @@
 }
 
 .completed-section {
-    border-left: 1px solid #16a34a;
+    border-left: 1px solid var(--color-success);
 }
 
 .in-progress-section {
-    border-left: 1px solid #2563eb;
+    border-left: 1px solid var(--color-primary);
 }
 
 .pending-section {
-    border-left: 1px solid #6b7280;
+    border-left: 1px solid var(--color-text-muted);
 }
 
 .task-cards-section h3 {
@@ -59,7 +59,7 @@
 
 .weekly-task-card {
     background: var(--color-background-card);
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--color-border-light);
     border-radius: 4px;
     padding: 12px;
     min-height: 120px;
@@ -73,33 +73,33 @@
 }
 
 .weekly-task-card.completed {
-    background: var(--color-background-card);
-    border-color: #e5e7eb;
+    background: var(--color-success-light);
+    border-color: var(--color-success);
 }
 
 .weekly-task-card.in_progress {
     background: var(--color-background-card);
-    border-color: #e5e7eb;
+    border-color: var(--color-border-light);
 }
 
 .weekly-task-card.pending {
     background: var(--color-background-card);
-    border-color: #e5e7eb;
+    border-color: var(--color-border-light);
 }
 
 .weekly-task-card.in_progress:hover,
 .weekly-task-card.pending:hover {
-    background: #f9fafb !important;
+    background: var(--color-background-subtle) !important;
 }
 
 .weekly-task-card.completed:hover {
     /* 完了タスクはホバー時も背景色を変更しない */
-    background: #d1fae5 !important;
+    background: var(--color-success-light) !important;
 }
 
 /* ルーティンタスクのスタイル */
 .task-card.routine-task {
-    background: #fff3e0 !important;
+    background: var(--color-warning-light) !important;
     position: relative;
 }
 
@@ -153,18 +153,18 @@
 }
 
 .priority-high {
-    background-color: #fee2e2;
-    color: #dc2626;
+    background-color: var(--color-priority-high-bg);
+    color: var(--color-priority-high);
 }
 
 .priority-medium {
-    background-color: #fef3c7;
-    color: #d97706;
+    background-color: var(--color-priority-medium-bg);
+    color: var(--color-priority-medium);
 }
 
 .priority-low {
-    background-color: #e5e7eb;
-    color: var(--color-text-muted);
+    background-color: var(--color-priority-low-bg);
+    color: var(--color-priority-low);
 }
 
 .status {
@@ -175,18 +175,18 @@
 }
 
 .status-completed {
-    background-color: #d1fae5;
-    color: #065f46;
+    background-color: var(--color-status-completed-bg);
+    color: var(--color-status-completed);
 }
 
 .status-in_progress {
-    background-color: #dbeafe;
-    color: #1e40af;
+    background-color: var(--color-status-progress-bg);
+    color: var(--color-status-progress);
 }
 
 .status-pending {
-    background-color: #f3f4f6;
-    color: var(--color-text-secondary);
+    background-color: var(--color-status-pending-bg);
+    color: var(--color-status-pending);
 }
 
 .task-card-title {
@@ -199,6 +199,13 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
     margin-bottom: 8px;
+}
+
+.parent-task-icon {
+    color: var(--color-primary);
+    margin-right: 6px;
+    font-size: 16px;
+    font-weight: bold;
 }
 
 .task-card-description {
@@ -220,12 +227,12 @@
 .no-tasks-message {
     grid-column: 1 / -1;
     text-align: center;
-    color: #9ca3af;
+    color: var(--color-text-muted);
     font-size: 14px;
     padding: 20px;
-    background: #f9fafb;
+    background: var(--color-background-subtle);
     border-radius: 8px;
-    border: 1px dashed #d1d5db;
+    border: 1px dashed var(--color-border-light);
 }
 
 /* Responsive Design */
@@ -287,3 +294,28 @@
         padding: 10px;
     }
 }
+
+/* ダークモード対応 */
+[data-theme="dark"] .weekly-task-cards {
+    background: transparent !important;
+}
+
+[data-theme="dark"] .task-status-sections {
+    background: transparent !important;
+}
+
+[data-theme="dark"] .task-cards-section {
+    background: var(--color-background-card) !important;
+    border-color: var(--color-border-light) !important;
+}
+
+[data-theme="dark"] .task-cards-grid {
+    background: transparent !important;
+}
+
+[data-theme="dark"] .no-tasks-message {
+    background: var(--color-background-subtle) !important;
+    color: var(--color-text-muted) !important;
+    border-color: var(--color-border-light) !important;
+}
+

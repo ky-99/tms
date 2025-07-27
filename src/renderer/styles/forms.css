@@ -34,8 +34,8 @@
 .form-group textarea:focus,
 .form-group select:focus {
     outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px var(--color-primary-light);
+    border-color: var(--color-border-medium);
+    box-shadow: none;
 }
 
 .form-group textarea {
@@ -70,4 +70,109 @@
     margin-top: var(--space-2);
     color: var(--color-error);
     font-size: var(--font-size-xs);
+}
+
+/* ダークモード特定のフォーム要素強化 */
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group textarea,
+[data-theme="dark"] .form-group select {
+    background-color: var(--color-background-card) !important;
+    color: var(--color-text-primary) !important;
+    border-color: var(--color-border-light) !important;
+}
+
+[data-theme="dark"] .form-group input:focus,
+[data-theme="dark"] .form-group textarea:focus,
+[data-theme="dark"] .form-group select:focus {
+    border-color: var(--color-border-medium) !important;
+    box-shadow: none !important;
+}
+
+[data-theme="dark"] .form-group input::placeholder,
+[data-theme="dark"] .form-group textarea::placeholder {
+    color: var(--color-text-muted) !important;
+}
+
+[data-theme="dark"] .form-group label {
+    color: var(--color-text-primary) !important;
+}
+
+/* ダークモード: より具体的な入力フィールド対応 */
+[data-theme="dark"] input:not(.task-detail-title-input),
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+    background-color: var(--color-background-card) !important;
+    color: var(--color-text-primary) !important;
+    border-color: var(--color-border-light) !important;
+}
+
+[data-theme="dark"] input:not(.task-detail-title-input):focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus {
+    border-color: var(--color-border-medium) !important;
+    box-shadow: none !important;
+}
+
+[data-theme="dark"] input:not(.task-detail-title-input)::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: var(--color-text-muted) !important;
+}
+
+[data-theme="dark"] input[type="date"]:not(.task-detail-title-input),
+[data-theme="dark"] input[type="datetime-local"]:not(.task-detail-title-input),
+[data-theme="dark"] input[type="time"]:not(.task-detail-title-input) {
+    background-color: var(--color-background-card) !important;
+    color: var(--color-text-primary) !important;
+    border-color: var(--color-border-light) !important;
+}
+
+[data-theme="dark"] input[type="date"]:not(.task-detail-title-input):focus,
+[data-theme="dark"] input[type="datetime-local"]:not(.task-detail-title-input):focus,
+[data-theme="dark"] input[type="time"]:not(.task-detail-title-input):focus {
+    border-color: var(--color-border-medium) !important;
+    box-shadow: none !important;
+}
+
+/* WebKit search input clear button styling */
+input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666666'%3E%3Cpath d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/%3E%3C/svg%3E");
+    background-size: 14px 14px;
+    background-repeat: no-repeat;
+    background-position: center;
+    border-radius: 50%;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+input[type="search"]::-webkit-search-cancel-button:hover {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Light mode - white background with dark X */
+:root input[type="search"]::-webkit-search-cancel-button,
+[data-theme="light"] input[type="search"]::-webkit-search-cancel-button {
+    background-color: #ffffff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23333333'%3E%3Cpath d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/%3E%3C/svg%3E");
+}
+
+:root input[type="search"]::-webkit-search-cancel-button:hover,
+[data-theme="light"] input[type="search"]::-webkit-search-cancel-button:hover {
+    background-color: #ffffff;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode - white background with dark X (same as light mode for visibility) */
+[data-theme="dark"] input[type="search"]::-webkit-search-cancel-button {
+    background-color: #ffffff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23333333'%3E%3Cpath d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/%3E%3C/svg%3E");
+}
+
+[data-theme="dark"] input[type="search"]::-webkit-search-cancel-button:hover {
+    background-color: #ffffff;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
 }

@@ -8,6 +8,7 @@ import TimelineView from '../components/calendar/TimelineView';
 import CalendarTaskCreateModal from '../components/modals/CalendarTaskCreateModal';
 import CalendarTaskEditModal from '../components/modals/CalendarTaskEditModal';
 import { setEndOfDay } from '../utils/lightDateUtils';
+import { flattenTasks } from '../utils/taskUtils';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import '../styles/views-page.css';
@@ -19,6 +20,11 @@ const ViewsPage: React.FC = () => {
   const { tasks } = useTaskData();
   const { updateTask } = useTaskContext();
   const { setCurrentContext } = useShortcut();
+  
+  // タスクをフラット化してカレンダー表示用に準備
+  const flattenedTasks = useMemo(() => {
+    return flattenTasks(tasks);
+  }, [tasks]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [stableSelectedTask, setStableSelectedTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,6 +52,7 @@ const ViewsPage: React.FC = () => {
   const currentSelectedTask = useMemo(() => {
     if (!stableSelectedTask || !isModalOpen) return null;
     
+    // 階層構造のtasksから検索（フラット化されたタスクではなく）
     const foundTask = findTaskById(tasks, stableSelectedTask.id);
     
     // タスクが見つからない場合でも、stableSelectedTaskを返してモーダルを維持
@@ -217,7 +224,7 @@ const ViewsPage: React.FC = () => {
       <div className="views-content">
         {calendarViewType === 'week' ? (
           <TimelineView
-            tasks={tasks}
+            tasks={flattenedTasks}
             onTaskClick={handleTaskClick}
             onCreateTask={handleCreateTask}
             currentDate={currentDate}
@@ -225,7 +232,7 @@ const ViewsPage: React.FC = () => {
           />
         ) : (
           <CalendarView
-            tasks={tasks}
+            tasks={flattenedTasks}
             onTaskClick={handleTaskClick}
             onCreateTask={handleCreateTask}
             currentDate={currentDate}

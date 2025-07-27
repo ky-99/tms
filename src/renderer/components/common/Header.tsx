@@ -201,7 +201,7 @@ const Header: React.FC = () => {
               title="Views"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1M17,12H12V17H17V12Z"/>
+                <path d="M3,3H21C21.5,3 22,3.5 22,4V20C22,20.5 21.5,21 21,21H3C2.5,21 2,20.5 2,20V4C2,3.5 2.5,3 3,3M3,8V13H8V8H3M9,8V13H15V8H9M16,8V13H21V8H16M3,14V19H8V14H3M9,14V19H15V14H9M16,14V19H21V14H16Z"/>
               </svg>
               <span className="nav-text">Views</span>
             </Link>
@@ -211,7 +211,7 @@ const Header: React.FC = () => {
               title="Tasks"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                <path d="M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3M7,7H17V9H7V7M7,11H17V13H7V11M7,15H13V17H7V15Z"/>
               </svg>
               <span className="nav-text">Tasks</span>
               {overdueCount > 0 && (
@@ -234,8 +234,8 @@ const Header: React.FC = () => {
               title="Export"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M23,12L19,8V11H10V13H19V16M1,18V6C1,4.89 1.89,4 3,4H15A2,2 0 0,1 17,6V9H15V6H3V18H15V15H17V18A2,2 0 0,1 15,20H3C1.89,20 1,19.1 1,18Z"/>
-            </svg>
+                <path d="M12,1L8,5H11V14H13V5H16M18,23H6C4.89,23 4,22.1 4,21V9A2,2 0 0,1 6,7H9V9H6V21H18V9H15V7H18A2,2 0 0,1 20,9V21A2,2 0 0,1 18,23Z"/>
+              </svg>
             <span className="nav-text">Export</span>
           </Link>
           <Link 
@@ -244,7 +244,7 @@ const Header: React.FC = () => {
             title="WorkSpace"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,3C7.58,3 4,4.79 4,7C4,9.21 7.58,11 12,11C16.42,11 20,9.21 20,7C20,4.79 16.42,3 12,3M4,9V12C4,14.21 7.58,16 12,16C16.42,16 20,14.21 20,12V9C20,11.21 16.42,13 12,13C7.58,13 4,11.21 4,9M4,14V17C4,19.21 7.58,21 12,21C16.42,21 20,19.21 20,17V14C20,16.21 16.42,18 12,18C7.58,18 4,16.21 4,14Z"/>
+              <path d="M2,3H8C9.1,3 10,3.9 10,5V9C10,10.1 9.1,11 8,11H2C0.9,11 0,10.1 0,9V5C0,3.9 0.9,3 2,3M2,13H8C9.1,13 10,13.9 10,15V19C10,20.1 9.1,21 8,21H2C0.9,21 0,20.1 0,19V15C0,13.9 0.9,13 2,13M14,3H20C21.1,3 22,3.9 22,5V9C22,10.1 21.1,11 20,11H14C12.9,11 12,10.1 12,9V5C12,3.9 12.9,3 14,3M14,13H20C21.1,13 22,13.9 22,15V19C22,20.1 21.1,21 20,21H14C12.9,21 12,20.1 12,19V15C12,13.9 12.9,13 14,13Z"/>
           </svg>
           <span className="nav-text">WorkSpace</span>
         </Link>

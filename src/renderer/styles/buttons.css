@@ -123,3 +123,26 @@
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
+
+/* ダークモード対応 */
+[data-theme="dark"] .btn-secondary {
+    background-color: var(--color-background-input);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border-light);
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+    background-color: var(--color-background-hover);
+    border-color: var(--color-border-medium);
+}
+
+[data-theme="dark"] .btn-ghost {
+    background-color: transparent;
+    color: var(--color-text-primary);
+    border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .btn-ghost:hover {
+    background-color: var(--color-background-hover);
+    border-color: var(--color-border-medium);
+}

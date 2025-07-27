@@ -55,13 +55,7 @@ const WeeklyTaskCards: React.FC<WeeklyTaskCardsProps> = ({ tasks, onTaskClick })
       <div 
         className={`weekly-task-card ${status}`}
         onClick={() => handleTaskClick(task)}
-        style={{ 
-          cursor: 'pointer',
-          ...(status === 'completed' ? { 
-            backgroundColor: '#d1fae5', 
-            borderColor: '#10b981'
-          } : {})
-        }}
+        style={{ cursor: 'pointer' }}
         title="クリックでタスク詳細を表示"
       >
         <div className="task-card-header">
@@ -78,12 +72,6 @@ const WeeklyTaskCards: React.FC<WeeklyTaskCardsProps> = ({ tasks, onTaskClick })
           {isParentTask && (
             <span 
               className="parent-task-icon" 
-              style={{ 
-                color: '#8b5cf6', 
-                marginRight: '6px',
-                fontSize: '16px',
-                fontWeight: 'bold'
-              }}
               title="親タスク"
             >
               ◎

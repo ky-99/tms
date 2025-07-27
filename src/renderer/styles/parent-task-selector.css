@@ -1,117 +1,99 @@
-/* Parent Task Selector - インライン検索デザイン */
+/* Parent Task Selector - Copilot風インライン補完デザイン */
 
 .parent-task-selector {
   width: 100%;
   position: relative;
 }
 
-.parent-task-selector-input {
-  width: 100%;
-  min-height: 40px;
+.parent-task-input-container {
   position: relative;
-}
-
-.parent-task-selector-input.disabled {
-  opacity: 0.6;
-}
-
-.parent-task-display-value {
   width: 100%;
-  height: 100%;
+  overflow: visible !important; /* オーバーフローを可視化 */
+}
+
+.parent-task-selector-input {
+  /* base-task-modal.cssのスタイルを継承 */
+  position: relative;
+  z-index: 1; /* オーバーレイが上に来るように調整 */
+}
+
+/* 入力フィールドの透明化は削除 - 入力文字は黒で表示 */
+.parent-task-selector-input.is-editing {
+  /* 通常の色で表示 */
+}
+
+.parent-task-completion-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
   display: flex;
   align-items: center;
-  cursor: pointer;
+  padding: 10px 14px;
+  font-size: 15px;
+  font-weight: 400;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+  z-index: 1; /* 入力フィールドの上に表示 */
 }
 
-.parent-task-search-input {
-  width: 100%;
-  height: 100%;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  padding: 0;
+.parent-task-spacer {
+  color: transparent; /* 入力済み文字分のスペース確保用（透明） */
+  white-space: pre;
 }
 
-.parent-task-search-input::placeholder {
-  color: var(--color-text-muted);
+.parent-task-completion-text {
+  color: #999999 !important; /* 固定のグレー色 */
+  opacity: 1 !important; /* 完全に不透明 */
+  white-space: pre;
 }
 
-/* Modal Content - シンプルなドロップダウンスタイル */
-.parent-task-selection-modal-content {
-  background: var(--color-background-card);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 1px solid var(--color-border-light);
-  max-width: calc(100vw - 32px);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+/* ダークモード対応 */
+[data-theme="dark"] .parent-task-completion-text {
+  color: #666666 !important; /* ダークモード用の固定グレー */
+  opacity: 1 !important;
 }
 
-/* List Section */
-.parent-task-selection-list {
-  max-height: 280px;
-  overflow-y: auto;
+/* エラーメッセージ */
+.parent-task-error-message {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
   padding: 4px 0;
+  font-size: 13px;
+  color: #dc2626;
+  font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+  z-index: 10;
+  animation: fadeIn 0.2s ease-out;
 }
 
-.parent-task-selection-item {
-  padding: 10px 16px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  display: flex;
-  align-items: center;
-  border-bottom: 1px solid var(--color-border-light);
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.parent-task-selection-item:last-child {
-  border-bottom: none;
+/* ダークモード対応 */
+[data-theme="dark"] .parent-task-error-message {
+  color: #fca5a5;
 }
 
-.parent-task-selection-item:hover {
-  background-color: var(--color-background-subtle);
-}
-
-.parent-task-selection-item.selected {
-  background-color: var(--color-primary-light);
-  border-left: 3px solid var(--color-primary);
-}
-
-.parent-task-name {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  font-weight: 500;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.parent-task-selection-item.selected .parent-task-name {
-  color: var(--color-primary);
-  font-weight: 600;
-}
-
-.parent-task-selection-empty {
-  padding: 20px 16px;
-  text-align: center;
-  color: var(--color-text-muted);
-  font-size: 14px;
-  font-style: italic;
-}
-
-/* Responsive */
-@media (max-width: 640px) {
-  .parent-task-selection-modal-content {
-    width: calc(100vw - 32px);
-    max-height: 80vh;
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .parent-task-completion-overlay {
+    font-size: 14px;
+    padding: 8px 12px;
   }
   
-  .parent-task-selection-list {
-    max-height: calc(80vh - 80px);
+  .parent-task-error-message {
+    font-size: 12px;
+    padding: 3px 0;
   }
 }
-
-/* 個別のスクロールバースタイルは削除 - グローバルスタイルを使用 */

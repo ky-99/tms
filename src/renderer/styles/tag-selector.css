@@ -1,28 +1,14 @@
 /* TagSelector Component Styles */
 .tag-selector {
   position: relative;
-  width: fit-content;
-  max-width: 300px;
+  width: 100%;
+  max-width: none;
 }
 
-/* Button styling - matching GoogleDatePicker */
+/* Tag selector uses google-date-input class, so styles are in google-date-time-separated.css */
 .tag-selector-button {
-  display: flex;
-  align-items: center;
-  min-height: 40px;
-  padding: 8px 12px;
-  border: 1px solid var(--color-border-light);
-  border-radius: 6px;
-  background-color: var(--color-background-card);
-  cursor: pointer;
-  transition: all 0.2s ease;
   width: 100%;
   min-width: 180px;
-}
-
-.tag-selector-button:hover {
-  border-color: var(--color-border-medium);
-  background-color: var(--color-background-subtle);
 }
 
 .tag-selector-button:focus {
@@ -105,6 +91,18 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  animation: tagModalFadeIn 0.15s ease-out;
+}
+
+@keyframes tagModalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .tag-selection-search {

@@ -170,3 +170,21 @@
 .modal-content.closing {
     animation: modalFadeOut var(--transition-base) ease-in;
 }
+
+/* ダークモード特定のモーダル強化 */
+[data-theme="dark"] .modal-content {
+    background-color: var(--color-background-card) !important;
+    border-color: var(--color-border-light) !important;
+    box-shadow: 
+        0 20px 25px -5px rgba(0, 0, 0, 0.4),
+        0 10px 10px -5px rgba(0, 0, 0, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .modal-backdrop {
+    background-color: var(--color-background-modal) !important;
+}
+
+[data-theme="dark"] .close-btn:hover {
+    background-color: var(--color-background-hover) !important;
+}

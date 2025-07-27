@@ -1,5 +1,4 @@
-import React, { useState, useRef, forwardRef, useCallback, useMemo } from 'react';
-import ReactDOM from 'react-dom';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 
 interface ParentTaskSelectorProps {
   availableTasks: { id: number; title: string; depth: number }[];
@@ -8,201 +7,21 @@ interface ParentTaskSelectorProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
-  maxHeight?: string;
 }
-
-// インライン検索入力コンポーネント
-const InlineSearchInput = forwardRef<HTMLInputElement, {
-  selectedTask?: { id: number; title: string; depth: number };
-  placeholder: string;
-  disabled: boolean;
-  isOpen: boolean;
-  searchTerm: string;
-  onSearchChange: (value: string) => void;
-  onFocus: () => void;
-  onBlur: () => void;
-}>(({ selectedTask, placeholder, disabled, isOpen, searchTerm, onSearchChange, onFocus, onBlur }, ref) => (
-  <input
-    ref={ref}
-    type="text"
-    value={isOpen ? searchTerm : (selectedTask ? selectedTask.title : '')}
-    onChange={(e) => onSearchChange(e.target.value)}
-    onFocus={onFocus}
-    onBlur={onBlur}
-    placeholder={isOpen ? "親タスクを検索..." : placeholder}
-    className="parent-task-selector-input"
-    disabled={disabled}
-    style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
-  />
-));
-
-InlineSearchInput.displayName = 'InlineSearchInput';
-
-// 親タスク選択モーダル
-const ParentTaskSelectionModal: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  availableTasks: { id: number; title: string; depth: number }[];
-  selectedParentId?: number;
-  onParentSelect: (parentId?: number) => void;
-  maxHeight: string;
-  triggerRef: React.RefObject<HTMLInputElement | null>;
-  searchTerm: string;
-}> = ({ isOpen, onClose, availableTasks, selectedParentId, onParentSelect, maxHeight, triggerRef, searchTerm }) => {
-  const [modalPosition, setModalPosition] = useState({ top: 0, left: 0, width: 0 });
-
-  // フィルタリングされたタスク（メモ化）
-  const filteredTasks = useMemo(() => {
-    if (!searchTerm.trim()) return availableTasks;
-    const searchLower = searchTerm.toLowerCase();
-    return availableTasks.filter(task =>
-      task.title.toLowerCase().includes(searchLower)
-    );
-  }, [availableTasks, searchTerm]);
-
-  // モーダルの位置を計算（入力欄の上に表示）
-  React.useEffect(() => {
-    const calculatePosition = () => {
-      if (!isOpen || !triggerRef.current) return;
-      
-      const rect = triggerRef.current.getBoundingClientRect();
-      
-      // BaseTaskModalのbody変形を考慮した位置補正
-      const bodyStyle = document.body.style;
-      const bodyTop = bodyStyle.position === 'fixed' ? 
-        parseInt(bodyStyle.top || '0', 10) : 0;
-      
-      const correctedRect = {
-        ...rect,
-        top: rect.top - bodyTop,
-        bottom: rect.bottom - bodyTop,
-        left: rect.left,
-        right: rect.right
-      };
-      const modalWidth = correctedRect.width; // 入力欄と同じ幅
-      const modalHeight = Math.min(280, window.innerHeight - 40);
-      
-      // 入力欄の真上に表示
-      let left = correctedRect.left;
-      let top = correctedRect.top - modalHeight - 8; // 入力欄の上に8px余白
-      
-      // 左右の位置調整：画面からはみ出ないように
-      if (left + modalWidth > window.innerWidth - 16) {
-        left = window.innerWidth - modalWidth - 16;
-      }
-      if (left < 16) {
-        left = 16;
-      }
-      
-      // 上にはみ出る場合は入力欄の下に表示
-      if (top < 20) {
-        top = correctedRect.bottom + 8;
-        // 下にもはみ出る場合は上下中央に
-        if (top + modalHeight > window.innerHeight - 20) {
-          top = Math.max(20, (window.innerHeight - modalHeight) / 2);
-        }
-      }
-      
-      setModalPosition({ top, left, width: modalWidth });
-    };
-
-    if (isOpen) {
-      calculatePosition();
-      
-      // スクロールやリサイズ時に位置を再計算
-      const handleResize = () => calculatePosition();
-      window.addEventListener('resize', handleResize);
-      window.addEventListener('scroll', handleResize, true);
-      
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        window.removeEventListener('scroll', handleResize, true);
-      };
-    }
-  }, [isOpen, triggerRef]);
-
-  // 外部クリックでモーダルを閉じる
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.parent-task-selection-modal-content') && !target.closest('.parent-task-selector-input')) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
-    }
-  }, [isOpen, onClose]);
-
-
-  // 親タスク選択ハンドラー
-  const handleParentSelect = useCallback((parentId?: number) => {
-    onParentSelect(parentId);
-    onClose();
-  }, [onParentSelect, onClose]);
-
-  if (!isOpen) return null;
-
-  const modalContent = (
-    <div 
-      className="parent-task-selection-modal-content" 
-      style={{ 
-        position: 'fixed',
-        maxHeight, 
-        top: modalPosition.top, 
-        left: modalPosition.left,
-        width: modalPosition.width || 'auto',
-        zIndex: 2000
-      }}
-    >
-      {/* タスクリスト */}
-      <div className="parent-task-selection-list">
-        {/* なし（ルートタスク）オプション */}
-        <div
-          className={`parent-task-selection-item ${!selectedParentId ? 'selected' : ''}`}
-          onClick={() => handleParentSelect(undefined)}
-        >
-          <span className="parent-task-name">なし（ルートタスク）</span>
-        </div>
-        
-        {filteredTasks.length === 0 && searchTerm ? (
-          <div className="parent-task-selection-empty">
-            該当するタスクがありません
-          </div>
-        ) : (
-          filteredTasks.map((task) => (
-            <div
-              key={task.id}
-              className={`parent-task-selection-item ${task.id === selectedParentId ? 'selected' : ''}`}
-              onClick={() => handleParentSelect(task.id)}
-              style={{ paddingLeft: `${16 + task.depth * 16}px` }}
-            >
-              <span className="parent-task-name">{task.title}</span>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-
-  return ReactDOM.createPortal(modalContent, document.body);
-};
 
 const ParentTaskSelector: React.FC<ParentTaskSelectorProps> = ({ 
   availableTasks, 
   selectedParentId, 
   onParentSelect,
-  placeholder = '親タスクを選択',
+  placeholder = '親タスクを入力',
   className = '',
-  disabled = false,
-  maxHeight = '300px'
+  disabled = false
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [inputValue, setInputValue] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [suggestionIndex, setSuggestionIndex] = useState(0);
+  const [isComposing, setIsComposing] = useState(false); // 日本語入力中フラグ
+  const [errorMessage, setErrorMessage] = useState(''); // エラーメッセージ
   const inputRef = useRef<HTMLInputElement>(null);
 
   // 選択されたタスクの情報を取得（メモ化）
@@ -211,54 +30,237 @@ const ParentTaskSelector: React.FC<ParentTaskSelectorProps> = ({
     [availableTasks, selectedParentId]
   );
 
+  // フィルタリングされた候補（メモ化）
+  const suggestions = useMemo(() => {
+    if (!inputValue.trim()) return [];
+    const searchLower = inputValue.toLowerCase();
+    return availableTasks.filter(task =>
+      task.title.toLowerCase().startsWith(searchLower) // 前方一致のみに限定
+    );
+  }, [availableTasks, inputValue]);
+
+  // 現在の候補
+  const currentSuggestion = suggestions[suggestionIndex] || null;
+
+  // 補完テキスト（前方一致の場合のみ）
+  const completionText = useMemo(() => {
+    if (!currentSuggestion || !inputValue.trim()) return '';
+    const completion = currentSuggestion.title.slice(inputValue.length);
+    console.log('Completion Debug:', {
+      inputValue,
+      suggestionTitle: currentSuggestion.title,
+      completion,
+      suggestionsCount: suggestions.length
+    });
+    return completion;
+  }, [currentSuggestion, inputValue, suggestions.length]);
+
+  // 表示値を計算 - シンプル化
+  const displayValue = useMemo(() => {
+    if (isEditing) return inputValue;
+    return selectedTask ? selectedTask.title : '';
+  }, [isEditing, inputValue, selectedTask]);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+    setSuggestionIndex(0); // 候補をリセット
+    setErrorMessage(''); // エラーメッセージをクリア
+  }, []);
+
+  // 日本語入力開始
+  const handleCompositionStart = useCallback(() => {
+    setIsComposing(true);
+  }, []);
+
+  // 日本語入力終了
+  const handleCompositionEnd = useCallback(() => {
+    setIsComposing(false);
+  }, []);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isEditing) return;
+
+    switch (e.key) {
+      case 'Enter':
+        // 日本語入力中は何もしない（変換確定を優先）
+        if (isComposing) {
+          return;
+        }
+        
+        e.preventDefault();
+        e.stopPropagation(); // イベントの伝播を停止
+        if (currentSuggestion) {
+          // 現在の候補を確定
+          onParentSelect(currentSuggestion.id);
+          setInputValue('');
+          setIsEditing(false);
+          setSuggestionIndex(0);
+          setErrorMessage('');
+          // フォーカスを外す
+          inputRef.current?.blur();
+        } else if (inputValue.trim() === '') {
+          // 空の場合は「なし」を選択
+          onParentSelect(undefined);
+          setInputValue('');
+          setIsEditing(false);
+          setSuggestionIndex(0);
+          setErrorMessage('');
+          // フォーカスを外す
+          inputRef.current?.blur();
+        } else {
+          // 完全一致検索
+          const matchingTask = availableTasks.find(task => 
+            task.title.toLowerCase() === inputValue.toLowerCase()
+          );
+          if (matchingTask) {
+            onParentSelect(matchingTask.id);
+            setInputValue('');
+            setIsEditing(false);
+            setSuggestionIndex(0);
+            setErrorMessage('');
+            // フォーカスを外す
+            inputRef.current?.blur();
+          } else {
+            // 一致しない場合はエラーメッセージを表示（編集状態を維持）
+            setErrorMessage('この親タスクは存在しません');
+          }
+        }
+        break;
+      case 'ArrowDown':
+        if (suggestions.length > 0) {
+          e.preventDefault();
+          setSuggestionIndex(prev => 
+            prev < suggestions.length - 1 ? prev + 1 : 0
+          );
+        }
+        break;
+      case 'ArrowUp':
+        if (suggestions.length > 0) {
+          e.preventDefault();
+          setSuggestionIndex(prev => 
+            prev > 0 ? prev - 1 : suggestions.length - 1
+          );
+        }
+        break;
+      case 'Escape':
+        setInputValue('');
+        setIsEditing(false);
+        setSuggestionIndex(0);
+        break;
+      case 'Backspace':
+      case 'Delete':
+        // バックスペース/削除キーは通常通り動作させる
+        break;
+    }
+  }, [isEditing, currentSuggestion, onParentSelect, inputValue, suggestions.length, availableTasks, isComposing]);
+
   const handleFocus = useCallback(() => {
     if (!disabled) {
-      setIsOpen(true);
+      setIsEditing(true);
+      setErrorMessage(''); // エラーメッセージをクリア
+      // 既に選択されているタスクがある場合は、そのタイトルから編集開始
+      if (selectedTask) {
+        setInputValue(selectedTask.title);
+        // カーソルを文末に配置（次のフレームで実行）
+        setTimeout(() => {
+          if (inputRef.current) {
+            const length = selectedTask.title.length;
+            inputRef.current.setSelectionRange(length, length);
+          }
+        }, 0);
+      } else {
+        setInputValue('');
+      }
     }
-  }, [disabled]);
+  }, [disabled, selectedTask]);
 
   const handleBlur = useCallback(() => {
-    // 少し遅延させてモーダル内のクリックを可能にする
     setTimeout(() => {
-      setIsOpen(false);
-      setSearchTerm('');
-    }, 200);
+      setIsEditing(false);
+      setInputValue('');
+      setSuggestionIndex(0);
+    }, 150);
   }, []);
 
-  const handleSearchChange = useCallback((value: string) => {
-    setSearchTerm(value);
-  }, []);
-
-  const handleParentSelect = useCallback((parentId?: number) => {
-    onParentSelect(parentId);
-    setIsOpen(false);
-    setSearchTerm('');
-  }, [onParentSelect]);
+  const handleClick = useCallback(() => {
+    if (!disabled && !isEditing) {
+      setIsEditing(true);
+      setErrorMessage(''); // エラーメッセージをクリア
+      // 既に選択されているタスクがある場合は、そのタイトルから編集開始
+      if (selectedTask) {
+        setInputValue(selectedTask.title);
+        inputRef.current?.focus();
+        // カーソルを文末に配置（次のフレームで実行）
+        setTimeout(() => {
+          if (inputRef.current) {
+            const length = selectedTask.title.length;
+            inputRef.current.setSelectionRange(length, length);
+          }
+        }, 0);
+      } else {
+        setInputValue('');
+        inputRef.current?.focus();
+      }
+    }
+  }, [disabled, isEditing, selectedTask]);
 
   return (
     <div className={`parent-task-selector ${className}`}>
-      <InlineSearchInput
-        ref={inputRef}
-        selectedTask={selectedTask}
-        placeholder={placeholder}
-        disabled={disabled}
-        isOpen={isOpen}
-        searchTerm={searchTerm}
-        onSearchChange={handleSearchChange}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-      />
-      
-      <ParentTaskSelectionModal
-        isOpen={isOpen}
-        onClose={() => { setIsOpen(false); setSearchTerm(''); }}
-        availableTasks={availableTasks}
-        selectedParentId={selectedParentId}
-        onParentSelect={handleParentSelect}
-        maxHeight={maxHeight}
-        triggerRef={inputRef}
-        searchTerm={searchTerm}
-      />
+      <div className="parent-task-input-container" onClick={handleClick}>
+        <input
+          ref={inputRef}
+          type="text"
+          value={displayValue}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          onCompositionStart={handleCompositionStart}
+          onCompositionEnd={handleCompositionEnd}
+          placeholder={placeholder}
+          className={`parent-task-selector-input ${isEditing ? 'is-editing' : ''}`}
+          disabled={disabled}
+        />
+        {/* Copilot風インライン補完オーバーレイ */}
+        {isEditing && completionText && (
+          <div 
+            className="parent-task-completion-overlay"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              pointerEvents: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              padding: '10px 14px',
+              fontSize: '15px',
+              fontFamily: 'Google Sans, system-ui, -apple-system, sans-serif',
+              zIndex: 5 // 入力フィールドより上に
+            }}
+          >
+            {/* 入力済み文字分のスペース（透明） */}
+            <span style={{
+              color: 'transparent',
+              whiteSpace: 'pre'
+            }}>{inputValue}</span>
+            {/* 補完文字（グレー） */}
+            <span style={{
+              color: '#999999',
+              whiteSpace: 'pre'
+            }}>{completionText}</span>
+          </div>
+        )}
+        
+        {/* エラーメッセージ */}
+        {errorMessage && (
+          <div className="parent-task-error-message">
+            {errorMessage}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

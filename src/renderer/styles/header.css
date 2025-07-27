@@ -171,11 +171,23 @@
   transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
+/* 期限切れタスクカードの背景を薄い赤に */
+.overdue-section .task-item-mini {
+  background-color: var(--color-error-light);
+  border-color: var(--color-error);
+}
+
 /* ダークモード特定のスタイル強化 */
 [data-theme="dark"] .task-item-mini {
   background-color: var(--color-background-card) !important;
   color: var(--color-text-primary) !important;
   border-color: var(--color-border-light) !important;
+}
+
+/* ダークモード時の期限切れタスクカード */
+[data-theme="dark"] .overdue-section .task-item-mini {
+  background-color: var(--color-status-overdue-bg) !important;
+  border-color: var(--color-error) !important;
 }
 
 /* ダークモード用全体のタスクリスト強化 */

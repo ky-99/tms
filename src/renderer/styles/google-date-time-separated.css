@@ -25,14 +25,14 @@
 .google-date-input {
   display: flex;
   align-items: center;
-  background: #f5f5f5;
-  border: none;
+  background: var(--color-background-subtle) !important;
+  border: none !important;
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 14px;
   color: var(--color-text-primary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: none !important;
   min-height: 36px;
   box-sizing: border-box;
   font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
@@ -40,12 +40,17 @@
 }
 
 .google-date-input:hover:not(.disabled) {
-  background: #eeeeee;
+  border: none !important;
+  background: var(--color-background-alt) !important;
+  box-shadow: none !important;
 }
 
-.google-date-input:focus-within:not(.disabled) {
-  background: #f5f5f5;
-  outline: none;
+.google-date-input:focus-within:not(.disabled),
+.google-date-input:focus:not(.disabled) {
+  background: var(--color-background-subtle) !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .google-date-input.disabled {
@@ -59,6 +64,10 @@
   width: 100%;
   text-align: left;
   line-height: 1.4;
+}
+
+.google-date-value.placeholder {
+  color: var(--color-text-muted);
 }
 
 /* 日付ピッカーのカレンダー */
@@ -80,7 +89,7 @@
 
 /* カレンダー内のスタイル調整 */
 .google-date-calendar .react-datepicker__header {
-  background: #f5f5f5 !important;
+  background: var(--color-background-input) !important;
   border-bottom: 1px solid #e0e0e0 !important;
 }
 
@@ -114,7 +123,7 @@
 }
 
 .google-date-calendar .react-datepicker__today-button {
-  background: #f5f5f5 !important;
+  background: var(--color-background-input) !important;
   border-top: 1px solid #e0e0e0 !important;
   color: #616161 !important;
 }
@@ -132,14 +141,14 @@
 .google-time-input {
   display: flex;
   align-items: center;
-  background: #f5f5f5;
-  border: none;
+  background: var(--color-background-subtle) !important;
+  border: none !important;
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 14px;
   color: var(--color-text-primary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: none !important;
   min-height: 36px;
   box-sizing: border-box;
   font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
@@ -148,25 +157,34 @@
 
 .google-time-input:hover:not(.disabled),
 .google-time-input.editing:not(.disabled) {
-  background: #eeeeee;
+  background: var(--color-background-alt) !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
-.google-time-input:focus-within:not(.disabled) {
-  background: #f5f5f5;
-  outline: none;
+.google-time-input:focus-within:not(.disabled),
+.google-time-input:focus:not(.disabled) {
+  background: var(--color-background-subtle) !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .google-time-input.disabled {
-  background-color: #f8f9fa;
+  background-color: var(--color-background-alt);
   color: var(--color-text-muted);
   cursor: not-allowed;
-  border-color: #e8eaed;
+  border-color: var(--color-border-light);
 }
 
 .google-time-value {
   flex: 1;
   text-align: left;
   line-height: 1.4;
+}
+
+.google-time-value.placeholder {
+  color: var(--color-text-muted);
 }
 
 .google-time-edit-icon {
@@ -184,25 +202,29 @@
 .google-time-text-input {
   width: 100%;
   padding: 10px 14px;
-  border: none;
-  background: #f5f5f5;
+  border: none !important;
+  background: var(--color-background-subtle) !important;
   border-radius: 8px;
   font-size: 14px;
   color: var(--color-text-primary);
   font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
   box-sizing: border-box;
   outline: none;
-  transition: all 0.15s ease;
+  transition: none !important;
+  line-height: 1.4;
+  height: calc(1.4 * 14px + 20px + 2px);
 }
 
 .google-time-text-input:focus {
-  background: #f5f5f5;
-  border-bottom: 2px solid #60a5fa;
+  background: var(--color-background-subtle) !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .google-time-text-input::placeholder {
   color: var(--color-text-muted);
-  font-style: italic;
+  font-style: normal;
 }
 
 /* 時間選択ドロップダウン */
@@ -285,7 +307,7 @@
   padding: 10px 14px !important;
   font-size: 14px !important;
   border: none !important;
-  background: #f5f5f5 !important;
+  background: var(--color-background-input) !important;
   border-radius: 8px !important;
   color: #3c4043 !important;
   font-family: 'Google Sans', system-ui, -apple-system, sans-serif !important;
@@ -296,9 +318,102 @@
   min-width: 0;
 }
 
+/* ダークモード対応 */
+[data-theme="dark"] .google-date-input {
+  background: var(--color-background-input) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border-light) !important;
+}
+
+[data-theme="dark"] .google-date-input:hover:not(.disabled) {
+  border-color: var(--color-border-medium) !important;
+  background: var(--color-background-input) !important;
+}
+
+[data-theme="dark"] .google-date-input:focus-within:not(.disabled) {
+  background: var(--color-background-input) !important;
+  border-color: var(--color-primary) !important;
+}
+
+[data-theme="dark"] .google-date-input.disabled {
+  background-color: var(--color-background-alt) !important;
+  border-color: var(--color-border-light) !important;
+}
+
+[data-theme="dark"] .google-time-text-input {
+  background: var(--color-background-input) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border-light) !important;
+}
+
+[data-theme="dark"] .google-time-text-input:focus {
+  background: var(--color-background-card) !important;
+  border: 1px solid var(--color-border-light) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .google-time-dropdown {
+  background: var(--color-background-card) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] .google-time-option {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="dark"] .google-time-option:hover {
+  background-color: var(--color-background-hover) !important;
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="dark"] .google-time-option.selected {
+  background-color: var(--color-primary) !important;
+  color: var(--color-text-inverse) !important;
+}
+
+[data-theme="dark"] .google-separated-date .google-date-input {
+  background: var(--color-background-input) !important;
+  border: 1px solid var(--color-border-light) !important;
+}
+
+[data-theme="dark"] .google-separated-date .react-datepicker__input-container input {
+  background: var(--color-background-input) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border-light) !important;
+}
+
+/* ダークモード: 時間入力フィールドの追加対応 */
+[data-theme="dark"] .google-time-input {
+  background: var(--color-background-input) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border-light) !important;
+}
+
+[data-theme="dark"] .google-time-input:hover:not(.disabled),
+[data-theme="dark"] .google-time-input.editing:not(.disabled) {
+  background: var(--color-background-input) !important;
+  border-color: var(--color-border-medium) !important;
+}
+
+[data-theme="dark"] .google-time-input:focus-within:not(.disabled) {
+  background: var(--color-background-input) !important;
+  border-color: var(--color-primary) !important;
+}
+
+[data-theme="dark"] .google-time-input.disabled {
+  background-color: var(--color-background-alt) !important;
+  border-color: var(--color-border-light) !important;
+}
+
+[data-theme="dark"] .google-separated-time .google-time-input {
+  background: var(--color-background-input) !important;
+  border-color: var(--color-border-light) !important;
+}
+
 .google-separated-time .google-time-input {
-  border: none;
-  background: #f5f5f5;
+  border: 1px solid var(--color-border-light);
+  background: var(--color-background-card);
 }
 
 /* 分離型時間ピッカーのサイズ統一 */
@@ -316,7 +431,7 @@
   padding: 10px 14px !important;
   font-size: 14px !important;
   border: none !important;
-  background: #f5f5f5 !important;
+  background: var(--color-background-input) !important;
   border-radius: 8px !important;
   color: #3c4043 !important;
   font-family: 'Google Sans', system-ui, -apple-system, sans-serif !important;

@@ -137,10 +137,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                 {/* 最初の週だけ曜日を表示 */}
                 {isFirstWeek && (
                   <div 
-                    className="calendar-day-name"
-                    style={{
-                      color: dayOfWeek === 0 ? '#dc2626' : dayOfWeek === 6 ? '#2563eb' : '#6b7280'
-                    }}
+                    className={`calendar-day-name ${
+                      dayOfWeek === 0 ? 'sunday' : dayOfWeek === 6 ? 'saturday' : ''
+                    }`}
                   >
                     {dayName}
                   </div>

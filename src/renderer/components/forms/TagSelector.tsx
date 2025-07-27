@@ -79,7 +79,7 @@ const TagSelectionModal: React.FC<{
   triggerRef: React.RefObject<HTMLDivElement | null>;
 }> = ({ isOpen, onClose, availableTags, selectedTagIds, onTagToggle, getContrastColor, maxHeight, triggerRef }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
+  const [modalPosition, setModalPosition] = useState<{ top: number; left: number } | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // フィルタリングされたタグ（メモ化）
@@ -165,6 +165,9 @@ const TagSelectionModal: React.FC<{
         window.removeEventListener('resize', handleResize);
         window.removeEventListener('scroll', handleResize, true);
       };
+    } else {
+      // モーダルが閉じた時は位置をリセット
+      setModalPosition(null);
     }
   }, [isOpen, triggerRef]);
 
@@ -196,7 +199,7 @@ const TagSelectionModal: React.FC<{
     onTagToggle(tagId);
   }, [onTagToggle]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !modalPosition) return null;
 
   const modalContent = (
     <div 

@@ -639,13 +639,9 @@ const BaseTaskModal: React.FC<BaseTaskModalProps> = ({
 
   const handleTitleSave = async (title: string) => {
     if (isCreating) {
-      // 新規作成時は実際にタスクを作成する
-      if (title.trim()) {
-        await handleSave();
-      } else {
-        setOptimisticTitle(title);
-        setIsEditingTitle(false);
-      }
+      // 新規作成時は保存のみ（タスク作成はしない）
+      setOptimisticTitle(title);
+      setIsEditingTitle(false);
     } else if (title !== task?.title) {
       try {
         setOptimisticTitle(title);
@@ -671,13 +667,9 @@ const BaseTaskModal: React.FC<BaseTaskModalProps> = ({
   const handleDescriptionSave = async (description: string) => {
     setIsActivelyEditingDescription(false);
     if (isCreating) {
-      // 新規作成時は、タイトルが入力されている場合のみタスクを作成
-      if (editedTitle.trim()) {
-        await handleSave();
-      } else {
-        setOptimisticDescription(description);
-        setIsEditingDescription(false);
-      }
+      // 新規作成時は保存のみ（タスク作成はしない）
+      setOptimisticDescription(description);
+      setIsEditingDescription(false);
     } else if (description !== (task?.description || '')) {
       try {
         setOptimisticDescription(description);
@@ -705,6 +697,17 @@ const BaseTaskModal: React.FC<BaseTaskModalProps> = ({
   // 保存処理
   const handleSave = async () => {
     if (!task) return;
+    
+    // タイトルが空の場合はトーストを表示して処理を中断
+    if (!editedTitle.trim()) {
+      showAlert('タイトルを入力してください', { 
+        type: 'warning',
+        title: 'タイトルが必要です'
+      });
+      // タイトル編集モードに切り替え
+      setIsEditingTitle(true);
+      return;
+    }
     
     try {
       setIsLoading(true);
@@ -750,6 +753,30 @@ const BaseTaskModal: React.FC<BaseTaskModalProps> = ({
       setIsLoading(false);
     }
   };
+
+  // グローバルキーボードイベント（フォーカスなし状態でのEnter）
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // フォーカスされた要素がある場合は何もしない
+      const activeElement = document.activeElement;
+      if (activeElement && activeElement !== document.body) {
+        return;
+      }
+
+      // Enterキーで作成/更新を実行
+      if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [isOpen, handleSave]);
 
   const handleBackgroundClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget && behavior.closeOnBackgroundClick) {

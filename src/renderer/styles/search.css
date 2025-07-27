@@ -25,12 +25,12 @@
 }
 
 .search-input:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    border-color: var(--color-border-medium);
+    box-shadow: none;
 }
 
 .search-input::placeholder {
-    color: var(--color-text-light);
+    color: var(--color-text-muted);
 }
 
 .search-clear {
@@ -40,7 +40,7 @@
     transform: translateY(-50%);
     background: none;
     border: none;
-    color: var(--color-text-muted);
+    color: #ffffff;
     font-size: 18px;
     cursor: pointer;
     padding: 0;
@@ -54,8 +54,8 @@
 }
 
 .search-clear:hover {
-    background-color: var(--color-background-subtle);
-    color: var(--color-text-secondary);
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
 }
 
 .search-filter-container {
@@ -235,4 +235,87 @@
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     padding: 20px;
+}
+
+/* Search input focus override - remove blue border for all themes */
+.search-input:focus,
+.search-input-wrapper .form-group input:focus {
+    border-color: var(--color-border-medium) !important;
+    box-shadow: none !important;
+}
+
+/* Dark Mode Support */
+[data-theme="dark"] .search-input {
+    background-color: var(--color-background-card);
+    border-color: var(--color-border-light);
+    color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .search-input:focus {
+    border-color: var(--color-border-medium) !important;
+    box-shadow: none !important;
+}
+
+[data-theme="dark"] .search-input::placeholder {
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .search-clear {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .search-clear:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+[data-theme="dark"] .search-input-wrapper .form-group input {
+    background-color: var(--color-background-card);
+    border-color: var(--color-border-light);
+    color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .search-filter-icon {
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .search-filter-icon:hover {
+    color: var(--color-text-secondary);
+    background-color: var(--color-background-hover);
+}
+
+[data-theme="dark"] .search-filter-icon.active,
+[data-theme="dark"] .search-filter-icon.has-filters {
+    color: var(--color-info-dark);
+    background-color: var(--color-info-light);
+}
+
+[data-theme="dark"] .create-task-icon,
+[data-theme="dark"] .merge-task-icon,
+[data-theme="dark"] .search-sort-icon,
+[data-theme="dark"] .tag-pool-trigger {
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .create-task-icon:hover,
+[data-theme="dark"] .merge-task-icon:hover,
+[data-theme="dark"] .search-sort-icon:hover {
+    color: var(--color-text-secondary);
+    background-color: var(--color-background-hover);
+}
+
+[data-theme="dark"] .search-sort-icon.active,
+[data-theme="dark"] .search-sort-icon.has-sort {
+    color: var(--color-info-dark);
+    background-color: var(--color-info-light);
+}
+
+[data-theme="dark"] .filter-panel {
+    background: var(--color-background-card);
+    border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .task-list-container {
+    background: var(--color-background-card);
+    border-color: var(--color-border-light);
 }

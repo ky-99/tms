@@ -1,36 +1,39 @@
 /* Tasks page styles - Unified with Export Page Design */
 .tasks-page {
-    width: 100%;
+    width: calc(100vw - 60px); /* サイドバー幅を引く - 月カレンダーと同じ */
+    height: calc(100vh - 40px); /* ヘッダー高さを引く */
     overflow-x: hidden;
-    max-width: 100vw;
     background: var(--color-background);
-    padding: 20px 16px; /* Base padding */
-    min-height: 100vh;
+    padding: 16px 12px; /* Minimal base padding */
+    position: fixed;
+    top: 40px; /* ヘッダーの下 */
+    left: 60px; /* サイドバーの右 */
+    box-sizing: border-box;
 }
 
-/* Responsive padding adjustments - Unified with Export Page */
+/* Responsive padding adjustments - Minimal padding for full width */
 @media (min-width: 768px) {
     .tasks-page {
-        padding: 24px;
+        padding: 16px;
     }
 }
 
 @media (min-width: 1024px) {
     .tasks-page {
-        padding: 24px 32px;
+        padding: 16px 20px;
     }
 }
 
 @media (min-width: 1440px) {
     .tasks-page {
-        padding: 24px 40px;
+        padding: 16px 24px;
     }
 }
 
-/* For very large screens, limit padding */
+/* For very large screens, minimal padding */
 @media (min-width: 1800px) {
     .tasks-page {
-        padding: 24px 48px;
+        padding: 16px 32px;
     }
 }
 
@@ -56,25 +59,32 @@
     grid-template-columns: 1fr;
 }
 
-/* Responsive grid layout */
+/* Responsive grid layout - Wider main content area */
 @media (min-width: 768px) {
-    .tasks-container {
-        grid-template-columns: 280px 1fr;
-        gap: 20px;
-    }
-}
-
-@media (min-width: 1024px) {
     .tasks-container {
         grid-template-columns: 300px 1fr;
         gap: 24px;
     }
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1024px) {
     .tasks-container {
         grid-template-columns: 320px 1fr;
         gap: 28px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .tasks-container {
+        grid-template-columns: 350px 1fr;
+        gap: 32px;
+    }
+}
+
+@media (min-width: 1440px) {
+    .tasks-container {
+        grid-template-columns: 380px 1fr;
+        gap: 36px;
     }
 }
 
@@ -84,6 +94,65 @@
     border-radius: 4px;
     padding: 20px;
     height: fit-content;
+}
+
+/* ダークモード対応 */
+[data-theme="dark"] .tasks-page {
+    background: var(--color-background);
+}
+
+[data-theme="dark"] .page-header h1 {
+    color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .filters-sidebar {
+    background: var(--color-background-card);
+    border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .error-banner {
+    background-color: var(--color-error-light);
+    border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .error-banner p {
+    color: var(--color-error);
+}
+
+[data-theme="dark"] .empty-state {
+    background: transparent;
+}
+
+[data-theme="dark"] .empty-message {
+    color: var(--color-text-muted);
+}
+
+[data-theme="dark"] .breadcrumb-link {
+    color: var(--color-primary);
+}
+
+[data-theme="dark"] .breadcrumb-link:hover {
+    background-color: var(--color-background-hover);
+    color: var(--color-primary-hover);
+}
+
+[data-theme="dark"] .breadcrumb-separator {
+    color: var(--color-text-light);
+}
+
+[data-theme="dark"] .breadcrumb-current {
+    color: var(--color-text-secondary);
+}
+
+[data-theme="dark"] .task-detail-view {
+    background: var(--color-background-card);
+    border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .loading-placeholder {
+    background: var(--color-background-card);
+    border-color: var(--color-border-light);
+    color: var(--color-text-muted);
 }
 
 .task-content {

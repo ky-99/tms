@@ -75,6 +75,8 @@ const TaskDetailHeader: React.FC<TaskDetailHeaderProps> = ({
     }
     
     await onTitleSave(trimmedTitle);
+    // 保存後にフォーカスを外す
+    titleInputRef.current?.blur();
   };
 
   const handleTitleCancel = () => {
@@ -97,6 +99,7 @@ const TaskDetailHeader: React.FC<TaskDetailHeaderProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !isComposing) {
       e.preventDefault();
+      e.stopPropagation(); // イベントの伝播を停止
       handleTitleSave();
     } else if (e.key === 'Escape') {
       e.preventDefault();

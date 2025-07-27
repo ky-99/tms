@@ -20,9 +20,9 @@
 .export-page {
     width: 100%;
     margin: 0;
-    height: 100vh;
+    height: calc(100vh - 40px); /* ヘッダー分を除く */
     background: var(--export-background);
-    padding: 20px 16px;
+    padding: 16px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -31,26 +31,26 @@
 /* Responsive padding adjustments */
 @media (min-width: 768px) {
     .export-page {
-        padding: 24px;
+        padding: 20px;
     }
 }
 
 @media (min-width: 1024px) {
     .export-page {
-        padding: 24px 32px;
+        padding: 20px 24px;
     }
 }
 
 @media (min-width: 1440px) {
     .export-page {
-        padding: 24px 40px;
+        padding: 20px 28px;
     }
 }
 
 /* For very large screens, limit padding */
 @media (min-width: 1800px) {
     .export-page {
-        padding: 24px 48px;
+        padding: 20px 32px;
     }
 }
 
@@ -73,7 +73,7 @@
 .export-container {
     flex: 1;
     display: flex;
-    gap: 24px;
+    gap: 20px;
     min-height: 0;
     background: transparent;
 }
@@ -103,8 +103,8 @@
 .settings-section {
     background: var(--export-surface);
     border: 1px solid var(--export-border-light);
-    padding: 16px;
-    margin-bottom: 12px;
+    padding: 14px;
+    margin-bottom: 10px;
 }
 
 .settings-section h3 {
@@ -742,7 +742,7 @@
 
 .export-preview {
     flex: 1;
-    padding: 20px;
+    padding: 16px;
     background: var(--export-surface);
     display: flex;
     flex-direction: column;
@@ -925,7 +925,7 @@
 }
 
 .parent-task-search-input::placeholder {
-    color: var(--export-text-muted);
+    color: var(--color-text-muted);
 }
 
 .search-clear-btn {
@@ -983,9 +983,9 @@
 }
 
 .parent-task-suggestion-item.no-results {
-    color: var(--export-text-muted);
+    color: var(--color-text-muted);
     cursor: default;
-    font-style: italic;
+    font-style: normal;
 }
 
 .parent-task-suggestion-item.no-results:hover {

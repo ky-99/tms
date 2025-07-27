@@ -5,7 +5,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.1);
+  background: var(--color-background-modal);
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -178,6 +178,25 @@
 .status-priority-modal .option-card.priority.urgent.selected {
   background-color: #c62828;
   color: white;
+}
+
+/* ダークモード特定のステータス・優先度モーダル強化 */
+[data-theme="dark"] .status-priority-modal {
+  background: var(--color-background-card) !important;
+  border-color: var(--color-border-light) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .status-priority-modal .section-title {
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="dark"] .status-priority-modal .option-card {
+  border-color: var(--color-border-light) !important;
+}
+
+[data-theme="dark"] .modal-header h3 {
+  color: var(--color-text-primary) !important;
 }
 
 /* レスポンシブ対応 */

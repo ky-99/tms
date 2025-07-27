@@ -702,3 +702,17 @@
         border-radius: 4px;
     }
 }
+
+/* ダークモード対応 */
+[data-theme="dark"] .grid-item {
+    background: var(--color-background-card) !important;
+    border-color: var(--color-border-light) !important;
+}
+
+[data-theme="dark"] .chart-header {
+    background: var(--color-background-card) !important;
+}
+
+[data-theme="dark"] .chart-content {
+    background: var(--color-background-card) !important;
+}

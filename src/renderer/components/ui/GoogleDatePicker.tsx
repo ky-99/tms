@@ -25,7 +25,7 @@ const CustomInput = forwardRef<HTMLDivElement, any>(({ value, onClick, placehold
     aria-label="日付を選択"
     style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
   >
-    <span className="google-date-value">
+    <span className={`google-date-value ${!value ? 'placeholder' : ''}`}>
       {value || placeholder || '日付を選択'}
     </span>
   </div>
